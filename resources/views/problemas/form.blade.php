@@ -14,10 +14,11 @@
     </div>
     <div class="col-md-6">
         <div class="form-group has-danger">
-            <label for="example-text-input"
-                class="form-control-label @error('codigo') is-invalid @enderror">Código*</label>
-            <input class="form-control" type="text" name="codigo" placeholder="Ej. suma-a-b"
+            <label for="codigo"
+                class="form-control-label @error('codigo') is-invalid @enderror">Código Único (Slug / Identificador)*</label>
+            <input class="form-control" type="text" name="codigo" id="codigo" placeholder="Ej. suma-a-b o PROB-01"
                 value="{{ isset($problema) ? old('codigo', $problema->codigo) : old('codigo') }}">
+            <p class="text-xs text-secondary mt-1 mb-0"><small>Es un identificador único (sin espacios ni tildes) usado para la URL amigable del problema.</small></p>
             @error('codigo')
                 <p class="text-danger text-xs pt-1"> {{ $message }} </p>
             @enderror
@@ -112,65 +113,120 @@
         @enderror
     </div>
 </div>
-<div class="row">
-    <div class="form-group">
-        <label for="cursos">Cursos*</label>
-        <label for="cursos">(Mantenga pulsado CTRL o CMD para seleccionar más de un curso)</label>
-        <select multiple class="form-control" id="cursos" name="cursos[]">
-            @foreach ($cursos as $curso)
-                <option value="{{ $curso->id }}" @if (
-                    (isset($problema) &&
-                        $problema->cursos()->get()->contains($curso->id)) ||
-                        (old('cursos') && in_array($curso->id, old('cursos')))) selected @endif>
-                    {{ $curso->nombre }}</option>
-            @endforeach
-        </select>
-    </div>
-    @error('cursos')
-        <p class="text-danger text-xs pt-1"> {{ $message }} </p>
-    @enderror
-</div>
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border shadow-xs mb-3">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="mb-0 text-sm font-weight-bold"><i class="fa fa-graduation-cap text-warning me-2"></i>Cursos Asignados*</h6>
+                        <p class="text-xs text-secondary mb-0">Seleccione los cursos donde estará disponible este problema:</p>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-xs btn-outline-secondary mb-0 me-1" onclick="toggleSelectionCards('prob-cursos-container', true)">Seleccionar Todos</button>
+                        <button type="button" class="btn btn-xs btn-outline-secondary mb-0" onclick="toggleSelectionCards('prob-cursos-container', false)">Desmarcar Todos</button>
+                    </div>
+                </div>
+                <div class="row g-2" id="prob-cursos-container">
+                    @foreach ($cursos as $curso)
+                        @php
+                            $isChecked = (isset($problema) && $problema->cursos()->get()->contains($curso->id)) || (old('cursos') && in_array($curso->id, old('cursos')));
+                        @endphp
+                        <div class="col-md-4 col-sm-6">
+                            <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif" for="prob_curso_{{ $curso->id }}">
+                                <input type="checkbox" id="prob_curso_{{ $curso->id }}" name="cursos[]" value="{{ $curso->id }}" @if($isChecked) checked @endif onchange="this.closest('.selection-card').classList.toggle('checked', this.checked)">
+                                <div class="selection-card-content">
+                                    <div class="selection-card-title">{{ $curso->nombre }}</div>
+                                    <div class="selection-card-subtitle">Código: <span class="badge bg-gradient-primary text-xxs px-2 py-1">{{ $curso->codigo }}</span></div>
+                                </div>
+                            </label>
+                        </div>
+                    @endforeach
+                </div>
+                @error('cursos')
+                    <p class="text-danger text-xs pt-2 mb-0"> {{ $message }} </p>
+                @enderror
+            </div>
+        </div>
 
-<div class="row">
-    <div class="form-group">
-        <label for="categorias">Categorías*</label>
-        <label for="categorias">(Mantenga pulsado CTRL o CMD para seleccionar más de un curso)</label>
-        <select multiple class="form-control" id="categorias" name="categorias[]">
-            @foreach ($categorias as $categoria)
-                <option value="{{ $categoria->id }}" @if (
-                    (isset($problema) &&
-                        $problema->categorias()->get()->contains($categoria->id)) ||
-                        (old('categorias') && in_array($categoria->id, old('categorias')))) selected @endif>
-                    {{ $categoria->nombre }}</option>
-            @endforeach
-        </select>
+        <div class="card border shadow-xs mb-3">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="mb-0 text-sm font-weight-bold"><i class="fa fa-tags text-primary me-2"></i>Categorías*</h6>
+                        <p class="text-xs text-secondary mb-0">Seleccione las categorías a las que pertenece este problema:</p>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-xs btn-outline-secondary mb-0 me-1" onclick="toggleSelectionCards('prob-categorias-container', true)">Seleccionar Todos</button>
+                        <button type="button" class="btn btn-xs btn-outline-secondary mb-0" onclick="toggleSelectionCards('prob-categorias-container', false)">Desmarcar Todos</button>
+                    </div>
+                </div>
+                <div class="row g-2" id="prob-categorias-container">
+                    @foreach ($categorias as $categoria)
+                        @php
+                            $isChecked = (isset($problema) && $problema->categorias()->get()->contains($categoria->id)) || (old('categorias') && in_array($categoria->id, old('categorias')));
+                        @endphp
+                        <div class="col-md-3 col-sm-6">
+                            <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif" for="prob_cat_{{ $categoria->id }}">
+                                <input type="checkbox" id="prob_cat_{{ $categoria->id }}" name="categorias[]" value="{{ $categoria->id }}" @if($isChecked) checked @endif onchange="this.closest('.selection-card').classList.toggle('checked', this.checked)">
+                                <div class="selection-card-content">
+                                    <div class="selection-card-title">{{ $categoria->nombre }}</div>
+                                </div>
+                            </label>
+                        </div>
+                    @endforeach
+                </div>
+                @error('categorias')
+                    <p class="text-danger text-xs pt-2 mb-0"> {{ $message }} </p>
+                @enderror
+            </div>
+        </div>
+
+        <div class="card border shadow-xs mb-3">
+            <div class="card-body p-3">
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" role="switch" value="1" id="sql" name="sql"
+                        @if ((isset($problema) && $problema->sql == true) || old('sql')) checked @endif>
+                    <label class="form-check-label font-weight-bold text-sm" for="sql">
+                        Es un Problema de Consultas SQL
+                    </label>
+                </div>
+
+                <div id="div_lenguajes">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h6 class="mb-0 text-sm font-weight-bold"><i class="fa fa-code text-danger me-2"></i>Lenguajes de Programación Permitidos*</h6>
+                            <p class="text-xs text-secondary mb-0">Marque los lenguajes en los cuales los estudiantes podrán resolver el problema:</p>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-xs btn-outline-secondary mb-0 me-1" onclick="toggleSelectionCards('prob-lenguajes-container', true)">Seleccionar Todos</button>
+                            <button type="button" class="btn btn-xs btn-outline-secondary mb-0" onclick="toggleSelectionCards('prob-lenguajes-container', false)">Desmarcar Todos</button>
+                        </div>
+                    </div>
+                    <div class="row g-2" id="prob-lenguajes-container">
+                        @foreach ($lenguajes as $lenguaje)
+                            @php
+                                $isChecked = (isset($problema) && $problema->lenguajes()->get()->contains($lenguaje->id)) || (old('lenguajes') && in_array($lenguaje->id, old('lenguajes')));
+                                $isDisabled = (isset($problema) && $problema->sql) || old('sql');
+                            @endphp
+                            <div class="col-md-3 col-sm-6">
+                                <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif @if($isDisabled) disabled @endif" for="prob_leng_{{ $lenguaje->id }}">
+                                    <input class="lenguaje-checkbox" type="checkbox" id="prob_leng_{{ $lenguaje->id }}" name="lenguajes[]" value="{{ $lenguaje->id }}" @if($isChecked) checked @endif @if($isDisabled) disabled @endif onchange="this.closest('.selection-card').classList.toggle('checked', this.checked)">
+                                    <div class="selection-card-content">
+                                        <div class="selection-card-title">{{ $lenguaje->nombre }}</div>
+                                        <div class="selection-card-subtitle"><span class="badge bg-gradient-info text-xxs px-2 py-1">{{ $lenguaje->abreviatura }}</span></div>
+                                    </div>
+                                </label>
+                            </div>
+                        @endforeach
+                    </div>
+                    @error('lenguajes')
+                        <p class="text-danger text-xs pt-2 mb-0"> {{ $message }} </p>
+                    @enderror
+                </div>
+            </div>
+        </div>
     </div>
-</div>
-<div class="form-check my-3">
-    <input class="form-check-input" type="checkbox" value="{{ true }}" id="sql" name="sql"
-        @if ((isset($problema) && $problema->sql == true) || old('sql')) checked @endif>
-    <label class="form-check-label" for="sql">
-        Problema de SQL
-    </label>
-</div>
-<div class="row" id="div_lenguajes">
-    <div class="form-group">
-        <label for="lenguajes">Lenguajes de Programación*</label>
-        <label for="lenguajes">(Mantenga pulsado CTRL o CMD para seleccionar más de un curso)</label>
-        <select multiple class="form-control" id="lenguajes" name="lenguajes[]"
-            @if ((isset($problema) && $problema->sql) || old('sql')) disabled @endif>
-            @foreach ($lenguajes as $lenguaje)
-                <option value="{{ $lenguaje->id }}" @if (
-                    (isset($problema) &&
-                        $problema->lenguajes()->get()->contains($lenguaje->id)) ||
-                        (old('lenguajes') && in_array($lenguaje->id, old('lenguajes')))) selected @endif>
-                    {{ $lenguaje->nombre }}</option>
-            @endforeach
-        </select>
-    </div>
-    @error('lenguajes')
-        <p class="text-danger text-xs pt-1"> {{ $message }} </p>
-    @enderror
 </div>
 <div id="sql_file" class="@if ((isset($problema) && $problema->sql == false) || (!isset($problema) && old('sql', false) == false)) ) d-none @endif">
     <p class="text-uppercase text-sm">Base de Datos (Solo para problemas de SQL)</p>

@@ -20,6 +20,8 @@
     <link href="{{asset('assets/css/fontawesome/all.min.css')}}" rel="stylesheet">
     <script src="{{ mix('js/app.js') }}" defer></script>
     <link rel="stylesheet" href="{{ mix('assets/css/argon-dashboard.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/datatables_argon_fix.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/selection_cards.css') }}">
 
     @stack('css')
 </head>
@@ -66,6 +68,116 @@
     <script async defer src="https://buttons.github.io/buttons.js"></script>
     <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
     @stack('js')
+    <link rel="stylesheet" href="{{ asset('assets/css/datatables_argon_fix.css') }}">
+    <style>
+        /* ABSOLUTE FIX FOR DATATABLES LENGTH SELECT ARROW OVERLAP */
+        .dataTables_length label,
+        div.dataTables_length label {
+            display: inline-flex !important;
+            align-items: center !important;
+            flex-wrap: nowrap !important;
+            gap: 0.5rem !important;
+            margin-bottom: 0 !important;
+            white-space: nowrap !important;
+            font-size: 0.875rem !important;
+            color: #6c757d !important;
+            font-weight: 600 !important;
+        }
+
+        select[name$="_length"],
+        .dataTables_length select,
+        div.dataTables_length select,
+        .dataTables_wrapper .dataTables_length select,
+        html body div.dataTables_wrapper div.dataTables_length select {
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") !important;
+            background-repeat: no-repeat !important;
+            background-position: calc(100% - 10px) center !important;
+            background-size: 14px 12px !important;
+            background-color: #ffffff !important;
+            padding-left: 14px !important;
+            padding-right: 42px !important; /* Huge 42px right padding */
+            min-width: 95px !important;
+            width: 95px !important;
+            height: 38px !important;
+            line-height: 1.5 !important;
+            border-radius: 0.5rem !important;
+            border: 1px solid #d2d6da !important;
+            box-sizing: border-box !important;
+            font-size: 0.875rem !important;
+            color: #495057 !important;
+            cursor: pointer !important;
+            display: inline-block !important;
+            margin: 0 0.5rem !important;
+        }
+
+        .dataTables_filter label,
+        div.dataTables_filter label {
+            display: inline-flex !important;
+            align-items: center !important;
+            flex-wrap: nowrap !important;
+            gap: 0.5rem !important;
+            margin-bottom: 0 !important;
+            white-space: nowrap !important;
+            font-size: 0.875rem !important;
+            color: #6c757d !important;
+            font-weight: 600 !important;
+        }
+
+        .dataTables_filter input,
+        div.dataTables_filter input,
+        .dataTables_wrapper .dataTables_filter input {
+            padding: 0.375rem 0.75rem !important;
+            font-size: 0.875rem !important;
+            border-radius: 0.5rem !important;
+            border: 1px solid #d2d6da !important;
+            margin-left: 0.5rem !important;
+            outline: none !important;
+            height: 38px !important;
+        }
+
+        /* DataTables Header Sorting Arrows Fix */
+        table.dataTable thead th.sorting,
+        table.dataTable thead th.sorting_asc,
+        table.dataTable thead th.sorting_desc {
+            position: relative !important;
+            padding-right: 28px !important;
+            cursor: pointer !important;
+        }
+
+        table.dataTable thead th.sorting:after,
+        table.dataTable thead th.sorting_asc:after,
+        table.dataTable thead th.sorting_desc:after {
+            position: absolute !important;
+            right: 10px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            opacity: 0.5 !important;
+        }
+
+        table.dataTable thead th.sorting_asc:after,
+        table.dataTable thead th.sorting_desc:after {
+            opacity: 1 !important;
+            color: #5e72e4 !important;
+        }
+    </style>
+
+    <script>
+        function toggleSelectionCards(containerId, state) {
+            var container = document.getElementById(containerId);
+            if (!container) return;
+            var checkboxes = container.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(function(cb) {
+                if (!cb.disabled) {
+                    cb.checked = state;
+                    var card = cb.closest('.selection-card');
+                    if (card) card.classList.toggle('checked', state);
+                }
+            });
+        }
+    </script>
 </body>
 
 </html>

@@ -20,14 +20,15 @@ use Illuminate\Support\Str;
 class CertamenesController extends Controller
 {
     public function index(Request $request){
-        $cursos_auth = auth()->user()->cursos()->get()->pluck('id')->toArray();
+        $cursos = auth()->user()->cursos()->get();
+        $cursos_auth = $cursos->pluck('id')->toArray();
         $certamenes = Certamenes::whereIn('id_curso', $cursos_auth)->get()->map(function ($item){
             $item->fecha_inicio = Carbon::parse($item->fecha_inicio)->locale('es_ES')->isoFormat('lll');
             $item->fecha_termino = Carbon::parse($item->fecha_termino)->locale('es_ES')->isoFormat('lll');
             $item->creado = Carbon::parse($item->created_at)->locale('es_ES')->isoFormat('lll');
             return $item;
         });
-        return view('certamen.index', compact('certamenes'));
+        return view('certamen.index', compact('certamenes', 'cursos'));
     }
 
     public function crear(Request $request){
@@ -105,6 +106,39 @@ class CertamenesController extends Controller
             return back()->with("error", $e->getMessage());
         }
         return redirect()->route('certamen.index')->with('success', 'La evaluación "'.$certamen->nombre.'" ha sido eliminado.');
+    }
+
+    public function duplicar(Request $request){
+        $request->validate([
+            'id_certamen' => 'required|exists:certamenes,id',
+            'id_curso' => 'required|exists:cursos,id',
+        ]);
+        try {
+            DB::beginTransaction();
+            $original = Certamenes::with('categorias')->findOrFail($request->id_certamen);
+            $nuevo = new Certamenes();
+            $nuevo->nombre = $original->nombre . ' (Copia)';
+            $nuevo->descripcion = $original->descripcion;
+            $nuevo->fecha_inicio = Carbon::now();
+            $nuevo->fecha_termino = Carbon::now()->addDays(7);
+            $nuevo->penalizacion_error = $original->penalizacion_error;
+            $nuevo->cantidad_penalizacion = $original->cantidad_penalizacion;
+            $nuevo->curso()->associate(Cursos::findOrFail($request->id_curso));
+            $nuevo->save();
+
+            foreach ($original->categorias as $cat) {
+                $nuevo->categorias()->attach($cat->id);
+            }
+            DB::commit();
+        } catch (\PDOException $e) {
+            DB::rollBack();
+            return back()->with("error", "Error al duplicar la evaluación: " . $e->getMessage());
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with("error", "Error inesperado al duplicar: " . $e->getMessage());
+        }
+        return redirect()->route('certamen.banco_problemas', ['id_certamen' => $nuevo->id])
+            ->with('success', 'La evaluación "' . $nuevo->nombre . '" ha sido duplicada exitosamente.');
     }
 
     public function listado_certamenes(Request $request){

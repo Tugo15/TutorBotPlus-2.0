@@ -153,6 +153,7 @@ Route::group(['middleware' => 'auth'], function () {
 		Route::post('/eliminar', [CertamenesController::class, 'eliminar'])->name('certamen.eliminar')->middleware('can:eliminar certamen'); 
 		Route::post('/store', [CertamenesController::class, 'store'])->name('certamen.store')->middleware('can:crear certamen'); 
 		Route::post('/update', [CertamenesController::class, 'update'])->name('certamen.update')->middleware('can:editar certamen'); 
+		Route::post('/duplicar', [CertamenesController::class, 'duplicar'])->name('certamen.duplicar')->middleware('can:crear certamen'); 
 
 		Route::get('/banco_problemas/{id_certamen}', [BancoProblemasCertamenesController::class, 'index'])->name('certamen.banco_problemas')->middleware('can:editar certamen'); 
 		Route::post('/banco_problemas/delete', [BancoProblemasCertamenesController::class, 'delete'])->name('certamen.eliminar_categoria')->middleware('can:editar certamen'); 

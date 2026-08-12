@@ -14,13 +14,19 @@
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">
                     @if (session('error'))
-                        <div class="alert alert-danger" role="alert">
-                            {{ session('error') }}
+                        <div class="alert alert-danger alert-dismissible fade show mx-4 mt-3 mb-0 text-white" role="alert">
+                            <span>{{ session('error') }}</span>
+                            <button type="button" class="btn-close text-lg opacity-10 py-3" data-bs-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
                         </div>
                     @endif
                     @if (session('success'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('success') }}
+                        <div class="alert alert-success alert-dismissible fade show mx-4 mt-3 mb-0 text-white" role="alert">
+                            <span>{{ session('success') }}</span>
+                            <button type="button" class="btn-close text-lg opacity-10 py-3" data-bs-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
                         </div>
                     @endif
 
@@ -57,24 +63,21 @@
                                 @foreach ($casos as $item)
                                     <tr>
                                         <td>
-                                            <h6 class="mb-0 text-sm">{{ $item->id }}
-                                            </h6>
+                                            <h6 class="mb-0 text-sm ps-3">{{ $item->id }}</h6>
                                         </td>
                                         <td>
-                                            <h6 class="mb-0 text-sm">{{ $item->entradas }}
-                                            </h6>
+                                            <h6 class="mb-0 text-sm">{{ $item->entradas }}</h6>
                                         </td>
                                         <td>
-                                            <h6 class="mb-0 text-sm">{{ $item->salidas }}
-                                            </h6>
+                                            <h6 class="mb-0 text-sm">{{ $item->salidas }}</h6>
                                         </td>
                                         <td>
                                             <h6 class="mb-0 text-sm">{{ $item->puntos }}</h6>
-
                                         </td>
                                         <td>
-                                            <h6 class="mb-0 text-sm">
-                                                {{ $item->ejemplo ? 'Si' : 'No' }}</h6>
+                                            <span class="badge {{ $item->ejemplo ? 'bg-gradient-success' : 'bg-gradient-secondary' }} text-xs">
+                                                {{ $item->ejemplo ? 'Sí' : 'No' }}
+                                            </span>
                                         </td>
                                         <td class="align-middle text-end">
                                             <div class="d-flex px-3 py-1 justify-content-center align-items-center">
@@ -82,7 +85,7 @@
                                                     <form action="{{ route('casos_pruebas.eliminar', ['id' => $item->id]) }}"
                                                         method="POST" onsubmit="deshabilitar_boton()">
                                                         @csrf
-                                                        <button type="submit" class="btn btn-outline-danger delete_button"><i
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger delete_button" title="Eliminar Caso"><i
                                                                 class="fa fa-fw fa-trash"></i></button>
                                                     </form>
                                                 @endcan

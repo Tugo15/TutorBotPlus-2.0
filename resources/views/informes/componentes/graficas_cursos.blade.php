@@ -1,9 +1,9 @@
 <div class="row mt-4 mx-4">
     <div class="col-12">
-        <div class="card mb-4">
-            <div class="card-header pb-0">
-                <div class="d-flex justify-content-between">
-                    <h6>Gráficas</h6>
+        <div class="card shadow-xs border mb-4">
+            <div class="card-header pb-0 border-bottom mb-3">
+                <div class="d-flex justify-content-between pb-3">
+                    <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-chart-pie me-2 text-primary"></i>Gráficas</h6>
                 </div>
             </div>
             <div class="card-body px-0 pt-0 pb-2">

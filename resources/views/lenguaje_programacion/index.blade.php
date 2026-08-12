@@ -4,31 +4,40 @@
     @include('layouts.navbars.auth.topnav', ['title' => 'Gestión de Lenguajes de Programación'])
     <div class="row mt-4 mx-4">
         <div class="col-12">
-            <div class="card mb-4">
-                <div class="card-header pb-0">
-                    <div class="d-flex justify-content-between">
-                        <h6>Lenguajes de Programación</h6>
+            <div class="card shadow-xs border mb-4">
+                <div class="card-header pb-0 border-bottom mb-3">
+                    <div class="d-flex justify-content-between align-items-center pb-3">
+                        <div>
+                            <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-code me-2 text-primary"></i>Gestión de Lenguajes de Programación</h6>
+                            <p class="text-xs text-secondary mb-0">Administre los lenguajes soportados por el Juez Virtual (Judge0).</p>
+                        </div>
                         @can('crear lenguaje de programación')
-                        <a class="btn btn-primary active" href="{{ route('lenguaje_programacion.crear') }}">Crear</a>
+                        <a class="btn btn-sm btn-primary mb-0" href="{{ route('lenguaje_programacion.crear') }}"><i class="fa fa-plus me-1"></i> Crear Lenguaje</a>
                         @endcan
                     </div>
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">
                     @if (session('error'))
-                        <div class="alert alert-danger" role="alert">
-                            {{ session('error') }}
+                        <div class="alert alert-danger alert-dismissible fade show mx-4 mt-3 mb-0 text-white" role="alert">
+                            <span>{{ session('error') }}</span>
+                            <button type="button" class="btn-close text-lg opacity-10 py-3" data-bs-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
                         </div>
                     @endif
                     @if (session('success'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('success') }}
+                        <div class="alert alert-success alert-dismissible fade show mx-4 mt-3 mb-0 text-white" role="alert">
+                            <span>{{ session('success') }}</span>
+                            <button type="button" class="btn-close text-lg opacity-10 py-3" data-bs-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
                         </div>
                     @endif
                     <div class="table-responsive p-0">
                         <table class="table align-items-center mb-0" id="table">
                             <thead>
                                 <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Código
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Código Juez
                                     </th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Nombre
                                     </th>
@@ -44,7 +53,7 @@
                                     @canany(['editar lenguaje de programación', 'eliminar lenguaje de programación'])
                                         <th
                                             class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
-                                            Acción</th>
+                                            Acciones</th>
                                     @endcanany
                                 </tr>
                             </thead>
@@ -54,28 +63,28 @@
                                         <td>
                                             <div class="d-flex px-3 py-1">
                                                 <div class="d-flex flex-column justify-content-center">
-                                                    <h6 class="mb-0 text-sm">{{ $item->codigo }}</h6>
+                                                    <span class="badge bg-gradient-dark text-xs">{{ $item->codigo }}</span>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>    
                                             <div class="d-flex px-3 py-1">
                                                 <div class="d-flex flex-column justify-content-center">
-                                                    <h6 class="mb-0 text-sm">{{ $item->nombre }}</h6>
+                                                    <h6 class="mb-0 text-sm font-weight-bold">{{ $item->nombre }}</h6>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
                                             <div class="d-flex px-3 py-1">
                                                 <div class="d-flex flex-column justify-content-center">
-                                                    <h6 class="mb-0 text-sm">{{ $item->abreviatura }}</h6>
+                                                    <span class="badge bg-gradient-info text-xs">{{ $item->abreviatura }}</span>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
                                             <div class="d-flex px-3 py-1">
                                                 <div class="d-flex flex-column justify-content-center">
-                                                    <h6 class="mb-0 text-sm">{{ $item->extension }}</h6>
+                                                    <span class="badge bg-gradient-secondary text-xs">{{ $item->extension }}</span>
                                                 </div>
                                             </div>
                                         </td>
@@ -87,14 +96,14 @@
                                             <td class="align-middle text-end">
                                                 <div class="d-flex px-3 py-1 justify-content-center align-items-center">
                                                     @can('editar lenguaje de programación')
-                                                        <a class="btn btn-outline-warning"
+                                                        <a class="btn btn-sm btn-outline-warning me-1" title="Editar Lenguaje"
                                                             href="{{ route('lenguaje_programacion.editar', ['id' => $item->id]) }}"><i class="fa fa-pencil"></i></a>
                                                     @endcan
                                                     @can('eliminar lenguaje de programación')
                                                         <form action="{{ route('lenguaje_programacion.eliminar', ['id' => $item->id]) }}"
                                                             method="POST" onsubmit="event.preventDefault();submitFormEliminar('{{'el lenguaje '.$item->nombre}}', {{$item->id}})" id="eliminarForm_{{$item->id}}">
                                                             @csrf
-                                                            <button type="submit" class="btn btn-outline-danger"><i
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Lenguaje"><i
                                                                 class="fa fa-fw fa-trash"></i></button>
                                                         </form>
                                                     @endcan

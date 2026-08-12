@@ -1,14 +1,17 @@
 <div class="row mt-4 mx-4">
     <div class="col-12">
-        <div class="card mb-4">
-            <div class="card-header pb-0">
-                <div class="d-flex justify-content-between">
-                    <h6>Informe de Estudiantes</h6>
+        <div class="card shadow-xs border mb-4">
+            <div class="card-header pb-0 border-bottom mb-3">
+                <div class="d-flex justify-content-between align-items-center pb-3">
+                    <div>
+                        <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-users me-2 text-primary"></i>Informe de Estudiantes</h6>
+                        <p class="text-xs text-secondary mb-0">Rendimiento de los estudiantes en este certamen. <span class="badge badge-sm bg-gradient-secondary ms-2 text-xxs">NR: No Resuelto</span></p>
+                    </div>
+                    <a href="{{ route('certamen.index') }}" class="btn btn-sm btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                 </div>
             </div>
 
             <div class="card-body pb-0">
-            <i class="ms-3" style="font-size: 15px;">NR: No Resuelto</i>
                 <div class="table-responsive p-0">
                     <table class="table align-items-center mb-0" id="tabla_estudiantes">
                         <thead>
@@ -41,7 +44,7 @@
                                     <td>
                                         <div class="d-flex px-3 py-1">
                                             <div class="d-flex flex-column justify-content-center">
-                                                <h6 class="mb-0 text-sm">{{ $item->firstname }} {{ $item->lastname }}
+                                                <h6 class="mb-0 text-sm font-weight-bold">{{ $item->firstname }} {{ $item->lastname }}
                                                 </h6>
                                             </div>
                                         </div>
@@ -53,24 +56,14 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>
-                                        <div class="d-flex px-3 py-1">
-                                            <div class="d-flex flex-column justify-content-center">
-                                                <h6 class="mb-0 text-sm">
-                                                    {{ $item->problemas_resueltos . '/' . $certamen_estadistica->cantidad_problemas }}
-                                                </h6>
-                                            </div>
-                                        </div>
+                                    <td class="align-middle text-center text-sm">
+                                        <span class="badge badge-sm bg-gradient-info">{{ $item->problemas_resueltos }} / {{ $certamen_estadistica->cantidad_problemas }}</span>
                                     </td>
                                     @for ($i = 0; $i < $certamen_estadistica->cantidad_problemas; $i++)
-                                        <td>
-                                            <div class="d-flex px-3 py-1">
-                                                <div class="d-flex flex-column justify-content-center">
-                                                    <h6 class="mb-0 text-sm">
-                                                        {{ isset($item->resultados[$i]) ? $item->resultados[$i]->maximo_puntaje . '/' . $item->resultados[$i]->puntos_total : 'NR' }}
-                                                    </h6>
-                                                </div>
-                                            </div>
+                                        <td class="align-middle text-center text-sm">
+                                            <span class="badge badge-sm {{ isset($item->resultados[$i]) ? 'bg-gradient-success' : 'bg-gradient-secondary' }}">
+                                                {{ isset($item->resultados[$i]) ? $item->resultados[$i]->maximo_puntaje . '/' . $item->resultados[$i]->puntos_total : 'NR' }}
+                                            </span>
                                         </td>
                                     @endfor
 
@@ -78,8 +71,8 @@
                                         <td class="align-middle text-end">
                                             <div class="d-flex px-3 py-1 justify-content-center align-items-center">
                                                 @can('ver informe del problema')
-                                                    <a class="btn btn-outline-warning"
-                                                        href="{{ route('informe.certamen.detalle', ['id_certamen' => $certamen_estadistica->id, 'id_res_certamen' => $item->id]) }}">Detalle</a>
+                                                    <a class="btn btn-xs btn-outline-info mb-0" title="Ver Detalles del Certamen"
+                                                        href="{{ route('informe.certamen.detalle', ['id_certamen' => $certamen_estadistica->id, 'id_res_certamen' => $item->id]) }}"><i class="fa fa-info-circle me-1"></i> Detalle</a>
                                                 @endcan
                                             </div>
                                         </td>
@@ -91,7 +84,6 @@
 
                 </div>
             </div>
-            <a href="{{ route('certamen.index') }}" class="btn btn-outline-primary mt-3 mx-5">Volver</a>
         </div>
     </div>
 </div>
@@ -103,7 +95,10 @@
             responsive: true,
             order: [
                 [0, 'ASC']
-            ]
+            ],
+            dom: "<'row pb-3 px-4 pt-4 align-items-center'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6 d-flex justify-content-end'f>>" +
+                 "<'row'<'col-sm-12'tr>>" +
+                 "<'row pt-3 px-4 pb-4 align-items-center'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>"
         });
     </script>
 @endpush

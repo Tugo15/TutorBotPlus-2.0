@@ -7,11 +7,19 @@
     <div class="container-fluid py-4">
         <form method="POST" action='{{ route('problemas.store') }}' enctype="multipart/form-data" onsubmit="event.preventDefault();submitFormCrear()" id="crearForm">
             @csrf
-            <div class="card">
+            <div class="card shadow-xs border">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 font-weight-bold text-primary"><i class="fa fa-plus-circle me-2"></i>Crear Nuevo Problema</h6>
+                        <a href="{{ route('problemas.index') }}" class="btn btn-sm btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                    </div>
+                </div>
                 <div class="card-body">
                     @include('problemas.form')
-                    <input type="submit" class="btn btn-primary" value="Crear">
-                    <a href="{{route('problemas.index')}}" class="btn btn-outline-primary">Volver</a>
+                    <div class="mt-4 pt-3 border-top">
+                        <button type="submit" class="btn btn-sm btn-primary me-2"><i class="fa fa-save me-1"></i> Crear Problema</button>
+                        <a href="{{ route('problemas.index') }}" class="btn btn-sm btn-outline-secondary"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                    </div>
                 </div>
             </div>
         </form>
@@ -25,9 +33,9 @@
         const checkbox = document.getElementById('sql')
         const checkbox_fecha_inicio = document.getElementById('set_fecha_inicio')
         const checkbox_fecha_termino = document.getElementById('set_fecha_termino')
-        const lenguajes = document.getElementById("lenguajes");
         const sql_file = document.getElementById("sql_file");
-        const archivos_adicionales = document.getElementById("archivos_adicionales")
+        const archivos_adicionales = document.getElementById("archivos_adicionales");
+        const lenguajeCheckboxes = document.querySelectorAll(".lenguaje-checkbox");
         const fecha_inicio = flatpickr("#fecha_inicio", {enableTime: true,
             dateFormat: "d-m-Y H:i",defaultDate:'null', minDate: new Date(),}); // flatpickr
         const fecha_termino = flatpickr("#fecha_termino", {enableTime: true,
@@ -46,15 +54,19 @@
         });
 
         checkbox.addEventListener('change', (event) => {
-            if (event.currentTarget.checked) {
-                lenguajes.disabled = true;
+            const isChecked = event.currentTarget.checked;
+            lenguajeCheckboxes.forEach(cb => {
+                cb.disabled = isChecked;
+                const card = cb.closest('.selection-card');
+                if (card) card.classList.toggle('disabled', isChecked);
+            });
+            if (isChecked) {
                 sql_file.classList.remove("d-none");
             } else {
                 sql_file.classList.add("d-none");
-                archivos_adicionales.value = ""
-                lenguajes.disabled = false;
+                if (archivos_adicionales) archivos_adicionales.value = "";
             }
-        })
+        });
 
         checkbox_fecha_inicio.addEventListener('change', (event) => {
             if (event.currentTarget.checked) {

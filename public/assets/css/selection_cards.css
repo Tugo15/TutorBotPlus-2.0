@@ -1,0 +1,61 @@
+/* Custom Interactive Selection Cards for Forms */
+.selection-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background-color: #ffffff;
+    border: 2px solid #e9ecef;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    user-select: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    margin-bottom: 0;
+}
+
+.selection-card:hover {
+    border-color: #5e72e4;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(94, 114, 228, 0.12);
+}
+
+.selection-card input[type="checkbox"] {
+    margin-right: 0.75rem;
+    width: 1.2rem;
+    height: 1.2rem;
+    accent-color: #5e72e4;
+    cursor: pointer;
+}
+
+.selection-card.checked {
+    border-color: #5e72e4 !important;
+    background-color: #f4f5fe !important;
+    box-shadow: 0 2px 6px rgba(94, 114, 228, 0.15) !important;
+}
+
+.selection-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+    background-color: #f8f9fa !important;
+    border-color: #e9ecef !important;
+}
+
+.selection-card-content {
+    flex-grow: 1;
+}
+
+.selection-card-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #344767;
+    margin-bottom: 0;
+    line-height: 1.25;
+}
+
+.selection-card-subtitle {
+    font-size: 0.75rem;
+    color: #8392ab;
+    margin-top: 0.2rem;
+}

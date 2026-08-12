@@ -2,8 +2,13 @@
 $old_cursos = old('cursos')? old('cursos') : [];
 $old_roles = old('roles')? old('roles') : [];
 @endphp
-<p class="text-uppercase text-sm">Información del usuario</p>
-<p class="text-sm text-danger">* Obligatorio</p>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h6 class="mb-0 font-weight-bold text-primary"><i class="fa fa-user me-2"></i>Información Personal y Accesos</h6>
+        <p class="text-xs text-secondary mb-0">Ingrese los datos personales del usuario, asigne sus roles y cursos.</p>
+    </div>
+    <span class="text-xs text-danger font-weight-bold">* Campo Obligatorio</span>
+</div>
 <div class="row">
     <div class="col-md-6">
         <div class="form-group has-danger">
@@ -78,17 +83,53 @@ $old_roles = old('roles')? old('roles') : [];
     </div>
 </div>
 
-<div class="row">
-    <div class="form-group">
-        <label for="cursos">Curso</label>
-        <label for="cursos">(Mantenga pulsado CTRL o CMD para seleccionar más de un curso)</label>
-        <select multiple class="form-control" id="cursos" name="cursos[]">
-            @foreach($cursos as $curso)
-                <option value="{{$curso->id}}" @if((isset($user) && $user->cursos()->get()->contains($curso))||(!isset($user) && in_array($curso->id,$old_cursos))) selected @endif>{{$curso->nombre}}</option>
-            @endforeach
-        </select>
-      </div>
-      @error('cursos')
-            <p class="text-danger text-xs pt-1"> {{ $message }} </p>
-      @enderror
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border shadow-xs">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="mb-0 text-sm font-weight-bold"><i class="fa fa-graduation-cap text-warning me-2"></i>Asignar Cursos</h6>
+                        <p class="text-xs text-secondary mb-0">Haga clic en los cursos para inscribir al usuario:</p>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-xs btn-outline-secondary mb-0 me-1" onclick="toggleSelectionCards('user-cursos-container', true)">Seleccionar Todos</button>
+                        <button type="button" class="btn btn-xs btn-outline-secondary mb-0" onclick="toggleSelectionCards('user-cursos-container', false)">Desmarcar Todos</button>
+                    </div>
+                </div>
+                <div class="row g-2" id="user-cursos-container">
+                    @foreach($cursos as $curso)
+                        @php
+                            $isChecked = (isset($user) && $user->cursos()->get()->contains($curso)) || (!isset($user) && in_array($curso->id, $old_cursos));
+                        @endphp
+                        <div class="col-md-4 col-sm-6">
+                            <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif" for="curso_{{ $curso->id }}">
+                                <input type="checkbox" id="curso_{{ $curso->id }}" name="cursos[]" value="{{ $curso->id }}" @if($isChecked) checked @endif onchange="this.closest('.selection-card').classList.toggle('checked', this.checked)">
+                                <div class="selection-card-content">
+                                    <div class="selection-card-title">{{ $curso->nombre }}</div>
+                                    <div class="selection-card-subtitle">Código: <span class="badge bg-gradient-primary text-xxs px-2 py-1">{{ $curso->codigo }}</span></div>
+                                </div>
+                            </label>
+                        </div>
+                    @endforeach
+                </div>
+                @error('cursos')
+                    <p class="text-danger text-xs pt-2 mb-0"> {{ $message }} </p>
+                @enderror
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    function toggleSelectionCards(containerId, state) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        var checkboxes = container.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(function(cb) {
+            cb.checked = state;
+            var card = cb.closest('.selection-card');
+            if (card) card.classList.toggle('checked', state);
+        });
+    }
+</script>

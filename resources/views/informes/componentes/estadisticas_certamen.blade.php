@@ -1,6 +1,6 @@
 <div class="row mx-3">
     <div class="col-xl-2 col-sm-5 mb-xl-0 mb-4">
-        <div class="card">
+        <div class="card shadow-xs border">
             <div class="card-body p-3">
                 <div class="row">
                     <div class="col-8">
@@ -16,7 +16,7 @@
         </div>
     </div>
     <div class="col-xl-2 col-sm-5 mb-xl-0 mb-4">
-        <div class="card">
+        <div class="card shadow-xs border">
             <div class="card-body p-3">
                 <div class="row">
                     <div class="col-8">
@@ -32,7 +32,7 @@
         </div>
     </div>
     <div class="col-xl-2 col-sm-5 mb-xl-0 mb-4">
-        <div class="card">
+        <div class="card shadow-xs border">
             <div class="card-body p-3">
                 <div class="row">
                     <div class="col-8">
@@ -52,7 +52,7 @@
         </div>
     </div>
     <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-        <div class="card">
+        <div class="card shadow-xs border">
             <div class="card-body p-3">
                 <div class="row">
                     <div class="col-8">
@@ -68,7 +68,7 @@
         </div>
     </div>
     <div class="col-xl-2 col-sm-5 mb-xl-0 mb-4">
-        <div class="card">
+        <div class="card shadow-xs border">
             <div class="card-body p-3">
                 <div class="row">
                     <div class="col-8">

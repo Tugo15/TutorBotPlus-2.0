@@ -43,8 +43,8 @@
                     <a class="nav-link {{ str_contains(request()->url(), 'roles') == true ? 'active' : '' }}"
                         href="{{ route('roles.index') }}">
                         <div
-                            class="icon border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="fa fa-gear" style="color:black;"></i>
+                            class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="fa fa-shield-alt text-info text-sm opacity-10"></i>
                         </div>
                         <span class="nav-link-text ms-1">Roles</span>
                     </a>
@@ -60,8 +60,8 @@
                     <a class="nav-link {{ str_contains(request()->url(), 'cursos') == true ? 'active' : '' }}"
                         href="{{ route('cursos.index') }}">
                         <div
-                            class="icon border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="fa fa-gear" style="color:black;"></i>
+                            class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="fa fa-graduation-cap text-warning text-sm opacity-10"></i>
                         </div>
                         <span class="nav-link-text ms-1">Cursos</span>
                     </a>
@@ -77,8 +77,8 @@
                     <a class="nav-link {{ str_contains(request()->url(), 'lenguajes_programacion') == true ? 'active' : '' }}"
                         href="{{ route('lenguaje_programacion.index') }}">
                         <div
-                            class="icon border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="fa fa-gear" style="color:black;"></i>
+                            class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="fa fa-code text-danger text-sm opacity-10"></i>
                         </div>
                         <span class="nav-link-text ms-1">Lenguajes de Programación</span>
                     </a>
@@ -94,8 +94,8 @@
                     <a class="nav-link {{ str_starts_with(Route::currentRouteName(), 'problemas') == true ? 'active' : '' }}"
                         href="{{ route('problemas.index') }}">
                         <div
-                            class="icon border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="fa fa-gear" style="color:black;"></i>
+                            class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="fa fa-list-alt text-success text-sm opacity-10"></i>
                         </div>
                         <span class="nav-link-text ms-1">Problemas</span>
                     </a>
@@ -106,8 +106,8 @@
                     <a class="nav-link {{ str_starts_with(Route::currentRouteName(), 'categorias') == true ? 'active' : '' }}"
                         href="{{ route('categorias.index') }}">
                         <div
-                            class="icon border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="fa fa-gear" style="color:black;"></i>
+                            class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="fa fa-tags text-primary text-sm opacity-10"></i>
                         </div>
                         <span class="nav-link-text ms-1">Categorías</span>
                     </a>
@@ -123,17 +123,21 @@
                     <a class="nav-link {{ str_starts_with(Route::currentRouteName(), 'certamen') == true ? 'active' : '' }}"
                         href="{{ route('certamen.index') }}">
                         <div
-                            class="icon border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="fa fa-gear" style="color:black;"></i>
+                            class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="fa fa-calendar-check text-info text-sm opacity-10"></i>
                         </div>
                         <span class="nav-link-text ms-1">Evaluaciones</span>
                     </a>
                 </li>
             @endcan
-            <li class="nav-item">
+            <li class="nav-item mt-3">
                 <a class="nav-link"
                     href="{{ route('cursos.listado') }}">
-                    <span class="nav-link-text ms-1">Volver a la Landing Page</span>
+                    <div
+                        class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fa fa-arrow-left text-secondary text-sm opacity-10"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Volver a la Landing</span>
                 </a>
             </li>
         </ul>

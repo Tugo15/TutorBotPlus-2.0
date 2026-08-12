@@ -4,22 +4,27 @@
     @include('layouts.navbars.auth.topnav', ['title' => 'Envios del Problema "'.$problema->nombre.'"'])
     <div class="row mt-4 mx-4">
         <div class="col-12">
-            <div class="card mb-4">
-                <div class="card-header pb-0">
-                    <div class="d-flex justify-content-between">
-                        <h6>Envios</h6>
-                        <a href="{{route('informes.problemas.index', ['id'=>$problema->id])}}" class="btn btn-outline-primary">Volver</a>
+            <div class="card shadow-xs border mb-4">
+                <div class="card-header pb-0 border-bottom mb-3">
+                    <div class="d-flex justify-content-between align-items-center pb-3">
+                        <div>
+                            <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-code me-2 text-primary"></i>Envíos del Problema</h6>
+                            <p class="text-xs text-secondary mb-0">Listado de todos los envíos realizados para este problema.</p>
+                        </div>
+                        <a href="{{route('informes.problemas.index', ['id'=>$problema->id])}}" class="btn btn-sm btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                     </div>
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">
                     @if (session('error'))
-                        <div class="alert alert-danger" role="alert">
-                            {{ session('error') }}
+                        <div class="alert alert-danger alert-dismissible fade show mx-4 mt-3 mb-0 text-white" role="alert">
+                            <span class="text-sm"><i class="fa fa-exclamation-circle me-1"></i> {{ session('error') }}</span>
+                            <button type="button" class="btn-close text-lg opacity-10 py-3" data-bs-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         </div>
                     @endif
                     @if (session('success'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('success') }}
+                        <div class="alert alert-success alert-dismissible fade show mx-4 mt-3 mb-0 text-white" role="alert">
+                            <span class="text-sm"><i class="fa fa-check-circle me-1"></i> {{ session('success') }}</span>
+                            <button type="button" class="btn-close text-lg opacity-10 py-3" data-bs-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         </div>
                     @endif
                     @include('informes.componentes.tabla_envios')

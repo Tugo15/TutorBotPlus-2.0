@@ -9,11 +9,19 @@
         <form role="form" method="POST" action="{{ route('problemas.update', ['id' => $problema->id]) }}"
             enctype="multipart/form-data" onsubmit="event.preventDefault();submitFormEditar('{{'el problema '.$problema->nombre}}')" id="editarForm">
             @csrf
-            <div class="card">
+            <div class="card shadow-xs border">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 font-weight-bold text-primary"><i class="fa fa-pencil me-2"></i>Editar Problema: {{ $problema->nombre }}</h6>
+                        <a href="{{ route('problemas.index') }}" class="btn btn-sm btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                    </div>
+                </div>
                 <div class="card-body">
                     @include('problemas.form')
-                    <input type="submit" class="btn btn-primary" value="Guardar Cambios">
-                    <a href="{{route('problemas.index')}}" class="btn btn-outline-primary">Volver</a>
+                    <div class="mt-4 pt-3 border-top">
+                        <button type="submit" class="btn btn-sm btn-primary me-2"><i class="fa fa-save me-1"></i> Guardar Cambios</button>
+                        <a href="{{ route('problemas.index') }}" class="btn btn-sm btn-outline-secondary"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                    </div>
                 </div>
             </div>
         </form>
@@ -26,7 +34,7 @@
     <script src="{{ asset('assets/js/alertas_administracion.js') }}"></script> 
     <script type="module">
         const checkbox = document.getElementById('sql')
-        const lenguajes = document.getElementById("lenguajes");
+        const lenguajeCheckboxes = document.querySelectorAll(".lenguaje-checkbox");
         const checkbox_fecha_inicio = document.getElementById('set_fecha_inicio')
         const checkbox_fecha_termino = document.getElementById('set_fecha_termino')
         const sql_file = document.getElementById("sql_file");
@@ -49,13 +57,17 @@
         });
 
         checkbox.addEventListener('change', (event) => {
-            if (event.currentTarget.checked) {
-                lenguajes.disabled = true;
+            const isChecked = event.currentTarget.checked;
+            lenguajeCheckboxes.forEach(cb => {
+                cb.disabled = isChecked;
+                const card = cb.closest('.selection-card');
+                if (card) card.classList.toggle('disabled', isChecked);
+            });
+            if (isChecked) {
                 sql_file.classList.remove("d-none");
             } else {
                 sql_file.classList.add("d-none");
-                archivos_adicionales.value = ""
-                lenguajes.disabled = false;
+                if (archivos_adicionales) archivos_adicionales.value = "";
             }
         })
 

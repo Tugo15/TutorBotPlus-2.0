@@ -4,22 +4,33 @@
     @include('layouts.navbars.auth.topnav', ['title' => 'Gestión de Categorías de Problemas'])
     <div class="row mt-4 mx-4">
         <div class="col-12">
-            <div class="card mb-4">
-                <div class="card-header pb-0">
-                    <div class="d-flex justify-content-between">
-                        <h6>Categorías de Problemas</h6>
-                        <a class="btn btn-primary active" href="{{ route('categorias.crear') }}">Crear</a>
+            <div class="card shadow-xs border mb-4">
+                <div class="card-header pb-0 border-bottom mb-3">
+                    <div class="d-flex justify-content-between align-items-center pb-3">
+                        <div>
+                            <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-tags me-2 text-primary"></i>Gestión de Categorías de Problemas</h6>
+                            <p class="text-xs text-secondary mb-0">Administre las categorías temáticas empleadas para clasificar los ejercicios.</p>
+                        </div>
+                        @can('crear categoría de problema')
+                        <a class="btn btn-sm btn-primary mb-0" href="{{ route('categorias.crear') }}"><i class="fa fa-plus me-1"></i> Crear Categoría</a>
+                        @endcan
                     </div>
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">
                     @if (session('error'))
-                        <div class="alert alert-danger" role="alert">
-                            {{ session('error') }}
+                        <div class="alert alert-danger alert-dismissible fade show mx-4 mt-3 mb-0 text-white" role="alert">
+                            <span>{{ session('error') }}</span>
+                            <button type="button" class="btn-close text-lg opacity-10 py-3" data-bs-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
                         </div>
                     @endif
                     @if (session('success'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('success') }}
+                        <div class="alert alert-success alert-dismissible fade show mx-4 mt-3 mb-0 text-white" role="alert">
+                            <span>{{ session('success') }}</span>
+                            <button type="button" class="btn-close text-lg opacity-10 py-3" data-bs-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
                         </div>
                     @endif
                     <div class="table-responsive p-0">
@@ -31,10 +42,10 @@
                                     <th
                                         class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
                                         Creado</th>
-                                    @canany(['editar categoría de problema', 'editar categoría de problema'])
+                                    @canany(['editar categoría de problema', 'eliminar categoría de problema'])
                                         <th
                                             class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
-                                            Acción</th>
+                                            Acciones</th>
                                     @endcanany
                                 </tr>
                             </thead>
@@ -44,7 +55,7 @@
                                         <td>
                                             <div class="d-flex px-3 py-1">
                                                 <div class="d-flex flex-column justify-content-center">
-                                                    <h6 class="mb-0 text-sm">{{ $categoria->nombre }}</h6>
+                                                    <h6 class="mb-0 text-sm font-weight-bold">{{ $categoria->nombre }}</h6>
                                                 </div>
                                             </div>
                                         </td>
@@ -52,11 +63,11 @@
                                             <p class="text-sm font-weight-bold mb-0">
                                                 {{ $categoria->fecha ? $categoria->fecha : 'Desconocido' }}</p>
                                         </td>
-                                        @canany(['editar categoría de problema', 'editar categoría de problema'])
+                                        @canany(['editar categoría de problema', 'eliminar categoría de problema'])
                                             <td class="align-middle text-end">
                                                 <div class="d-flex px-3 py-1 justify-content-center align-items-center">
                                                     @can('editar categoría de problema')
-                                                        <a class="btn btn-outline-warning"
+                                                        <a class="btn btn-sm btn-outline-warning me-1" title="Editar Categoría"
                                                             href="{{ route('categorias.editar', ['id' => $categoria->id]) }}"><i
                                                                 class="fa fa-pencil"></i></a>
                                                     @endcan
@@ -64,7 +75,7 @@
                                                         <form action="{{ route('categorias.eliminar', ['id' => $categoria->id]) }}"
                                                             method="POST" onsubmit="event.preventDefault();submitFormEliminar('{{'la categoria '.$categoria->nombre}}', {{$categoria->id}})" id="eliminarForm_{{$categoria->id}}">
                                                             @csrf
-                                                            <button type="submit" class="btn btn-outline-danger"><i
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Categoría"><i
                                                                     class="fa fa-fw fa-trash"></i></button>
                                                         </form>
                                                     @endcan

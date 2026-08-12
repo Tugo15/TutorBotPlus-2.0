@@ -14,13 +14,18 @@
                             
             </div>
             <ul class="navbar-nav  justify-content-end">
+                <li class="nav-item d-flex align-items-center me-3">
+                    <span class="text-white font-weight-bold text-sm me-3 opacity-9">
+                        <i class="fa fa-user-circle me-1"></i> {{ auth()->user()->firstname }} {{ auth()->user()->lastname }}
+                    </span>
+                </li>
                 <li class="nav-item d-flex align-items-center">
                     <form role="form" method="post" action="{{ route('logout') }}" id="logout-form">
                         @csrf
                         <a href="{{ route('logout') }}"
                             onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
                             class="nav-link text-white font-weight-bold px-0">
-                            <i class="fa fa-user me-sm-1"></i>
+                            <i class="fa fa-sign-out-alt me-sm-1"></i>
                             <span class="d-sm-inline d-none">Cerrar Sesión</span>
                         </a>
                     </form>

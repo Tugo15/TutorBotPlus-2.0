@@ -4,24 +4,33 @@
     @include('layouts.navbars.auth.topnav', ['title' => 'Gestión de Cursos'])
     <div class="row mt-4 mx-4">
         <div class="col-12">
-            <div class="card mb-4">
-                <div class="card-header pb-0">
-                    <div class="d-flex justify-content-between">
-                        <h6>Cursos</h6>
+            <div class="card shadow-xs border mb-4">
+                <div class="card-header pb-0 border-bottom mb-3">
+                    <div class="d-flex justify-content-between align-items-center pb-3">
+                        <div>
+                            <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-graduation-cap me-2 text-primary"></i>Gestión de Cursos</h6>
+                            <p class="text-xs text-secondary mb-0">Administre las asignaturas y secciones disponibles en la plataforma.</p>
+                        </div>
                         @can('crear curso')
-                        <a class="btn btn-primary active" href="{{ route('cursos.crear') }}">Crear</a>
+                        <a class="btn btn-sm btn-primary mb-0" href="{{ route('cursos.crear') }}"><i class="fa fa-plus me-1"></i> Crear Curso</a>
                         @endcan
                     </div>
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">
                     @if (session('error'))
-                        <div class="alert alert-danger" role="alert">
-                            {{ session('error') }}
+                        <div class="alert alert-danger alert-dismissible fade show mx-4 mt-3 mb-0 text-white" role="alert">
+                            <span>{{ session('error') }}</span>
+                            <button type="button" class="btn-close text-lg opacity-10 py-3" data-bs-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
                         </div>
                     @endif
                     @if (session('success'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('success') }}
+                        <div class="alert alert-success alert-dismissible fade show mx-4 mt-3 mb-0 text-white" role="alert">
+                            <span>{{ session('success') }}</span>
+                            <button type="button" class="btn-close text-lg opacity-10 py-3" data-bs-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
                         </div>
                     @endif
                     <div class="table-responsive p-0">
@@ -47,16 +56,16 @@
                                 @foreach ($cursos as $curso)
                                     <tr>
                                         <td>
-                                            <div class="d-flex px-3 py-1">
-                                                <div class="d-flex flex-column justify-content-center">
-                                                    <h6 class="mb-0 text-sm">{{ $curso->nombre }}</h6>
+                                            <div class="d-inline-flex align-items-center py-1">
+                                                <div class="d-flex flex-column justify-content-center ms-2">
+                                                    <h6 class="mb-0 text-sm font-weight-bold">{{ $curso->nombre }}</h6>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
                                             <div class="d-flex px-3 py-1">
                                                 <div class="d-flex flex-column justify-content-center">
-                                                    <h6 class="mb-0 text-sm">{{ $curso->codigo }}</h6>
+                                                    <span class="badge bg-gradient-primary text-xs">{{ $curso->codigo }}</span>
                                                 </div>
                                             </div>
                                         </td>
@@ -66,15 +75,15 @@
                                         </td>
                                         @canany(['editar curso', 'eliminar curso', 'ver informe del curso'])
                                             <td class="align-middle text-end">
-                                                <div class="d-flex px-3 py-1 justify-content-center align-items-center">
+                                                <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1">
                                                     @can('ver informe del curso')
-                                                        <a class="btn btn-outline-warning"
-                                                            href="{{ route('informe.curso', ['id_curso' => $curso->id]) }}">Informe</a>
-                                                        <a class="btn btn-outline-warning"
-                                                            href="{{ route('informe.envios.curso', ['id_curso' => $curso->id]) }}">Envios</a>
+                                                        <a class="btn btn-xs btn-outline-primary mb-0" title="Ver Informe del Curso"
+                                                            href="{{ route('informe.curso', ['id_curso' => $curso->id]) }}"><i class="fa fa-chart-bar"></i></a>
+                                                        <a class="btn btn-xs btn-outline-info mb-0" title="Ver Envíos del Curso"
+                                                            href="{{ route('informe.envios.curso', ['id_curso' => $curso->id]) }}"><i class="fa fa-code"></i></a>
                                                     @endcan
                                                     @can('editar curso')
-                                                        <a class="btn btn-outline-warning"
+                                                        <a class="btn btn-xs btn-outline-warning mb-0" title="Editar Curso"
                                                             href="{{ route('cursos.editar', ['id' => $curso->id]) }}"><i
                                                                 class="fa fa-pencil"></i></a>
                                                     @endcan
@@ -84,7 +93,7 @@
                                                             onsubmit="event.preventDefault();submitFormEliminar('{{ 'el curso ' . $curso->nombre }}', {{ $curso->id }})"
                                                             id="eliminarForm_{{ $curso->id }}">
                                                             @csrf
-                                                            <button type="submit" class="btn btn-outline-danger"><i
+                                                            <button type="submit" class="btn btn-xs btn-outline-danger mb-0" title="Eliminar Curso"><i
                                                                     class="fa fa-fw fa-trash"></i></button>
                                                         </form>
                                                     @endcan
