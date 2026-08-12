@@ -1,0 +1,73 @@
+================================================================================
+          GUIA Y COMANDOS DE EJECUCION DE TUTORBOTPLUS 2.0
+================================================================================
+
+--------------------------------------------------------------------------------
+1. REQUISITOS PREVIOS
+--------------------------------------------------------------------------------
+- XAMPP con Apache y MySQL iniciados.
+- PHP (disponible en C:\xampp\php\php.exe o en la variable PATH).
+
+
+--------------------------------------------------------------------------------
+2. PASO 1: INSTALACION INICIAL DE DEPENDENCIAS (Solo si es un proyecto nuevo)
+--------------------------------------------------------------------------------
+Ejecutar en la consola dentro del directorio del proyecto:
+
+    composer install
+    npm install
+
+
+--------------------------------------------------------------------------------
+3. PASO 2: BASE DE DATOS Y TABLAS DE PRUEBA
+--------------------------------------------------------------------------------
+1. Asegurate de crear la base de datos "tutorbotplus" en phpMyAdmin (http://localhost/phpmyadmin).
+2. Ejecuta las migraciones y seeders de prueba:
+
+    C:\xampp\php\php.exe artisan migrate:fresh --seed
+    C:\xampp\php\php.exe artisan storage:link
+
+
+--------------------------------------------------------------------------------
+4. PASO 3: INICIAR EL SERVIDOR WEB (Terminal 1)
+--------------------------------------------------------------------------------
+En una consola, ejecuta el servidor Laravel:
+
+    C:\xampp\php\php.exe artisan serve --port=8000
+
+-> URL de acceso en el navegador: http://127.0.0.1:8000
+
+
+--------------------------------------------------------------------------------
+5. PASO 4: INICIAR EL PROCESADOR DE EVALUACIONES (Terminal 2 - IMPORTANTE)
+--------------------------------------------------------------------------------
+En OTRA consola, ejecuta el planificador de Laravel (necesario para procesar las
+evaluaciones del juez en vivo y evitar que la pagina se quede en "In Process"):
+
+    C:\xampp\php\php.exe artisan schedule:work
+
+
+--------------------------------------------------------------------------------
+6. PASO 5: COMPILADOR FRONTEND (Terminal 3 - Opcional para cambios visuales)
+--------------------------------------------------------------------------------
+    npm run dev
+
+
+--------------------------------------------------------------------------------
+7. CUENTAS DE ACCESO DE PRUEBA
+--------------------------------------------------------------------------------
+- Administrador : admin@tutorbot.com     / Clave: admin
+- Profesor      : profesor@tutorbot.com  / Clave: profesor
+- Estudiante    : estudiante@tutorbot.com/ Clave: estudiante
+
+
+--------------------------------------------------------------------------------
+8. LENGUAJES RECOMENDADOS PARA ENVIOS
+--------------------------------------------------------------------------------
+En el menu desplegable de resolucion de problemas de la plataforma, selecciona:
+- Python 3.8.1
+- C (GCC 9.2.0)
+- C++ (GCC 9.2.0)
+- Java (OpenJDK 13.0.1)
+
+================================================================================

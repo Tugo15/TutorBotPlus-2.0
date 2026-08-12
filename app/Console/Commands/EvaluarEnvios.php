@@ -80,7 +80,7 @@ class EvaluarEnvios extends Command
                             }
                         } else if ($item['status']["id"] == 4) {
                             $evaluacion->estado = "Rechazado";
-                        } else if ($item['status']["id"] >= 5 && $item['status']["id"] <= 12) {
+                        } else if ($item['status']["id"] >= 5) {
                             $evaluacion->estado = "Error";
                         }
                         $evaluacion->save();
