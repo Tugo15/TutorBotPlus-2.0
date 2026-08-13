@@ -249,7 +249,7 @@ new DataTable('#table', {
     language :  espaniol,
     responsive: true,
     order: [[indexLastColumn, 'desc']],
-    dom: "<'row pb-3 px-4 pt-4 align-items-center'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6 d-flex justify-content-end'f>>" +
+    dom: "<'row pb-3 px-4 pt-4 align-items-center'<'col-sm-12 col-lg-8 d-flex flex-wrap align-items-center gap-3 custom-filters-container'l><'col-sm-12 col-lg-4 d-flex justify-content-end'f>>" +
          "<'row'<'col-sm-12'tr>>" +
          "<'row pt-3 px-4 pb-4 align-items-center'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>"
 })

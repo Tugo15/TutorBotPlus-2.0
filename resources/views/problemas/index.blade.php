@@ -33,6 +33,66 @@
                             </button>
                         </div>
                     @endif
+                    @php
+                        $cursos_disponibles = collect();
+                        $categorias_disponibles = collect();
+                        foreach($problemas as $prob) {
+                            foreach($prob->cursos as $cur) { $cursos_disponibles->put($cur->codigo, $cur->codigo); }
+                            foreach($prob->categorias as $cat) { $categorias_disponibles->put($cat->nombre, $cat->nombre); }
+                        }
+                        $cursos_disponibles = $cursos_disponibles->sort();
+                        $categorias_disponibles = $categorias_disponibles->sort();
+                    @endphp
+
+                    <div id="custom-filters-src" class="d-none">
+                        <div class="d-flex align-items-center">
+                            <label for="filterEstado" class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Estado:</label>
+                            <select id="filterEstado" class="form-select form-select-sm w-auto" style="min-width: 100px;">
+                                <option value="">Todos</option>
+                                <option value="Visible">Visible</option>
+                                <option value="Oculto">Oculto</option>
+                            </select>
+                        </div>
+
+                        <div class="d-flex align-items-center">
+                            <label class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Curso:</label>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                                    Seleccionar...
+                                </button>
+                                <ul class="dropdown-menu px-2" style="max-height: 200px; overflow-y: auto;">
+                                    @foreach($cursos_disponibles as $c)
+                                        <li>
+                                            <div class="form-check mb-1">
+                                                <input class="form-check-input filter-curso-chk" type="checkbox" value="{{ $c }}" id="chkCur_{{ $loop->index }}">
+                                                <label class="form-check-label text-sm mb-0" for="chkCur_{{ $loop->index }}">{{ $c }}</label>
+                                            </div>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center">
+                            <label class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Categoría:</label>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                                    Seleccionar...
+                                </button>
+                                <ul class="dropdown-menu px-2" style="max-height: 200px; overflow-y: auto;">
+                                    @foreach($categorias_disponibles as $c)
+                                        <li>
+                                            <div class="form-check mb-1">
+                                                <input class="form-check-input filter-categoria-chk" type="checkbox" value="{{ $c }}" id="chkCat_{{ $loop->index }}">
+                                                <label class="form-check-label text-sm mb-0" for="chkCat_{{ $loop->index }}">{{ $c }}</label>
+                                            </div>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="table-responsive p-0">
                         <table class="table align-items-center mb-0" id="table">
                             <thead>
@@ -141,4 +201,43 @@
 
     <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}"></script>
     <script src="{{ asset('assets/js/alertas_administracion.js') }}"></script> 
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            setTimeout(() => {
+                if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable('#table')) {
+                    var table = $('#table').DataTable();
+                    
+                    // Integrar filtros visualmente al lado del selector de cantidad
+                    $('#custom-filters-src').children().appendTo('.custom-filters-container');
+                    $('#custom-filters-src').remove();
+                    
+                    $('#filterEstado').on('change', function() {
+                        table.column(3).search(this.value).draw();
+                    });
+                    
+                    function updateCol1Filters() {
+                        var cursos = $('.filter-curso-chk:checked').map(function() { return this.value; }).get();
+                        var categorias = $('.filter-categoria-chk:checked').map(function() { return this.value; }).get();
+                        
+                        var searchStr = '';
+                        
+                        var cursoRegex = cursos.length > 0 ? '(' + cursos.join('|') + ')' : '';
+                        var catRegex = categorias.length > 0 ? '(' + categorias.join('|') + ')' : '';
+                        
+                        if (cursoRegex && catRegex) {
+                            searchStr = '(?=.*' + cursoRegex + ')(?=.*' + catRegex + ')';
+                        } else if (cursoRegex) {
+                            searchStr = cursoRegex;
+                        } else if (catRegex) {
+                            searchStr = catRegex;
+                        }
+                        
+                        table.column(1).search(searchStr, true, false).draw();
+                    }
+                    
+                    $('.filter-curso-chk, .filter-categoria-chk').on('change', updateCol1Filters);
+                }
+            }, 500);
+        });
+    </script>
 @endpush

@@ -36,6 +36,57 @@
                             </button>
                         </div>
                     @endif
+                    @php
+                        $roles_disponibles = collect();
+                        $cursos_disponibles = collect();
+                        foreach($users as $usr) {
+                            foreach($usr->getRoleNames() as $rol) { $roles_disponibles->put($rol, $rol); }
+                            foreach($usr->cursos as $cur) { $cursos_disponibles->put($cur->codigo, $cur->codigo); }
+                        }
+                        $roles_disponibles = $roles_disponibles->sort();
+                        $cursos_disponibles = $cursos_disponibles->sort();
+                    @endphp
+
+                    <div id="custom-filters-src" class="d-none">
+                        <div class="d-flex align-items-center">
+                            <label class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Rol:</label>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                                    Seleccionar...
+                                </button>
+                                <ul class="dropdown-menu px-2" style="max-height: 200px; overflow-y: auto;">
+                                    @foreach($roles_disponibles as $r)
+                                        <li>
+                                            <div class="form-check mb-1">
+                                                <input class="form-check-input filter-rol-chk" type="checkbox" value="{{ $r }}" id="chkRol_{{ $loop->index }}">
+                                                <label class="form-check-label text-sm mb-0" for="chkRol_{{ $loop->index }}">{{ $r }}</label>
+                                            </div>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center">
+                            <label class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Curso:</label>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                                    Seleccionar...
+                                </button>
+                                <ul class="dropdown-menu px-2" style="max-height: 200px; overflow-y: auto;">
+                                    @foreach($cursos_disponibles as $c)
+                                        <li>
+                                            <div class="form-check mb-1">
+                                                <input class="form-check-input filter-curso-chk" type="checkbox" value="{{ $c }}" id="chkCur_{{ $loop->index }}">
+                                                <label class="form-check-label text-sm mb-0" for="chkCur_{{ $loop->index }}">{{ $c }}</label>
+                                            </div>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="table-responsive p-0">
                         <table class="table align-items-center mb-0" id="table">
                             <thead>
@@ -132,7 +183,30 @@
 <link href="{{asset('assets/js/DataTables/datatables.min.css')}}" rel="stylesheet">
  
 <script src="{{asset('assets/js/DataTables/datatables.min.js')}}"></script>
-
 <script src="{{asset('assets/js/DataTables/gestion_initialize_es_cl.js')}}"></script>
 <script src="{{ asset('assets/js/alertas_administracion.js') }}"></script> 
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        setTimeout(() => {
+            if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable('#table')) {
+                var table = $('#table').DataTable();
+                
+                $('#custom-filters-src').children().appendTo('.custom-filters-container');
+                $('#custom-filters-src').remove();
+                
+                $('.filter-rol-chk').on('change', function() {
+                    var roles = $('.filter-rol-chk:checked').map(function() { return this.value; }).get();
+                    var regex = roles.length > 0 ? '(' + roles.join('|') + ')' : '';
+                    table.column(1).search(regex, true, false).draw();
+                });
+                
+                $('.filter-curso-chk').on('change', function() {
+                    var cursos = $('.filter-curso-chk:checked').map(function() { return this.value; }).get();
+                    var regex = cursos.length > 0 ? '(' + cursos.join('|') + ')' : '';
+                    table.column(2).search(regex, true, false).draw();
+                });
+            }
+        }, 500);
+    });
+</script>
 @endpush
