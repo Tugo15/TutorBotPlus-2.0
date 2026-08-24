@@ -18020,12 +18020,10 @@ svg.text-dark .color-background {
 
 .blur {
   box-shadow: inset 0px 0px 2px rgba(254, 254, 254, 0.8196078431);
-  -webkit-backdrop-filter: saturate(200%) blur(30px);
   backdrop-filter: saturate(200%) blur(30px);
   background-color: rgba(255, 255, 255, 0.8) !important;
 }
 .blur.saturation-less {
-  -webkit-backdrop-filter: saturate(20%) blur(30px);
   backdrop-filter: saturate(20%) blur(30px);
 }
 .blur.blur-rounded {
@@ -18047,13 +18045,11 @@ svg.text-dark .color-background {
 }
 
 .navbar-blur {
-  -webkit-backdrop-filter: saturate(200%) blur(30px);
   backdrop-filter: saturate(200%) blur(30px);
   background-color: rgba(255, 255, 255, 0.58) !important;
 }
 
 .blur-section {
-  -webkit-backdrop-filter: saturate(200%) blur(30px);
   backdrop-filter: saturate(200%) blur(30px);
 }
 .blur-section.blur-gradient-primary {
@@ -21931,7 +21927,6 @@ pre[class*=language-] {
   -moz-tab-size: 4;
   -o-tab-size: 4;
   tab-size: 4;
-  -webkit-hyphens: none;
   hyphens: none;
 }
 

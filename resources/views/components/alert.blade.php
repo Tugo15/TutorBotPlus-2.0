@@ -6,12 +6,17 @@
     @endif
     @if ($message = session()->has('error'))
         <div class="alert alert-danger" role="alert">
-            <p class="text-black mb-0">{{ session()->get('error') }}</p>
+            <p class="text-white mb-0">{{ session()->get('error') }}</p>
         </div>
     @endif
+    @error('session')
+        <div class="alert alert-warning text-white font-weight-bold" role="alert">
+            <p class="text-white mb-0"><i class="fas fa-exclamation-triangle me-2"></i>{{ $message }}</p>
+        </div>
+    @enderror
     @if ($message = session()->has('status'))
         <div class="alert alert-danger" role="alert">
-            <p class="text-black mb-0">{{ session()->get('status') }}</p>
+            <p class="text-white mb-0">{{ session()->get('status') }}</p>
         </div>
     @endif
 </div>

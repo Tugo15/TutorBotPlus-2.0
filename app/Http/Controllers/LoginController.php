@@ -6,9 +6,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Password;
+use App\Services\SingleSessionService;
 
 class LoginController extends Controller
 {
+    protected SingleSessionService $sessionService;
+
+    public function __construct(SingleSessionService $sessionService)
+    {
+        $this->sessionService = $sessionService;
+    }
+
     /**
      * Display login page.
      *
@@ -28,6 +36,9 @@ class LoginController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
+            // Register current session as the only active session for this user
+            $this->sessionService->registerSession(Auth::user(), $request->session()->getId());
+
             return redirect()->intended('cursos');
         }
 
@@ -38,6 +49,10 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
+        if (Auth::check()) {
+            $this->sessionService->invalidateSession(Auth::user());
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();

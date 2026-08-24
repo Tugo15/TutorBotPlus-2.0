@@ -36,6 +36,7 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\EnsureSingleSession::class,
         ],
 
         'api' => [
@@ -68,5 +69,6 @@ class Kernel extends HttpKernel
         'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         'certamen_en_resolucion' => \App\Http\Middleware\CheckUserCertamen::class,
         'chequear_fecha_certamen' => \App\Http\Middleware\CertamenCheckDate::class,
+        'single_session' => \App\Http\Middleware\EnsureSingleSession::class,
     ];
 }

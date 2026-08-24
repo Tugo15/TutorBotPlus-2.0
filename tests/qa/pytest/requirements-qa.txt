@@ -1,0 +1,3 @@
+# Dependencias QA para ejecución de pruebas en Pytest
+pytest>=7.4.0
+requests>=2.31.0

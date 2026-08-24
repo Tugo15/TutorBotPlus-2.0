@@ -7,10 +7,18 @@
         "watch-poll": "mix watch -- --watch-options-poll=1000",
         "hot": "mix watch --hot",
         "prod": "npm run production",
-        "production": "mix --production"
+        "production": "mix --production",
+        "test:jest": "jest --watchAll=false",
+        "test:phpunit": "C:\\xampp\\php\\php.exe artisan test",
+        "test:pytest": "python -m pytest tests/qa/pytest",
+        "test:k6": "C:\\PROGRA~1\\k6\\k6.exe run tests/qa/k6/smoke_test.js",
+        "test:qa": "npm run test:jest",
+        "test:all": "npm run test:jest && npm run test:pytest && npm run test:k6",
+        "test": "npm run test:all"
     },
     "devDependencies": {
         "axios": "^1.1.2",
+        "jest": "^30.4.2",
         "laravel-mix": "^6.0.49",
         "resolve-url-loader": "^5.0.0",
         "sass": "^1.79.3",
