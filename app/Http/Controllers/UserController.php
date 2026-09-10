@@ -51,10 +51,10 @@ class UserController extends Controller
     public function actualizar_informacion(Request $request){
         $validated = $request->validate([
             'username' => ['required','string', 'max:255'],
-            'rut' => ['required', 'string', Rule::unique('users')->ignore($request->rut, "rut")],
-            'email' => ['required', 'email', Rule::unique('users')->ignore($request->email, "email")],
-            'firstname' => ['required', 'string'],
-            'lastname' => ['required', 'string'],
+            'rut' => ['required', 'string', 'max:12', 'regex:/^[1-9]\d*\-(\d|k|K)$/', Rule::unique('users', 'rut')->ignore(auth()->user()->id)],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore(auth()->user()->id)],
+            'firstname' => ['required', 'string', 'max:100'],
+            'lastname' => ['required', 'string', 'max:100'],
             'password_actual' => ['nullable','required_with:password,password_confirmation', 'min:8'],
             'password' => ['nullable','min:8', 'required_with:password_confirmation,password_actual', 'same:password_confirmation'],
             'password_confirmation' => ['nullable','min:8'],
@@ -84,8 +84,8 @@ class UserController extends Controller
             'csvFile' => 'required|mimes:csv,txt',
         ]);
         $contenido = file_get_contents($request->file('csvFile')->getRealPath());
-        //remover caracteres especiales
-        $contenido = str_replace(["\u{FEFF}", "\r"], "", $contenido);
+        //remover caracteres especiales y nulos
+        $contenido = str_replace(["\u{FEFF}", "\r", "\0", "\x00"], "", $contenido);
         //dividir el contenido por el separador de break space. Lo que transforma en un array de strings, donde cada elemento es un usuario.
         $string_arrays = explode("\n", $contenido);
         $keys_array = array('username', 'firstname', 'lastname', 'email', 'rut', 'cursos', 'roles');
@@ -93,7 +93,7 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
             foreach ($string_arrays as $key=>$string_info) {
-                if($string_info == ""){
+                if(trim($string_info) == ""){
                     continue;
                 }
                 if(str_contains($string_info,';')){
@@ -111,8 +111,8 @@ class UserController extends Controller
                     'username' => ['required', 'string', 'max:255'],
                     'rut' => ['required', 'string', 'unique:App\Models\User,rut','regex:/^[1-9]\d*\-(\d|k|K)$/'],
                     'email' => ['required', 'email', 'unique:App\Models\User,email'],
-                    'firstname' => ['required', 'string'],
-                    'lastname' => ['required', 'string'],
+                    'firstname' => ['required', 'string', 'max:100'],
+                    'lastname' => ['required', 'string', 'max:100'],
                     'cursos'=> ['array', 'min:1'],
                     'roles' =>  ['array', 'min:1'],
                 ]);
@@ -161,6 +161,9 @@ class UserController extends Controller
     }
     public function editar(Request $request)
     {
+        $request->validate([
+            'id' => 'required|integer|exists:users,id',
+        ]);
         $user = User::find($request->id);
         $cursos = Cursos::all();
         $roles = Role::all();
@@ -171,11 +174,11 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'username' => 'required|string|max:255',
-            'rut' => 'required|string|unique:App\Models\User,rut',
-            'email' => 'required|email|unique:App\Models\User,email',
-            'firstname' => 'string',
-            'lastname' => 'string',
-            'fecha_nacimiento' => 'date',
+            'rut' => ['required', 'string', 'max:12', 'regex:/^[1-9]\d*\-(\d|k|K)$/', 'unique:App\Models\User,rut'],
+            'email' => 'required|email|max:255|unique:App\Models\User,email',
+            'firstname' => 'required|string|max:100',
+            'lastname' => 'required|string|max:100',
+            'fecha_nacimiento' => 'nullable|date',
             'cursos'=>'required|array|min:1',
             'roles'=>'required|array|min:1',
         ]);
@@ -204,12 +207,13 @@ class UserController extends Controller
     public function update(Request $request)
     {
         $validated = $request->validate([
+            'id' => ['required', 'integer', 'exists:users,id'],
             'username' => ['required', 'string', 'max:255'],
-            'rut' => ['required', 'string', Rule::unique('users', 'rut')->ignore($request->id)],
-            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($request->id)],
-            'firstname' => ['string'],
-            'lastname' => ['string'],
-            'fecha_nacimiento' => ['date'],
+            'rut' => ['required', 'string', 'max:12', 'regex:/^[1-9]\d*\-(\d|k|K)$/', Rule::unique('users', 'rut')->ignore($request->id)],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($request->id)],
+            'firstname' => ['required', 'string', 'max:100'],
+            'lastname' => ['required', 'string', 'max:100'],
+            'fecha_nacimiento' => ['nullable', 'date'],
         ]);
         $roles = isset($request->roles)? $request->roles : [];
         try {
@@ -236,6 +240,9 @@ class UserController extends Controller
     }
     public function eliminar(Request $request)
     {
+        $request->validate([
+            'id' => 'required|integer|exists:users,id',
+        ]);
         try {
             DB::beginTransaction();
             $user = User::find($request->id);
@@ -246,5 +253,57 @@ class UserController extends Controller
             return redirect()->route('usuarios.index')->with('error', $e->getMessage());
         }
         return redirect()->route('usuarios.index')->with('success', 'El usuario ' . $user->username . ' ha sido eliminado');
+    }
+
+    /**
+     * Forcibly invalidate all active sessions for a target user (Admin action).
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function forzar_invalidacion_sesion(Request $request, $id)
+    {
+        $usuario = User::find($id);
+
+        if (!$usuario) {
+            return back()->with('error', 'Usuario no encontrado.');
+        }
+
+        $sessionService = app(\App\Services\SingleSessionService::class);
+        $sessionService->forceInvalidateSession($usuario);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'La sesión del usuario "' . $usuario->username . '" ha sido finalizada de manera remota.'
+            ]);
+        }
+
+        return back()->with('success', 'La sesión del usuario "' . $usuario->username . '" ha sido finalizada de manera remota.');
+    }
+
+    /**
+     * Terminate all other active sessions for the current authenticated user.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function cerrar_otras_sesiones(Request $request)
+    {
+        $user = auth()->user();
+        $currentSessionId = $request->session()->getId();
+
+        $sessionService = app(\App\Services\SingleSessionService::class);
+        $sessionService->forceInvalidateOtherSessions($user, $currentSessionId);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Todas tus otras sesiones activas han sido cerradas correctamente.'
+            ]);
+        }
+
+        return back()->with('success', 'Todas tus otras sesiones activas en otros navegadores o dispositivos han sido cerradas.');
     }
 }

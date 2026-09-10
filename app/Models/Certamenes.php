@@ -23,11 +23,24 @@ class Certamenes extends Model
         "fecha_inicio" => ["date", "before_or_equal:fecha_termino", "required"],
         "fecha_termino" => ["date", "after_or_equal:fecha_inicio", "required"],
         "curso" => ["required", "numeric"],
-        "penalizacion_error" => ["nullable", "min:0"]
+        "penalizacion_error" => ["nullable", "min:0"],
+        "restriccion_red" => ["nullable", "boolean"],
+        "ips_autorizadas" => ["nullable", "string"],
+        "dificultad" => ["nullable", "in:Fácil,Medio,Difícil"],
+        "problemas" => ["nullable", "array"]
+    ];
+
+    protected $casts = [
+        'restriccion_red' => 'boolean',
     ];
     public function curso(): BelongsTo
     {
         return $this->belongsTo(Cursos::class, 'id_curso');
+    }
+
+    public function problemas(): BelongsToMany
+    {
+        return $this->belongsToMany(Problemas::class, 'banco_problemas_certamenes', 'id_certamen', 'id_categoria');
     }
 
     public function categorias(): BelongsToMany

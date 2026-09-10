@@ -17,9 +17,10 @@ class Problemas extends Model
     use HasFactory;
     
 
-    protected $filable = [
+    protected $fillable = [
         "nombre",
         "codigo",
+        "dificultad",
         "fecha_inicio",
         "fecha_termino",
         "memoria_limite",
@@ -35,6 +36,7 @@ class Problemas extends Model
     public static $createRules = [
         "nombre" => ['required','max:255','string'],
         "codigo" => ['required', 'string', 'max:100', 'unique:App\Models\Problemas,codigo'], 
+        "dificultad" => ['nullable', 'in:Fácil,Medio,Difícil'],
         "fecha_inicio" => ['date', 'nullable', 'before_or_equal:fecha_termino'],
         "fecha_termino" => ['date', 'nullable', 'after_or_equal:fecha_inicio'],
         "memoria_limite" => ["nullable","numeric"],
@@ -49,6 +51,7 @@ class Problemas extends Model
     public static function createRules(bool $boolFechaInicio, bool $boolFechaTermino, $codigo=null, $sql=false, $update=false){
         $rules = [
             "nombre" => ['required','max:255','string'],
+            "dificultad" => ['nullable', 'in:Fácil,Medio,Difícil'],
             "memoria_limite" => ["nullable","numeric", "min:2048"],
             "cursos" => ["required","array","min:1"],
             "tiempo_limite" => ["nullable", "numeric", "gt:0"],

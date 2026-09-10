@@ -73,9 +73,7 @@ class CasosPruebasController extends Controller
             }
             $caso->entradas = $request->input("entradas");
             $caso->salidas = $request->input("salidas");
-            if(!isset($request->ejemplo)){
-                $caso->ejemplo = true;
-            }
+            $caso->ejemplo = $request->has('ejemplo') ? true : false;
             $problema->casos_de_prueba()->save($caso);
             $problema->puntaje_total = $problema->puntaje_total + $caso->puntos;
             $problema->refresh();
@@ -86,5 +84,37 @@ class CasosPruebasController extends Controller
         }
         return redirect()->route('casos_pruebas.assign', ["id"=>$request->id])->with('success', 'El caso de prueba '.$caso->id.' ha sido añadido');
 
+    }
+
+    public function update_caso(Request $request){
+        $validated = $request->validate([
+            'id_caso' => ['required', 'exists:casos__pruebas,id'],
+            'entradas' => ['nullable', 'string'],
+            'salidas' => ['required', 'string'],
+            'puntos' => ['nullable', 'numeric'],
+        ]);
+
+        try{
+            DB::beginTransaction();
+            $caso = Casos_Pruebas::findOrFail($request->id_caso);
+            $problema = Problemas::findOrFail($caso->id_problema);
+
+            $caso->entradas = $request->input("entradas");
+            $caso->salidas = $request->input("salidas");
+            $caso->puntos = isset($request->puntos) ? (float)$request->puntos : 0;
+            $caso->ejemplo = $request->has('ejemplo') ? true : false;
+            $caso->save();
+
+            // Recalculate total score for problem
+            $problema->puntaje_total = $problema->casos_de_prueba()->sum('puntos');
+            $problema->save();
+
+            DB::commit();
+        }catch(\Exception $e){
+            DB::rollback();
+            return redirect()->back()->with('error', 'Error al modificar el caso de prueba: ' . $e->getMessage());
+        }
+
+        return redirect()->route('casos_pruebas.assign', ["id" => $caso->id_problema])->with('success', 'El caso de prueba #' . $caso->id . ' ha sido modificado exitosamente.');
     }
 }

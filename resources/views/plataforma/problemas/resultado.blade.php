@@ -34,8 +34,8 @@
                                                     <div class="card">
                                                         <div class="card-body">
                                                             <h5 class="card-title">Entradas</h5>
-                                                            <p class="card-text"  id="evaluacion_{{$i}}_e">
-                                                                {!! nl2br($evaluaciones[$i]->casos_pruebas->entradas) !!}</p>
+                                                             <p class="card-text"  id="evaluacion_{{$i}}_e">
+                                                                {!! nl2br(e($evaluaciones[$i]->casos_pruebas->entradas)) !!}</p>
                                                         </div>
                                                     </div>
                                                 @endif
@@ -43,7 +43,7 @@
                                                     <div class="card mx-2">
                                                         <div class="card-body">
                                                             <h5 class="card-title">Salidas Esperadas</h5>
-                                                            <p class="card-text" id="evaluacion_{{$i}}_se">{!! nl2br($evaluaciones[$i]->casos_pruebas->salidas) !!}
+                                                            <p class="card-text" id="evaluacion_{{$i}}_se">{!! nl2br(e($evaluaciones[$i]->casos_pruebas->salidas)) !!}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -53,7 +53,7 @@
                                                     <div class="card-body">
                                                         <h5 class="card-title">Salidas</h5>
                                                         <p class="card-text" id="evaluacion_{{$i}}_s">
-                                                            {!! $evaluaciones[$i]->stout ? nl2br(base64_decode($evaluaciones[$i]->stout)) : '-' !!}</p>
+                                                            {!! $evaluaciones[$i]->stout ? nl2br(e(base64_decode($evaluaciones[$i]->stout))) : '-' !!}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -61,7 +61,7 @@
                                                     <div class="card-body">
                                                         <h5 class="card-title">Mensaje del Compilador</h5>
                                                         <p class="card-text text-danger"  id="evaluacion_{{$i}}_ec">
-                                                            {!! $evaluaciones[$i]->error_compilacion ? nl2br(base64_decode($evaluaciones[$i]->error_compilacion)) : '-' !!}</p>
+                                                            {!! $evaluaciones[$i]->error_compilacion ? nl2br(e(base64_decode($evaluaciones[$i]->error_compilacion))) : '-' !!}</p>
                                                     </div>
                                                 </div>
                                             
@@ -93,7 +93,7 @@
                         @if ($envio->usuario->id == auth()->user()->id && !$evaluaciones->contains('estado', '=', 'En Proceso') && $envio->solucionado == false)
                             <div class="row px-5 mt-2">
                                 <a class="btn btn-outline-secondary text-nowrap btn-block"
-                                    href="{{ isset($res_certamen)? route('certamenes.resolver_problema', ['token_certamen'=>$res_certamen->token, 'codigo'=>$envio->problema->codigo, 'id_curso'=>$res_certamen->certamen->id_curso]) : route('problemas.resolver', ['codigo' => $envio->problema->codigo, 'id_curso' => $envio->curso->id]) }}"
+                                    href="{{ (isset($res_certamen) && $res_certamen->certamen)? route('certamenes.resolver_problema', ['token_certamen'=>$res_certamen->token, 'codigo'=>$envio->problema->codigo, 'id_curso'=>$res_certamen->certamen->id_curso]) : route('problemas.resolver', ['codigo' => $envio->problema->codigo, 'id_curso' => $envio->curso->id]) }}"
                                     role="button">Volver al intento</a>
                             </div>
                         @endif

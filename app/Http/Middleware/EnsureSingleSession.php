@@ -29,6 +29,11 @@ class EnsureSingleSession
             $currentSessionId = $request->session()->getId();
 
             if (!$this->sessionService->isValidSession($user, $currentSessionId)) {
+                $isForcedRemote = is_null($user->current_session_id);
+                $mensaje = $isForcedRemote 
+                    ? 'Tu sesión ha sido finalizada de manera remota por un administrador o ha expirado su tiempo de validez.' 
+                    : 'Tu sesión ha sido cerrada debido a un inicio de sesión concurrente en otro dispositivo.';
+
                 // Logout the invalidated session
                 Auth::logout();
                 $request->session()->invalidate();
@@ -36,12 +41,12 @@ class EnsureSingleSession
 
                 if ($request->expectsJson()) {
                     return response()->json([
-                        'message' => 'Tu sesión ha sido cerrada debido a un inicio de sesión concurrente en otro dispositivo.'
+                        'message' => $mensaje
                     ], 401);
                 }
 
                 return redirect()->route('login')->withErrors([
-                    'session' => 'Tu sesión ha sido cerrada porque se inició sesión desde otro dispositivo o navegador.'
+                    'session' => $mensaje
                 ]);
             }
         }

@@ -75,4 +75,38 @@ class SingleSessionService
         $user->current_session_id = null;
         $user->save();
     }
+
+    /**
+     * Forcibly invalidate all active sessions and API tokens for a user.
+     *
+     * @param User $user
+     * @return void
+     */
+    public function forceInvalidateSession(User $user): void
+    {
+        // 1. Remove from Cache
+        Cache::forget(self::CACHE_PREFIX . $user->id);
+
+        // 2. Clear Database Session ID
+        $user->current_session_id = null;
+        $user->save();
+
+        // 3. Revoke API / Sanctum Tokens if present
+        if (method_exists($user, 'tokens')) {
+            $user->tokens()->delete();
+        }
+    }
+
+    /**
+     * Keep only the current session active for a user and forcibly terminate all other sessions.
+     *
+     * @param User $user
+     * @param string $currentSessionId
+     * @return void
+     */
+    public function forceInvalidateOtherSessions(User $user, string $currentSessionId): void
+    {
+        // Re-register current session as the only valid active session
+        $this->registerSession($user, $currentSessionId);
+    }
 }

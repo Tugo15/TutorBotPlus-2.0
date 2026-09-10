@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
     <link rel="icon" type="image/x-icon" href="{{ asset('img/favicon.ico') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/plataforma.css') }}" rel="stylesheet">
+    <script src="{{ asset('assets/js/disable_devtools.js') }}"></script>
     <script src="{{ mix('js/plataforma.js') }}" defer></script>
     <link rel="stylesheet" href="{{ mix('css/plataforma.css') }}">
     <style>

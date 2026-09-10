@@ -85,11 +85,11 @@ Route::group(['middleware'=>['auth', 'certamen_en_resolucion']], function(){
 
 	Route::get('/evaluaciones', [CertamenesController::class, "listado_certamenes"])->name('certamenes.listado')->withoutMiddleware('certamen_en_resolucion');
 	Route::get('/evaluaciones/{id_certamen}', [CertamenesController::class, "ver_certamen"])->name('certamenes.ver')->withoutMiddleware('certamen_en_resolucion');
-	Route::get('/evaluaciones/{id_certamen}/resolver', [CertamenesController::class, "inicializar_certamen"])->name('certamenes.iniciar_resolucion')->withoutMiddleware('certamen_en_resolucion');
+	Route::get('/evaluaciones/{id_certamen}/resolver', [CertamenesController::class, "inicializar_certamen"])->name('certamenes.iniciar_resolucion')->withoutMiddleware('certamen_en_resolucion')->middleware('red_institucional');
 
-	Route::get('/evaluaciones/{token}/resolucion', [CertamenesController::class, "resolver_certamen"])->name('certamenes.resolucion')->withoutMiddleware('certamen_en_resolucion')->middleware('chequear_fecha_certamen');
-	Route::get('/evaluaciones/{token_certamen}/problema/{codigo}', [ProblemasController::class, "resolver_problema"])->name('certamenes.resolver_problema')->withoutMiddleware('certamen_en_resolucion')->middleware('chequear_fecha_certamen');
-	Route::post('/evaluacion/problema/enviar', [EnvioSolucionProblemaController::class, 'enviar_solucion'])->name('certamenes.enviar_problema')->withoutMiddleware('certamen_en_resolucion')->middleware('chequear_fecha_certamen');
+	Route::get('/evaluaciones/{token}/resolucion', [CertamenesController::class, "resolver_certamen"])->name('certamenes.resolucion')->withoutMiddleware('certamen_en_resolucion')->middleware(['chequear_fecha_certamen', 'red_institucional']);
+	Route::get('/evaluaciones/{token_certamen}/problema/{codigo}', [ProblemasController::class, "resolver_problema"])->name('certamenes.resolver_problema')->withoutMiddleware('certamen_en_resolucion')->middleware(['chequear_fecha_certamen', 'red_institucional']);
+	Route::post('/evaluacion/problema/enviar', [EnvioSolucionProblemaController::class, 'enviar_solucion'])->name('certamenes.enviar_problema')->withoutMiddleware('certamen_en_resolucion')->middleware(['chequear_fecha_certamen', 'red_institucional']);
 	Route::post('/evaluaciones/guardar_codigo', [CertamenesController::class, "guardar_codigo_certamen"])->name('certamenes.guardar_codigo')->withoutMiddleware('certamen_en_resolucion');
 	Route::get('/evaluaciones/{token}/data/update', [CertamenesController::class, "obtener_ultimos_envios_json"])->name('certamenes.update_data')->withoutMiddleware('certamen_en_resolucion');
 	Route::post('/evaluaciones/{token}/finalizar', [CertamenesController::class, "finalizar_certamen"])->name('certamen.finalizar')->withoutMiddleware('certamen_en_resolucion');
@@ -111,7 +111,9 @@ Route::group(['middleware' => 'auth'], function () {
 		Route::post('/eliminar', [UserController::class, 'eliminar'])->name('usuarios.eliminar')->middleware('can:eliminar usuario'); 
 		Route::post('/store', [UserController::class, 'store'])->name('usuarios.store')->middleware('can:crear usuario'); 
 		Route::post('/update', [UserController::class, 'update'])->name('usuarios.update')->middleware('can:editar usuario'); 
+		Route::post('/{id}/forzar-invalidacion', [UserController::class, 'forzar_invalidacion_sesion'])->name('usuarios.forzar_invalidacion')->middleware('can:editar usuario'); 
 	});
+	Route::post('/perfil/cerrar-otras-sesiones', [UserController::class, 'cerrar_otras_sesiones'])->name('perfil.cerrar_otras_sesiones');
 	Route::prefix('roles')->group(function () {
 		Route::get('/index', [RoleController::class, 'index'])->name('roles.index')->middleware('can:ver rol'); 
 		Route::get('/crear', [RoleController::class, 'crear'])->name('roles.crear')->middleware('can:crear rol'); 
@@ -176,6 +178,7 @@ Route::group(['middleware' => 'auth'], function () {
 		Route::get('/{id}/casos', [CasosPruebasController::class, 'asignacion_casos'])->name('casos_pruebas.assign')->middleware('can:editar problemas'); 
 		Route::post('/casos/eliminar', [CasosPruebasController::class, 'eliminar_caso'])->name('casos_pruebas.eliminar')->middleware('can:editar problemas'); 
 		Route::post('/casos/add', [CasosPruebasController::class, 'add_caso'])->name('casos_pruebas.add')->middleware('can:editar problemas'); 
+		Route::post('/casos/update', [CasosPruebasController::class, 'update_caso'])->name('casos_pruebas.update')->middleware('can:editar problemas'); 
 		Route::post('/casos/sql', [CasosPruebasController::class, 'caso_sql'])->name('casos_pruebas.set_sql')->middleware('can:editar problemas'); 
 	});
 

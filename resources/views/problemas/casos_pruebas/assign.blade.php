@@ -80,13 +80,19 @@
                                             </span>
                                         </td>
                                         <td class="align-middle text-end">
-                                            <div class="d-flex px-3 py-1 justify-content-center align-items-center">
+                                            <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-2">
                                                 @can('editar problemas')
+                                                    <button type="button" class="btn btn-sm btn-outline-warning edit_button mb-0" 
+                                                        title="Editar Caso" data-bs-toggle="modal" data-bs-target="#modalEditarCaso{{ $item->id }}">
+                                                        <i class="fa fa-fw fa-pencil-alt"></i>
+                                                    </button>
+
                                                     <form action="{{ route('casos_pruebas.eliminar', ['id' => $item->id]) }}"
-                                                        method="POST" onsubmit="deshabilitar_boton()">
+                                                        method="POST" onsubmit="deshabilitar_boton()" class="mb-0">
                                                         @csrf
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger delete_button" title="Eliminar Caso"><i
-                                                                class="fa fa-fw fa-trash"></i></button>
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger delete_button mb-0" title="Eliminar Caso">
+                                                            <i class="fa fa-fw fa-trash"></i>
+                                                        </button>
                                                     </form>
                                                 @endcan
                                             </div>
@@ -100,6 +106,57 @@
             </div>
         </div>
     </div>
+
+    @can('editar problemas')
+        @foreach ($casos as $item)
+            <!-- Modal Editar Caso #{{ $item->id }} -->
+            <div class="modal fade text-start" id="modalEditarCaso{{ $item->id }}" tabindex="-1" aria-labelledby="modalEditarCasoLabel{{ $item->id }}" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title font-weight-bolder" id="modalEditarCasoLabel{{ $item->id }}">
+                                <i class="fa fa-edit me-2 text-warning"></i>Editar Caso de Prueba #{{ $item->id }}
+                            </h5>
+                            <button type="button" class="btn-close text-dark" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="{{ route('casos_pruebas.update') }}" method="POST" onsubmit="deshabilitar_boton()">
+                            @csrf
+                            <input type="hidden" name="id_caso" value="{{ $item->id }}">
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="entradas_{{ $item->id }}" class="form-label font-weight-bold">Entradas</label>
+                                        <textarea class="form-control" id="entradas_{{ $item->id }}" name="entradas" rows="5" placeholder="Entradas del caso">{{ $item->entradas }}</textarea>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="salidas_{{ $item->id }}" class="form-label font-weight-bold">Salidas <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" id="salidas_{{ $item->id }}" name="salidas" rows="5" required placeholder="Salidas esperadas">{{ $item->salidas }}</textarea>
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label for="puntos_{{ $item->id }}" class="form-label font-weight-bold">Puntos</label>
+                                        <input type="number" step="any" class="form-control" id="puntos_{{ $item->id }}" name="puntos" value="{{ $item->puntos }}" placeholder="Puntaje">
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" role="switch" id="ejemplo_{{ $item->id }}" name="ejemplo" value="1" {{ $item->ejemplo ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="ejemplo_{{ $item->id }}">
+                                                Es un caso de ejemplo (mostrar entradas y salidas en los resultados)
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary"><i class="fa fa-save me-1"></i> Guardar Cambios</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    @endcan
+
     @include('problemas.casos_pruebas.ejemplo')
 @endsection
 @push('js')
@@ -112,9 +169,13 @@
         function deshabilitar_boton(){
             const add_button = document.getElementById('boton_crear');
             const delete_button = document.querySelectorAll('.delete_button');
-            add_button.setAttribute('disabled', true);
+            const edit_button = document.querySelectorAll('.edit_button');
+            if(add_button) add_button.setAttribute('disabled', true);
             for(let i=0; i<delete_button.length; i++){
                 delete_button[i].setAttribute('disabled', true);
+            }
+            for(let i=0; i<edit_button.length; i++){
+                edit_button[i].setAttribute('disabled', true);
             }
         }
     </script>

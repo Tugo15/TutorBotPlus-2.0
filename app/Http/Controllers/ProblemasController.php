@@ -13,9 +13,11 @@ use App\Models\LenguajesProgramaciones;
 use App\Models\Categoria_Problema;
 use App\Models\JuecesVirtuales;
 use App\Models\ResolucionCertamenes;
+use App\Models\Certamenes;
 use App\Models\EnvioSolucionProblema;
 use Illuminate\Validation\Rule;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use PDF;
@@ -24,35 +26,59 @@ class ProblemasController extends Controller
 {
     public function index(Request $request)
     {
-        $problemas = Problemas::whereHas('cursos', function (Builder $query) {
-            $cursos = auth()->user()->cursos()->select('cursos.id')->pluck('id')->toArray();
-            $query->whereIn('cursos.id', $cursos);
-        })->get()->map(function($item){
-            $item->creado = Carbon::parse($item->created_at)->locale('es_ES')->isoFormat('lll');
-            if(isset($item->fecha_inicio)){
-                $item->fecha_inicio = Carbon::parse($item->fecha_inicio)->locale('es_ES')->isoFormat('lll');
-            }else{
-                $item->fecha_inicio = "No definido";
-            }
+        $id_curso_activo = $request->input('id_curso');
 
-            if(isset($item->fecha_termino)){
-                $item->fecha_termino = Carbon::parse($item->fecha_termino)->locale('es_ES')->isoFormat('lll');
-            }else{
-                $item->fecha_termino = "No definido";
-            }
-            
+        if (auth()->user()->hasRole('administrador')) {
+            $cursos = Cursos::withCount('problemas')->get();
+        } else {
+            $cursos = auth()->user()->cursos()->withCount('problemas')->get();
+        }
+
+        $curso_activo = null;
+
+        if ($id_curso_activo) {
+            $curso_activo = Cursos::find($id_curso_activo);
+            $query = Problemas::whereHas('cursos', function (Builder $q) use ($id_curso_activo) {
+                $q->where('cursos.id', $id_curso_activo);
+            });
+        } else {
+            $cursos_ids = $cursos->pluck('id')->toArray();
+            $query = Problemas::whereHas('cursos', function (Builder $q) use ($cursos_ids) {
+                $q->whereIn('cursos.id', $cursos_ids);
+            });
+        }
+
+        $problemas = $query->get()->map(function($item){
+            $item->creado = Carbon::parse($item->created_at)->locale('es_ES')->isoFormat('lll');
+            $item->fecha_inicio = isset($item->fecha_inicio) ? Carbon::parse($item->fecha_inicio)->locale('es_ES')->isoFormat('lll') : "No definido";
+            $item->fecha_termino = isset($item->fecha_termino) ? Carbon::parse($item->fecha_termino)->locale('es_ES')->isoFormat('lll') : "No definido";
             return $item;
         });
 
-        return view('problemas.index', compact('problemas'));
+        return view('problemas.index', compact('problemas', 'cursos', 'id_curso_activo', 'curso_activo'));
     }
 
-    public function crear()
+    public function crear(Request $request)
     {
         $categorias = Categoria_Problema::all();
-        $cursos = auth()->user()->cursos()->get();
+        if (auth()->user()->hasRole('administrador')) {
+            $cursos = Cursos::all();
+        } else {
+            $cursos = auth()->user()->cursos()->get();
+        }
+
+        $id_curso_preseleccionado = $request->input('id_curso', $request->input('curso'));
+
+        if (!$id_curso_preseleccionado && $cursos->isNotEmpty()) {
+            $id_curso_preseleccionado = $cursos->first()->id;
+        }
+
+        if (!$id_curso_preseleccionado && $cursos->isEmpty()) {
+            return redirect()->route('problemas.index')->with('error', 'Debe tener al menos un curso asignado para crear un problema.');
+        }
+
         $lenguajes = LenguajesProgramaciones::where('abreviatura', 'NOT LIKE', '%sql%')->get();
-        return view('problemas.crear', compact('categorias', 'cursos', 'lenguajes'))->with('accion', "crear");;
+        return view('problemas.crear', compact('categorias', 'cursos', 'lenguajes', 'id_curso_preseleccionado'))->with('accion', "crear");
     }
 
     public function editar(Request $request)
@@ -140,63 +166,46 @@ class ProblemasController extends Controller
                 $problema->visible = false;
             }
 
-            if (isset($request->habilitar_llm)) {
-                $problema->habilitar_llm = true;
-            } else {
-                $problema->habilitar_llm = false;
-            }
-            $problema->limite_llm = $request->input('limite_llm')? $request->input('limite_llm') : 0;
-            if(isset($request->archivos_adicionales)){
-                $archivo = $request->file('archivos_adicionales');
-                $nombre = $archivo->hashName();
-                $request->file('archivos_adicionales')->storeAs(
-                    'archivos_adicionales',$nombre,'public'
-                );
-                if(isset($problema->archivo_adicional)){
-                    Storage::delete('public/archivos_adicionales/'.$problema->archivo_adicional);
-                }
-                $problema->archivo_adicional = $nombre;
-            }
             $problema->save();
-            $problema->cursos()->sync($request->input('cursos'));
-            if($request->sql==true){
-                $problema->lenguajes()->sync(LenguajesProgramaciones::where('abreviatura', '=', 'sql')->get()->pluck('id'));
-            }else{
-                $problema->lenguajes()->sync($request->input('lenguajes'));
-                if(isset($problema->archivo_adicional)){
-                    Storage::delete('public/archivos_adicionales/'.$problema->archivo_adicional);
-                    $problema->archivo_adicional = null;
-                }
+            if(isset($request->sql) && $request->sql==1){
+                $id_sql = LenguajesProgramaciones::where('nombre', 'LIKE', '%sql%')->pluck('id');
+                $problema->lenguajes()->sync($id_sql);
             }
-            $problema->categorias()->sync($request->input('categorias'));
+            if(isset($request->categorias)){
+                $problema->categorias()->sync($request->input('categorias'));
+            }
+
+            if (isset($request->cursos)) {
+                $problema->cursos()->sync($request->input('cursos'));
+            }
     }
     public function update(Request $request)
     {
-
-        $validated = $request->validate(Problemas::createRules(isset($request->fecha_inicio),isset($request->fecha_termino),$request->codigo, $request->sql, true));
+        $validated = $request->validate(Problemas::updateRules(isset($request->fecha_inicio), isset($request->fecha_termino),$request->id, $request->sql));
         try {
             db::beginTransaction();
             $problema = Problemas::find($request->id);
             $this->set_datos_problemas($problema, $request);
             db::commit();
-        } catch (\Exception $e) {
+        } catch (\PDOException $e) {
+            DB::rollBack();
             return redirect()->route('problemas.index')->with('error', $e->getMessage());
         }
-        return redirect()->route('problemas.index')->with('success', 'El problema ha "'.$problema->nombre.'" sido modificado');
+        return redirect()->route('problemas.index')->with('success', 'El problema ' . $problema->nombre . ' ha sido modificado');
     }
+
     public function eliminar(Request $request)
     {
         try {
             DB::beginTransaction();
             $problema = Problemas::find($request->id);
             $problema->delete();
-            Storage::delete('public/archivos_adicionales/'.$problema->archivo_adicional);
             DB::commit();
         } catch (\PDOException $e) {
             db::rollBack();
             return redirect()->route('problemas.index')->with('error', $e->getMessage());
         }
-        return redirect()->route('problemas.index')->with('success', 'El problema "' . $problema->nombre . '" ha sido eliminado');
+        return redirect()->route('problemas.index')->with('success', 'El Problema ' . $problema->nombre . ' ha sido eliminado');
     }
 
     public function update_editorial(Request $request)
@@ -236,68 +245,120 @@ class ProblemasController extends Controller
             $fecha_ahora = Carbon::now();
             $problemas = $curso->problemas()->where('visible', '=', true)->get()->map(function ($problema) use($curso_usuario_pivot){
                 $problema->puntaje_total = $problema->casos_de_prueba()->get()->pluck('puntos')->sum();
-                $problema->categorias = implode(',', array: $problema->categorias()->get()->pluck('nombre')->toArray());
+                $problema->categorias = implode(', ', $problema->categorias()->get()->pluck('nombre')->toArray());
                 $problema->creado = Carbon::parse($problema->created_at)->locale('es_ES')->isoFormat('lll');
                 $problema->resuelto = $problema->envios()->where('id_cursa', '=', $curso_usuario_pivot->id)->where('solucionado', '=', true)->exists();
                 return $problema;
             })->unique();
+
+            // Cargar ÚNICAMENTE las evaluaciones pertenecientes a este curso específico
+            $resultados_certamenes = DB::table('resolucion_certamenes')
+                ->leftJoin('envio_solucion_problemas', 'envio_solucion_problemas.id_certamen', '=', 'resolucion_certamenes.id')
+                ->where('id_usuario', '=', auth()->user()->id)
+                ->select('resolucion_certamenes.id_certamen', DB::raw('max(finalizado) as estado_finalizado'), 'fecha_finalizado', DB::raw('max(puntaje_obtenido) as puntaje_maximo'), DB::raw('max(problemas_resueltos) as maximo_resuelto'))
+                ->groupBy('resolucion_certamenes.id_certamen', 'fecha_finalizado')
+                ->orderBy('fecha_finalizado', 'desc');
+
+            $evaluaciones = Certamenes::leftJoinSub($resultados_certamenes, 'resultados_certamenes', function (JoinClause $join) {
+                $join->on('resultados_certamenes.id_certamen', '=', 'certamenes.id');
+            })->where('id_curso', '=', $curso->id)->orderBy('fecha_inicio', 'desc')->get()->map(function ($item) {
+                $now = Carbon::now();
+                $inicio = Carbon::parse($item->fecha_inicio);
+                $termino = Carbon::parse($item->fecha_termino);
+
+                $item->disponible = ($now->gte($inicio) && $now->lte($termino));
+                $item->fecha_inicio_formatted = $inicio->locale('es_ES')->isoFormat('lll');
+                $item->fecha_termino_formatted = $termino->locale('es_ES')->isoFormat('lll');
+                if (isset($item->fecha_finalizado)) {
+                    $item->tiempo_desarrollo = Carbon::parse($item->fecha_finalizado)->diffInSeconds($inicio);
+                }
+                return $item;
+            });
+
         } catch (\PDOException $e) {
             DB::rollBack();
             return redirect()->route('cursos.listado')->with('error', $e->getMessage());
         }
-        return view('plataforma.problemas.index', compact('problemas', 'curso'));
+        return view('plataforma.problemas.index', compact('problemas', 'evaluaciones', 'curso'));
     }
 
     public function ver_problema(Request $request)
     {
         try {
             $problema = Problemas::where('codigo', '=', $request->codigo)->first();
+            if (!$problema) {
+                return redirect()->route('cursos.listado')->with('error', 'El problema que estás tratando de acceder no existe.');
+            }
             if(!Cursos::where('cursos.id','=',$request->id_curso)->exists()){
                 return redirect()->route('cursos.listado')->with('error', 'El curso que estás tratando de acceder no existe.');
             }
+            
             $curso_usuario = auth()->user()->cursos()->find($request->id_curso);
-            if ($problema->cursos()->where('cursos.id', '=', $curso_usuario)->exists() || $problema->visible == false) {
+            if (!$curso_usuario && auth()->user()->hasRole('administrador')) {
+                \App\Models\Cursa::firstOrCreate([
+                    'id_usuario' => auth()->id(),
+                    'id_curso' => $request->id_curso
+                ]);
+                $curso_usuario = auth()->user()->cursos()->find($request->id_curso);
+            }
+
+            if ((!$problema->cursos()->where('cursos.id', '=', $request->id_curso)->exists() || $problema->visible == false) && !auth()->user()->hasRole('administrador')) {
                 return redirect()->route('cursos.listado')->with('error', 'No tienes acceso al problema ' . $problema->nombre);
             }
+
             $problema->disponible = true;
-            //verifica si el usuario ha solucionado el problema mediante la tabla intermedia de curso y usuario (pivot)
-            $problema->estado = $problema->envios()->where('id_cursa', '=', $curso_usuario->pivot->id)->whereNull('id_certamen')->where('solucionado', '=', true)->exists();
+            $id_cursa = $curso_usuario && isset($curso_usuario->pivot) ? $curso_usuario->pivot->id : 0;
+            $problema->estado = $problema->envios()->where('id_cursa', '=', $id_cursa)->whereNull('id_certamen')->where('solucionado', '=', true)->exists();
+            
             $now = Carbon::now();
-            if(isset($problema->fecha_inicio)){
-            $fecha_inicio = Carbon::parse($problema->fecha_inicio);
+            if (isset($problema->fecha_inicio)) {
+                $fecha_inicio = Carbon::parse($problema->fecha_inicio);
                 if ($now->lt($fecha_inicio)) {
                     $problema->disponible = false;
                 }
-            $problema->fecha_inicio = isset($problema->fecha_inicio)? $fecha_inicio->locale('es_ES')->isoFormat('lll') : "No Definido";
+                $problema->fecha_inicio = $fecha_inicio->locale('es_ES')->isoFormat('lll');
+            } else {
+                $problema->fecha_inicio = "No Definido";
             }
+            
             if (isset($problema->fecha_termino)) {
                 $fecha_termino = Carbon::parse($problema->fecha_termino);
                 if ($now->gt($fecha_termino)) {
                     $problema->disponible = false;
                 }
-            $problema->fecha_termino = isset($problema->fecha_termino)? $fecha_termino->locale('es_ES')->isoFormat('lll') : "No Definido";
-        }
+                $problema->fecha_termino = $fecha_termino->locale('es_ES')->isoFormat('lll');
+            } else {
+                $problema->fecha_termino = "No Definido";
+            }
         } catch (\PDOException $e) {
+            return redirect()->route('cursos.listado')->with('error', $e->getMessage());
+        } catch (\Exception $e) {
             return redirect()->route('cursos.listado')->with('error', $e->getMessage());
         }
         return view('plataforma.problemas.ver_problema', compact('problema'))->with('id_curso', $request->id_curso);
     }
+
     public function ver_editorial(Request $request)
     {
         try {
             $problema = Problemas::where('codigo', '=', $request->codigo)->first();
+            if (!$problema) {
+                return redirect()->route('cursos.listado')->with('error', 'El problema no existe.');
+            }
             $cursos_usuario = auth()->user()->cursos()->get()->pluck('id')->toArray();
-            if (!$problema->cursos()->whereIn('cursos.id', $cursos_usuario)->exists() || $problema->visible == false) {
+            if ((!$problema->cursos()->whereIn('cursos.id', $cursos_usuario)->exists() || $problema->visible == false) && !auth()->user()->hasRole('administrador')) {
                 return redirect()->route('cursos.listado')->with('error', 'No tienes acceso al problema ' . $problema->nombre);
             }
             if (isset($problema->fecha_termino)) {
                 $now = Carbon::now();
                 $fecha_termino = Carbon::parse($problema->fecha_termino);
-                if ($now->gt($fecha_termino)) {
-                    return redirect()->route('cursos.listado')->with('error', 'El problema ' . $problema->nombre . 'no está disponible');
+                if ($now->gt($fecha_termino) && !auth()->user()->hasRole('administrador')) {
+                    return redirect()->route('cursos.listado')->with('error', 'El problema ' . $problema->nombre . ' no está disponible');
                 }
             }
         } catch (\PDOException $e) {
+            return redirect()->route('cursos.listado')->with('error', $e->getMessage());
+        } catch (\Exception $e) {
             return redirect()->route('cursos.listado')->with('error', $e->getMessage());
         }
         return view('plataforma.problemas.ver_editorial', compact('problema'))->with('id_curso', $request->id_curso);
@@ -307,33 +368,56 @@ class ProblemasController extends Controller
     {
         try {
             $problema = Problemas::where('codigo', '=', $request->codigo)->first();
+            if (!$problema) {
+                return redirect()->route('cursos.listado')->with('error', 'El problema no existe.');
+            }
             $curso_usuario  = auth()->user()->cursos()->find($request->id_curso);
+            if (!$curso_usuario && auth()->user()->hasRole('administrador')) {
+                \App\Models\Cursa::firstOrCreate([
+                    'id_usuario' => auth()->id(),
+                    'id_curso'   => $request->id_curso
+                ]);
+                $curso_usuario = auth()->user()->cursos()->find($request->id_curso);
+            }
+            if (!$curso_usuario) {
+                return redirect()->route('cursos.listado')->with('error', 'No tienes acceso a este curso.');
+            }
+
             $lenguajes = $problema->lenguajes()->get();
             $jueces = JuecesVirtuales::all();
             $res_certamen = null;
-            if(isset($request->token_certamen)){
-                $res_certamen = ResolucionCertamenes::where('token', '=', $request->token_certamen)->first();
-                $last_envio = $problema->envios()->where('id_certamen', '=', $res_certamen->id)->orderBy('created_at', 'DESC')->first();
-            }else{
+            if (isset($request->token_certamen)) {
+                $res_certamen = ResolucionCertamenes::with('certamen')->where('token', '=', $request->token_certamen)->first();
+                if ($res_certamen && !$res_certamen->certamen) {
+                    $res_certamen = null;
+                }
+                if ($res_certamen) {
+                    $last_envio = $problema->envios()->where('id_certamen', '=', $res_certamen->id)->orderBy('created_at', 'DESC')->first();
+                } else {
+                    $last_envio = $problema->envios()->where('id_cursa', '=', $curso_usuario->pivot->id)->whereNull('id_certamen')->orderBy('created_at', 'DESC')->first();
+                }
+            } else {
                 $last_envio = $problema->envios()->where('id_cursa', '=', $curso_usuario->pivot->id)->whereNull('id_certamen')->orderBy('created_at', 'DESC')->first();
             }
+
             if (isset($last_envio->termino) || !isset($last_envio)) {
                 DB::beginTransaction();
                 $envio = new EnvioSolucionProblema;
                 $envio->token = Str::random(40);
+                $envio->ip_origen = $request->ip();
                 $envio->inicio = Carbon::now();
-                if(isset($last_envio->termino)){
+                if (isset($last_envio->termino) && isset($last_envio->lenguaje->id)) {
                     $envio->ProblemaLenguaje()->associate($lenguajes->find($last_envio->lenguaje->id)->pivot);
-                }else{
+                } else {
                     $envio->ProblemaLenguaje()->associate($lenguajes[0]->pivot);
                 }
                 $envio->CursoUsuario()->associate($curso_usuario->pivot);
-                if(isset($res_certamen)){
+                if (isset($res_certamen)) {
                     $envio->id_certamen = $res_certamen->id;
-                }else{
+                } else {
                     DB::table('disponible')->where('id_curso', '=', $request->id_curso)->where('id_problema', '=', $problema->id)->increment('cantidad_intentos');
                 }
-                if(isset($last_envio->termino) && $last_envio->solucionado==false){
+                if (isset($last_envio->termino) && $last_envio->solucionado == false) {
                     $codigo = $last_envio->codigo;
                     $envio->codigo = $codigo;
                     $envio->inicio = $last_envio->inicio;
@@ -343,6 +427,10 @@ class ProblemasController extends Controller
                 DB::commit();
             }
         } catch (\PDOException $e) {
+            DB::rollBack();
+            return redirect()->route('cursos.listado')->with('error', $e->getMessage());
+        } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()->route('cursos.listado')->with('error', $e->getMessage());
         }
         return view('plataforma.problemas.resolver_problema', compact('problema', 'lenguajes', 'jueces', 'last_envio','res_certamen'))->with('id_curso', $request->id_curso);

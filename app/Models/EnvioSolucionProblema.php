@@ -41,6 +41,7 @@ class EnvioSolucionProblema extends Model
             'cant_casos_resueltos',
             'puntaje',
             'solucionado',
+            'ip_origen',
     ];
     
     public static $rules = [

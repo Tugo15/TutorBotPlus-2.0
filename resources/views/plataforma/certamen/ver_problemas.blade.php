@@ -1,4 +1,10 @@
-@extends('layout_plataforma.app', ['title_html' => $res_certamen->certamen->nombre, 'title' => 'Certamen - ' . $res_certamen->certamen->nombre, 'breadcrumbs' => [['nombre' => 'Evaluaciones', 'route' => route('certamenes.listado')], ['nombre' => $res_certamen->certamen->nombre, 'route' => route('certamenes.ver', ['id_certamen' => $res_certamen->certamen->id])], ['nombre' => 'Resolución']]])
+@php
+    $certamenObj = (isset($res_certamen) && $res_certamen->certamen) ? $res_certamen->certamen : null;
+    $certamenNombre = $certamenObj ? $certamenObj->nombre : 'Evaluación';
+    $certamenId = $certamenObj ? $certamenObj->id : null;
+    $certamenFechaTermino = $certamenObj ? $certamenObj->fecha_termino : null;
+@endphp
+@extends('layout_plataforma.app', ['title_html' => $certamenNombre, 'title' => 'Certamen - ' . $certamenNombre, 'breadcrumbs' => [['nombre' => 'Cursos', 'route' => route('cursos.listado')], ['nombre' => $certamenNombre, 'route' => $certamenId ? route('certamenes.ver', ['id_certamen' => $certamenId]) : route('cursos.listado')], ['nombre' => 'Resolución']]])
 
 @section('content')
     <div class="container-fluid py-3 px-4">
@@ -17,6 +23,46 @@
                                 'html_input' => 'strip',
                                 'allow_unsafe_links' => false,
                             ]) !!}
+
+                            @php
+                                $casos_ejemplo_0 = isset($problemas[0]->casos_de_prueba) ? $problemas[0]->casos_de_prueba : $problemas[0]->casos_de_prueba()->where('ejemplo', true)->get();
+                            @endphp
+
+                            @if(count($casos_ejemplo_0) > 0)
+                                <div class="mt-4 pt-3 border-top">
+                                    <h6 class="font-weight-bold text-primary mb-3"><i class="fa fa-vials me-2"></i>Ejemplos de Entrada y Salida</h6>
+                                    <div class="row">
+                                        @foreach($casos_ejemplo_0 as $caso)
+                                            <div class="col-12 mb-3">
+                                                <div class="card bg-gray-100 border shadow-none">
+                                                    <div class="card-header py-1 px-3 bg-gray-200">
+                                                        <span class="text-xs font-weight-bold text-dark">Ejemplo #{{ $loop->iteration }}</span>
+                                                    </div>
+                                                    <div class="card-body p-3">
+                                                        <div class="row">
+                                                            @if(!is_null($caso->entradas) && trim($caso->entradas) !== '')
+                                                                <div class="col-md-6 mb-2 mb-md-0">
+                                                                    <span class="text-xs font-weight-bold text-uppercase d-block mb-1 text-secondary">Entrada</span>
+                                                                    <pre class="bg-white p-2 rounded border mb-0 text-dark" style="font-family: monospace; white-space: pre-wrap; font-size: 0.85rem;">{{ $caso->entradas }}</pre>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <span class="text-xs font-weight-bold text-uppercase d-block mb-1 text-secondary">Salida Esperada</span>
+                                                                    <pre class="bg-white p-2 rounded border mb-0 text-dark" style="font-family: monospace; white-space: pre-wrap; font-size: 0.85rem;">{{ $caso->salidas }}</pre>
+                                                                </div>
+                                                            @else
+                                                                <div class="col-12">
+                                                                    <span class="text-xs font-weight-bold text-uppercase d-block mb-1 text-secondary">Salida Esperada</span>
+                                                                    <pre class="bg-white p-2 rounded border mb-0 text-dark" style="font-family: monospace; white-space: pre-wrap; font-size: 0.85rem;">{{ $caso->salidas }}</pre>
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -74,7 +120,7 @@
 @push('js')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
     <script>
-        const fecha_termino = new Date(@json($res_certamen->certamen->fecha_termino));
+        const fecha_termino = new Date(@json($certamenFechaTermino));
         var problemas = @json($problemas);
         var id_problema_activo = 0;
         showdown.setOption('tables', 'true')
@@ -114,13 +160,37 @@
             });
         }
 
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/&/g, "&amp;")
+                       .replace(/</g, "&lt;")
+                       .replace(/>/g, "&gt;")
+                       .replace(/"/g, "&quot;")
+                       .replace(/'/g, "&#039;");
+        }
+
         function seleccion_problema(item) {
             if (item != id_problema_activo) {
                 document.getElementById("problema_" + id_problema_activo).classList.remove('active');
                 document.getElementById("problema_" + item).classList.add('active');
                 id_problema_activo = item
                 console.log(problemas[item])
-                document.getElementById("enunciado").innerHTML = converter.makeHtml(problemas[item]["body_problema"]);
+                let htmlEnunciado = converter.makeHtml(problemas[item]["body_problema"]);
+                if (problemas[item]["casos_de_prueba"] && problemas[item]["casos_de_prueba"].length > 0) {
+                    htmlEnunciado += '<div class="mt-4 pt-3 border-top"><h6 class="font-weight-bold text-primary mb-3"><i class="fa fa-vials me-2"></i>Ejemplos de Entrada y Salida</h6><div class="row">';
+                    problemas[item]["casos_de_prueba"].forEach((caso, idx) => {
+                        htmlEnunciado += '<div class="col-12 mb-3"><div class="card bg-gray-100 border shadow-none"><div class="card-header py-1 px-3 bg-gray-200"><span class="text-xs font-weight-bold text-dark">Ejemplo #' + (idx + 1) + '</span></div><div class="card-body p-3"><div class="row">';
+                        if (caso.entradas && caso.entradas.trim() !== '') {
+                            htmlEnunciado += '<div class="col-md-6 mb-2 mb-md-0"><span class="text-xs font-weight-bold text-uppercase d-block mb-1 text-secondary">Entrada</span><pre class="bg-white p-2 rounded border mb-0 text-dark" style="font-family: monospace; white-space: pre-wrap; font-size: 0.85rem;">' + escapeHtml(caso.entradas) + '</pre></div>';
+                            htmlEnunciado += '<div class="col-md-6"><span class="text-xs font-weight-bold text-uppercase d-block mb-1 text-secondary">Salida Esperada</span><pre class="bg-white p-2 rounded border mb-0 text-dark" style="font-family: monospace; white-space: pre-wrap; font-size: 0.85rem;">' + escapeHtml(caso.salidas) + '</pre></div>';
+                        } else {
+                            htmlEnunciado += '<div class="col-12"><span class="text-xs font-weight-bold text-uppercase d-block mb-1 text-secondary">Salida Esperada</span><pre class="bg-white p-2 rounded border mb-0 text-dark" style="font-family: monospace; white-space: pre-wrap; font-size: 0.85rem;">' + escapeHtml(caso.salidas) + '</pre></div>';
+                        }
+                        htmlEnunciado += '</div></div></div></div>';
+                    });
+                    htmlEnunciado += '</div></div>';
+                }
+                document.getElementById("enunciado").innerHTML = htmlEnunciado;
                 document.getElementById("titulo_problema").innerHTML = problemas[item]["nombre"];
                 document.getElementById("puntaje_total").innerHTML = problemas[item]["puntaje_total"];
                 if (problemas[item]["tiempo_limite"] == null) {

@@ -20,27 +20,55 @@ use Illuminate\Support\Str;
 class CertamenesController extends Controller
 {
     public function index(Request $request){
-        $cursos = auth()->user()->cursos()->get();
-        $cursos_auth = $cursos->pluck('id')->toArray();
-        $certamenes = Certamenes::whereIn('id_curso', $cursos_auth)->get()->map(function ($item){
+        $userCursos = auth()->user()->cursos();
+        $cursos = $userCursos->withCount('certamenes')->get();
+        $id_curso_activo = $request->input('id_curso');
+        $curso_activo = null;
+
+        if ($id_curso_activo) {
+            $curso_activo = Cursos::find($id_curso_activo);
+            $query = Certamenes::where('id_curso', $id_curso_activo);
+        } else {
+            $cursos_auth = $cursos->pluck('id')->toArray();
+            $query = Certamenes::whereIn('id_curso', $cursos_auth);
+        }
+
+        $certamenes = $query->get()->map(function ($item){
             $item->fecha_inicio = Carbon::parse($item->fecha_inicio)->locale('es_ES')->isoFormat('lll');
             $item->fecha_termino = Carbon::parse($item->fecha_termino)->locale('es_ES')->isoFormat('lll');
             $item->creado = Carbon::parse($item->created_at)->locale('es_ES')->isoFormat('lll');
             return $item;
         });
-        return view('certamen.index', compact('certamenes', 'cursos'));
+
+        return view('certamen.index', compact('certamenes', 'cursos', 'id_curso_activo', 'curso_activo'));
     }
 
     public function crear(Request $request){
         $cursos = auth()->user()->cursos()->get();
-        return view('certamen.crear', compact('cursos'));
+        $id_curso_preseleccionado = $request->input('id_curso', $request->input('curso'));
+
+        if (!$id_curso_preseleccionado && $cursos->isNotEmpty()) {
+            $id_curso_preseleccionado = $cursos->first()->id;
+        }
+
+        if ($id_curso_preseleccionado) {
+            $curso_modelo = Cursos::find($id_curso_preseleccionado);
+            $todos_problemas = $curso_modelo ? $curso_modelo->problemas()->with('categorias')->get() : Problemas::with('categorias')->get();
+        } else {
+            return redirect()->route('certamen.index')->with('error', 'Debe seleccionar un curso para crear una evaluación.');
+        }
+        $categorias_existentes = \App\Models\Categoria_Problema::orderBy('nombre')->get();
+        return view('certamen.crear', compact('cursos', 'todos_problemas', 'id_curso_preseleccionado', 'categorias_existentes'));
     }
     public function editar(Request $request){
         $cursos = auth()->user()->cursos()->get();
         $certamen = Certamenes::find($request->id);
         $certamen->fecha_inicio = Carbon::parse($certamen->fecha_inicio);
         $certamen->fecha_termino = Carbon::parse($certamen->fecha_termino);
-        return view('certamen.editar', compact('cursos', 'certamen'));
+        $todos_problemas = Problemas::with('categorias')->get();
+        $problemas_seleccionados = $certamen->categorias()->pluck('categoria__problemas.id')->toArray();
+        $categorias_existentes = \App\Models\Categoria_Problema::orderBy('nombre')->get();
+        return view('certamen.editar', compact('cursos', 'certamen', 'todos_problemas', 'problemas_seleccionados', 'categorias_existentes'));
     }
     public function store(Request $request){
         $validated = $request->validate(Certamenes::$rules);
@@ -51,20 +79,33 @@ class CertamenesController extends Controller
             $certamen->descripcion = $request->input("descripcion");
             $certamen->fecha_inicio = Carbon::parse($request->input("fecha_inicio"));
             $certamen->fecha_termino = Carbon::parse($request->input("fecha_termino"));
+            $certamen->dificultad = $request->input("dificultad", "Medio");
             if(isset($request->penalizacion_error)){
                 $certamen->penalizacion_error = $request->input("penalizacion_error");
             }
             if(isset($request->cantidad_penalizacion)){
                 $certamen->cantidad_penalizacion = $request->input("cantidad_penalizacion");
             }
+            $certamen->restriccion_red = $request->boolean("restriccion_red", false);
+            $certamen->ips_autorizadas = $request->input("ips_autorizadas");
             $certamen->curso()->associate(Cursos::find($request->curso));
+            
+            $problemasSeleccionados = $request->input("problemas", []);
+            $certamen->cantidad_problemas = count($problemasSeleccionados);
             $certamen->save();
+
+            if (!empty($problemasSeleccionados)) {
+                // Sincronizar categorías asociadas a los problemas seleccionados
+                $categoriasIds = DB::table('pertenece')->whereIn('id_problema', $problemasSeleccionados)->pluck('id_categoria')->unique()->toArray();
+                $certamen->categorias()->sync($categoriasIds);
+            }
+
             DB::commit();
         }catch(\PDOException $e){
             DB::rollBack();
             return back()->withInput()->with("error", $e->getMessage());
         }
-        return redirect()->route('certamen.banco_problemas', ['id_certamen'=>$certamen->id])->with('success', 'La evaluación "'.$certamen->nombre.'" ha sido creado.');
+        return redirect()->route('certamen.index')->with('success', 'La evaluación "'.$certamen->nombre.'" ha sido creada de manera correcta.');
     }
 
     public function update(Request $request){
@@ -76,23 +117,35 @@ class CertamenesController extends Controller
             $certamen->descripcion = $request->input("descripcion");
             $certamen->fecha_inicio = Carbon::parse($request->input("fecha_inicio"));
             $certamen->fecha_termino = Carbon::parse($request->input("fecha_termino"));
+            $certamen->dificultad = $request->input("dificultad", "Medio");
             if(isset($request->penalizacion_error)){
                 $certamen->penalizacion_error = $request->input("penalizacion_error");
             }
             if(isset($request->cantidad_penalizacion)){
                 $certamen->cantidad_penalizacion = $request->input("cantidad_penalizacion");
             }
+            $certamen->restriccion_red = $request->boolean("restriccion_red", false);
+            $certamen->ips_autorizadas = $request->input("ips_autorizadas");
             if($certamen->curso->id != $request->input('curso')){
                 $certamen->curso()->dissociate();
                 $certamen->curso()->associate(Cursos::find($request->input("curso")));
             }
+
+            $problemasSeleccionados = $request->input("problemas", []);
+            $certamen->cantidad_problemas = count($problemasSeleccionados);
             $certamen->save();
+
+            if (!empty($problemasSeleccionados)) {
+                $categoriasIds = DB::table('pertenece')->whereIn('id_problema', $problemasSeleccionados)->pluck('id_categoria')->unique()->toArray();
+                $certamen->categorias()->sync($categoriasIds);
+            }
+
             DB::commit();
         }catch(\PDOException $e){
             DB::rollBack();
             return back()->withInput()->with("error", $e->getMessage());
         }
-        return redirect()->route('certamen.index')->with('success', "La evaluación ha sido actualizado.");
+        return redirect()->route('certamen.index')->with('success', "La evaluación ha sido actualizada correctamente.");
     }
 
     public function eliminar(Request $request){
@@ -123,11 +176,15 @@ class CertamenesController extends Controller
             $nuevo->fecha_termino = Carbon::now()->addDays(7);
             $nuevo->penalizacion_error = $original->penalizacion_error;
             $nuevo->cantidad_penalizacion = $original->cantidad_penalizacion;
+            $nuevo->restriccion_red = $original->restriccion_red;
+            $nuevo->ips_autorizadas = $original->ips_autorizadas;
+            $nuevo->dificultad = $original->dificultad ?? 'Medio';
+            $nuevo->cantidad_problemas = $original->cantidad_problemas ?? 0;
             $nuevo->curso()->associate(Cursos::findOrFail($request->id_curso));
             $nuevo->save();
 
-            foreach ($original->categorias as $cat) {
-                $nuevo->categorias()->attach($cat->id);
+            if ($original->categorias->isNotEmpty()) {
+                $nuevo->categorias()->sync($original->categorias->pluck('id')->toArray());
             }
             DB::commit();
         } catch (\PDOException $e) {
@@ -137,22 +194,33 @@ class CertamenesController extends Controller
             DB::rollBack();
             return back()->with("error", "Error inesperado al duplicar: " . $e->getMessage());
         }
-        return redirect()->route('certamen.banco_problemas', ['id_certamen' => $nuevo->id])
+        return redirect()->route('certamen.index', ['id_curso' => $nuevo->id_curso])
             ->with('success', 'La evaluación "' . $nuevo->nombre . '" ha sido duplicada exitosamente.');
     }
 
     public function listado_certamenes(Request $request){
         try{
-            $cursos_usuario = auth()->user()->cursos()->pluck('cursos.id');
+            $id_curso_activo = $request->input('id_curso');
+            $cursos = auth()->user()->cursos()->withCount('certamenes')->get();
+            $curso_activo = null;
+
+            if ($id_curso_activo) {
+                $curso_activo = Cursos::find($id_curso_activo);
+                $cursos_filtro = [$id_curso_activo];
+            } else {
+                $cursos_filtro = $cursos->pluck('id')->toArray();
+            }
+
             $resultados_certamenes = DB::table('resolucion_certamenes')
             ->leftJoin('envio_solucion_problemas', 'envio_solucion_problemas.id_certamen', '=', 'resolucion_certamenes.id')
             ->where('id_usuario','=', auth()->user()->id)
             ->select('resolucion_certamenes.id_certamen',  DB::raw('max(finalizado) as estado_finalizado'), 'fecha_finalizado', DB::raw('max(puntaje_obtenido) as puntaje_maximo'), DB::raw('max(problemas_resueltos) as maximo_resuelto'))
             ->groupBy('resolucion_certamenes.id_certamen', 'fecha_finalizado')
             ->orderBy('fecha_finalizado', 'desc');
+
             $evaluaciones = Certamenes::leftJoinSub($resultados_certamenes, 'resultados_certamenes', function (JoinClause $join){
                 $join->on('resultados_certamenes.id_certamen', '=', 'certamenes.id');
-            })->whereIn('id_curso', $cursos_usuario)->orderBy('fecha_inicio', 'desc')->get()->map(function($item){
+            })->whereIn('id_curso', $cursos_filtro)->orderBy('fecha_inicio', 'desc')->get()->map(function($item){
                 $fecha_inicio = Carbon::parse($item->fecha_inicio);
                 $item->fecha_inicio = Carbon::parse( $item->fecha_inicio)->locale('es_ES')->isoFormat('lll');
                 $item->fecha_termino = Carbon::parse( $item->fecha_termino)->locale('es_ES')->isoFormat('lll');
@@ -166,7 +234,7 @@ class CertamenesController extends Controller
         }catch(\PDOException $e){
             return redirect()->route('cursos.listado')->with("error", $e->getMessage());
         }
-        return view('plataforma.certamen.index', compact('evaluaciones'));
+        return view('plataforma.certamen.index', compact('evaluaciones', 'cursos', 'id_curso_activo', 'curso_activo'));
     }
 
     public function ver_certamen(Request $request){
@@ -223,6 +291,10 @@ class CertamenesController extends Controller
                 }
             }else{
                 $certamen = Certamenes::find($request->id_certamen);
+                if (!$certamen) {
+                    throw new \Exception("Error: La evaluación seleccionada no existe.");
+                }
+
                 $res_certamen = new ResolucionCertamenes;
                 $res_certamen->token = Str::random(55);
                 $res_certamen->id_usuario = auth()->user()->id;
@@ -232,17 +304,35 @@ class CertamenesController extends Controller
                 $problemas_seleccionados = [];
                 $problemas_seleccionados_id = [];
                 foreach ($categorias as $categoria){
-                    //selecciona un problema aleatorio, ignorando los problemas que ya fueron escogidos previamente
+                    // Selecciona un problema aleatorio de la categoría para este curso
                     $problema_aleatorio = $categoria->problemas()
-                    ->join('disponible', 'disponible.id_problema', '=', 'problemas.id')
-                    ->where('disponible.id_curso', '=', $certamen->id_curso)
-                    ->whereNotIn('problemas.id', $problemas_seleccionados_id)
-                    ->inRandomOrder()->first();
-                    $seleccion = new SeleccionProblemasCertamenes;
-                    $seleccion->problema()->associate($problema_aleatorio);
-                    array_push($problemas_seleccionados, $seleccion);        
-                    array_push($problemas_seleccionados_id, $problema_aleatorio->id);
+                        ->join('disponible', 'disponible.id_problema', '=', 'problemas.id')
+                        ->where('disponible.id_curso', '=', $certamen->id_curso)
+                        ->whereNotIn('problemas.id', $problemas_seleccionados_id)
+                        ->select('problemas.*')
+                        ->inRandomOrder()->first();
+
+                    // Fallback: Si la categoría no tiene un problema disponible sin asignar, buscar cualquier problema disponible del curso
+                    if (!$problema_aleatorio) {
+                        $problema_aleatorio = Problemas::join('disponible', 'disponible.id_problema', '=', 'problemas.id')
+                            ->where('disponible.id_curso', '=', $certamen->id_curso)
+                            ->whereNotIn('problemas.id', $problemas_seleccionados_id)
+                            ->select('problemas.*')
+                            ->inRandomOrder()->first();
+                    }
+
+                    if ($problema_aleatorio) {
+                        $seleccion = new SeleccionProblemasCertamenes;
+                        $seleccion->problema()->associate($problema_aleatorio);
+                        array_push($problemas_seleccionados, $seleccion);        
+                        array_push($problemas_seleccionados_id, $problema_aleatorio->id);
+                    }
                 }
+
+                if (empty($problemas_seleccionados)) {
+                    throw new \Exception("Error: No hay problemas disponibles configurados para esta evaluación.");
+                }
+
                 $res_certamen->ProblemasSeleccionadas()->saveMany($problemas_seleccionados);
             }
             DB::commit();
@@ -263,7 +353,9 @@ class CertamenesController extends Controller
             ->where('envio_solucion_problemas.id_certamen', '=', $res_certamen->id)
             ->where('cursa.id_usuario', '=', auth()->user()->id)
             ->select('resolver.id_problema', 'envio_solucion_problemas.solucionado', 'envio_solucion_problemas.puntaje');
-            $problemas = Problemas::with('lenguajes')->leftJoinSub($ultimos_envios, 'ultimos_envios', function (JoinClause $join){
+            $problemas = Problemas::with(['lenguajes', 'casos_de_prueba' => function($q) {
+                $q->where('ejemplo', true);
+            }])->leftJoinSub($ultimos_envios, 'ultimos_envios', function (JoinClause $join){
                 $join->on('ultimos_envios.id_problema', '=', 'problemas.id');
             })
             ->whereIn('problemas.id', $res_certamen->ProblemasSeleccionadas()->pluck('id_problema')->toArray())

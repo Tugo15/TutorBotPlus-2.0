@@ -21,6 +21,7 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+        \App\Http\Middleware\SanitizeInputs::class,
     ];
 
     /**
@@ -70,5 +71,6 @@ class Kernel extends HttpKernel
         'certamen_en_resolucion' => \App\Http\Middleware\CheckUserCertamen::class,
         'chequear_fecha_certamen' => \App\Http\Middleware\CertamenCheckDate::class,
         'single_session' => \App\Http\Middleware\EnsureSingleSession::class,
+        'red_institucional' => \App\Http\Middleware\CheckInstitutionalNetwork::class,
     ];
 }

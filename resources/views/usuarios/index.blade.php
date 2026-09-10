@@ -13,7 +13,7 @@
                         </div>
                         @can('crear usuario')
                         <div>
-                            <a class="btn btn-sm btn-primary mb-0 me-2" href="{{ route('usuarios.crear') }}"><i class="fa fa-user-plus me-1"></i> Crear Usuario</a>
+                            <a class="btn btn-sm btn-dark mb-0 me-2" href="{{ route('usuarios.crear') }}"><i class="fa fa-user-plus me-1"></i> Crear Usuario</a>
                             <a class="btn btn-sm btn-outline-primary mb-0" href="{{ route('usuarios.bulk') }}"><i class="fa fa-file-upload me-1"></i> Inserción Masiva</a>
                         </div>
                         @endcan
@@ -90,25 +90,14 @@
                     <div class="table-responsive p-0">
                         <table class="table align-items-center mb-0" id="table">
                             <thead>
-                                <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Usuario
-                                    </th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
-                                        Roles
-                                    </th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
-                                        Cursos
-                                    </th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
-                                        Email
-                                    </th>
-                                    <th
-                                        class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
-                                        Creado</th>
+                                <tr class="border-bottom">
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Usuario</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7 ps-2">Roles</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7 ps-2">Cursos</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7 ps-2">Email</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Creado</th>
                                     @canany(['editar usuario', 'eliminar usuario'])
-                                        <th
-                                            class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
-                                            Acciones</th>
+                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Acciones</th>
                                     @endcanany
                                 </tr>
                             </thead>
@@ -118,7 +107,7 @@
                                         <td>
                                             <div class="d-inline-flex align-items-center py-1">
                                                 <div class="d-flex flex-column justify-content-center ms-2">
-                                                    <h6 class="mb-0 text-sm font-weight-bold">{{ $user->firstname ? $user->firstname . ' ' . $user->lastname : $user->username }}</h6>
+                                                    <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $user->firstname ? $user->firstname . ' ' . $user->lastname : $user->username }}</h6>
                                                     <p class="text-xs text-secondary mb-0">{{ $user->username }} | {{ $user->rut }}</p>
                                                 </div>
                                             </div>
@@ -126,43 +115,46 @@
                                         <td>
                                             <div class="d-flex flex-wrap gap-1">
                                                 @foreach ($user->getRoleNames() as $rol)
-                                                    <span class="badge bg-gradient-info text-xs">{{ $rol }}</span>
+                                                    <span class="badge border border-info text-info text-xxs px-2 py-1 bg-white">{{ $rol }}</span>
                                                 @endforeach
                                             </div>
                                         </td>
                                         <td>
                                             <div class="d-flex flex-wrap gap-1">
                                                 @foreach ($user->cursos()->get() as $curso)
-                                                    <span class="badge bg-gradient-primary text-xs" title="{{ $curso->nombre }}">{{ $curso->codigo }}</span>
+                                                    <span class="badge border border-primary text-primary text-xxs px-2 py-1 bg-white" title="{{ $curso->nombre }}">{{ $curso->codigo }}</span>
                                                 @endforeach
                                             </div>
                                         </td>
                                         <td>
                                             <div class="d-flex px-3 py-1">
                                                 <div class="d-flex flex-column justify-content-center">
-                                                    <h6 class="mb-0 text-sm">{{ $user->email }}</h6>
+                                                    <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $user->email }}</h6>
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="align-middle text-center text-sm">
-                                            <p class="text-sm font-weight-bold mb-0">
+                                            <p class="text-xs text-secondary font-weight-bold mb-0">
                                                 {{ $user->fecha ? $user->fecha : 'Desconocido' }}</p>
                                         </td>
                                         @canany(['editar usuario', 'eliminar usuario'])
                                             <td class="align-middle text-end">
-                                                <div class="d-flex px-3 py-1 justify-content-center align-items-center">
-                                                    @can('editar usuario')
-                                                        <a class="btn btn-sm btn-outline-warning me-1" title="Editar Usuario"
-                                                            href="{{ route('usuarios.editar', ['id' => $user->id]) }}"><i
-                                                                class="fa fa-pencil"></i></a>
-                                                    @endcan
+                                                <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1">
+                                                     @can('editar usuario')
+                                                         <a class="btn btn-xs btn-outline-info mb-0" title="Editar Usuario"
+                                                             href="{{ route('usuarios.editar', ['id' => $user->id]) }}"><i class="fa fa-pencil me-1"></i> Editar</a>
+                                                         <form action="{{ route('usuarios.forzar_invalidacion', ['id' => $user->id]) }}"
+                                                             method="POST" class="d-inline" onsubmit="return confirm('¿Desea finalizar remotamente todas las sesiones activas de {{ $user->username }}?');">
+                                                             @csrf
+                                                             <button type="submit" class="btn btn-xs btn-outline-dark mb-0" title="Cerrar Sesión Remota"><i class="fa fa-power-off me-1"></i> Sesión</button>
+                                                         </form>
+                                                     @endcan
                                                     @can('eliminar usuario')
                                                         @if (auth()->user()->id != $user->id)
                                                             <form action="{{ route('usuarios.eliminar', ['id' => $user->id]) }}"
                                                                 method="POST" onsubmit="event.preventDefault();submitFormEliminar('el usuario {{ $user->username }}', {{ $user->id }})" id="eliminarForm_{{ $user->id }}">
                                                                 @csrf
-                                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Usuario"><i
-                                                                        class="fa fa-fw fa-trash"></i></button>
+                                                                <button type="submit" class="btn btn-xs btn-outline-danger mb-0" title="Eliminar Usuario"><i class="fa fa-fw fa-trash me-1"></i> Eliminar</button>
                                                             </form>
                                                         @endif
                                                     @endcan

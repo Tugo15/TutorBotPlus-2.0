@@ -6,4 +6,5 @@
     @include('informes.componentes.informe_problemas_curso')
     @include('informes.componentes.graficas_cursos', ['estadistica_estados'=>$estadistica_estados])
     @include('informes.componentes.tabla_estudiantes_cursos', ['listado_estudiantes'=>$listado_estudiantes])
+    @include('informes.componentes.tabla_envios', ['todos_envios'=>$todos_envios ?? []])
 @endsection

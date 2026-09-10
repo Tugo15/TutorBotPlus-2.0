@@ -73,6 +73,7 @@ class EnvioSolucionProblemaController extends Controller
                 return redirect()->route('envios.ver', ["token" => $envio->token]);
             }
             $envio->codigo = $request->codigo;
+            $envio->ip_origen = $request->ip();
             $envio->juez_virtual()->associate(JuecesVirtuales::find($request->juez_virtual));
             $lenguaje = LenguajesProgramaciones::where("codigo", "=", $request->lenguaje)->first();
             $pivot_problema_lenguaje = $lenguaje->problemas()->find($request->id_problema)->pivot;

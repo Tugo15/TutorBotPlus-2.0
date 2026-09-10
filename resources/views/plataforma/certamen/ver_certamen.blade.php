@@ -1,4 +1,4 @@
-@extends('layout_plataforma.app', ['title_html' => $certamen->nombre, 'title' => 'Certamen - ' . $certamen->nombre, 'breadcrumbs' => [['nombre' => 'Evaluaciones', 'route' => route('certamenes.listado')], ['nombre' => $certamen->nombre]]])
+@extends('layout_plataforma.app', ['title_html' => $certamen->nombre, 'title' => 'Certamen - ' . $certamen->nombre, 'breadcrumbs' => [['nombre' => 'Cursos', 'route' => route('cursos.listado')], ['nombre' => $certamen->nombre]]])
 
 @section('content')
     <div class="container-fluid py-3 px-4">

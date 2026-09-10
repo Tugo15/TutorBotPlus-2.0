@@ -1,7 +1,12 @@
-<p class="text-uppercase text-sm">Información del Problema</p>
-<p class="text-sm text-danger">* Obligatorio</p>
+<div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom">
+    <div>
+        <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-code text-primary me-2"></i>Información del Problema</h6>
+        <p class="text-xs text-secondary mb-0">Configure los parámetros de ejecución, fechas, cursos y enunciado.</p>
+    </div>
+    <span class="text-xs text-danger font-weight-bold">* Campo Obligatorio</span>
+</div>
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-4">
         <div class="form-group has-danger">
             <label for="example-text-input"
                 class="form-control-label @error('nombre') is-invalid @enderror">Nombre*</label>
@@ -12,16 +17,29 @@
             @enderror
         </div>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-4">
         <div class="form-group has-danger">
             <label for="codigo"
                 class="form-control-label @error('codigo') is-invalid @enderror">Código Único (Slug / Identificador)*</label>
             <input class="form-control" type="text" name="codigo" id="codigo" placeholder="Ej. suma-a-b o PROB-01"
                 value="{{ isset($problema) ? old('codigo', $problema->codigo) : old('codigo') }}">
-            <p class="text-xs text-secondary mt-1 mb-0"><small>Es un identificador único (sin espacios ni tildes) usado para la URL amigable del problema.</small></p>
+            <p class="text-xs text-secondary mt-1 mb-0"><small>Identificador único sin espacios ni tildes.</small></p>
             @error('codigo')
                 <p class="text-danger text-xs pt-1"> {{ $message }} </p>
             @enderror
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="form-group">
+            <label for="dificultad" class="form-control-label font-weight-bold">Nivel de Dificultad</label>
+            @php
+                $difProb = isset($problema) ? old('dificultad', $problema->dificultad ?? 'Medio') : old('dificultad', 'Medio');
+            @endphp
+            <select class="form-select" id="dificultad" name="dificultad">
+                <option value="Fácil" @if($difProb == 'Fácil') selected @endif>Fácil</option>
+                <option value="Medio" @if($difProb == 'Medio') selected @endif>Medio</option>
+                <option value="Difícil" @if($difProb == 'Difícil') selected @endif>Difícil</option>
+            </select>
         </div>
     </div>
 
@@ -96,8 +114,9 @@
     </label>
 </div>
 <label>Si no ingresa el tiempo y la memoria límite, el juez virtual no evaluara estos dos parametros.</label>
-<hr>
-<p class="text-uppercase text-sm mt-2">Enunciado</p>
+<div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom mt-4">
+    <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-file-alt text-primary me-2"></i>Enunciado del Problema</h6>
+</div>
 <div class="row">
     <div class="col">
         <div class="form-group">
@@ -130,14 +149,14 @@
                 <div class="row g-2" id="prob-cursos-container">
                     @foreach ($cursos as $curso)
                         @php
-                            $isChecked = (isset($problema) && $problema->cursos()->get()->contains($curso->id)) || (old('cursos') && in_array($curso->id, old('cursos')));
+                            $isChecked = (isset($problema) && $problema->cursos()->get()->contains($curso->id)) || (old('cursos') && in_array($curso->id, old('cursos'))) || (isset($id_curso_preseleccionado) && $id_curso_preseleccionado == $curso->id);
                         @endphp
                         <div class="col-md-4 col-sm-6">
                             <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif" for="prob_curso_{{ $curso->id }}">
                                 <input type="checkbox" id="prob_curso_{{ $curso->id }}" name="cursos[]" value="{{ $curso->id }}" @if($isChecked) checked @endif onchange="this.closest('.selection-card').classList.toggle('checked', this.checked)">
                                 <div class="selection-card-content">
                                     <div class="selection-card-title">{{ $curso->nombre }}</div>
-                                    <div class="selection-card-subtitle">Código: <span class="badge bg-gradient-primary text-xxs px-2 py-1">{{ $curso->codigo }}</span></div>
+                                    <div class="selection-card-subtitle">Código: <span class="badge bg-primary text-xxs px-2 py-1">{{ $curso->codigo }}</span></div>
                                 </div>
                             </label>
                         </div>
@@ -214,7 +233,7 @@
                                     <input class="lenguaje-checkbox" type="checkbox" id="prob_leng_{{ $lenguaje->id }}" name="lenguajes[]" value="{{ $lenguaje->id }}" @if($isChecked) checked @endif @if($isDisabled) disabled @endif onchange="this.closest('.selection-card').classList.toggle('checked', this.checked)">
                                     <div class="selection-card-content">
                                         <div class="selection-card-title">{{ $lenguaje->nombre }}</div>
-                                        <div class="selection-card-subtitle"><span class="badge bg-gradient-info text-xxs px-2 py-1">{{ $lenguaje->abreviatura }}</span></div>
+                                        <div class="selection-card-subtitle"><span class="badge bg-info text-xxs px-2 py-1">{{ $lenguaje->abreviatura }}</span></div>
                                     </div>
                                 </label>
                             </div>
@@ -228,18 +247,16 @@
         </div>
     </div>
 </div>
-<div id="sql_file" class="@if ((isset($problema) && $problema->sql == false) || (!isset($problema) && old('sql', false) == false)) ) d-none @endif">
-    <p class="text-uppercase text-sm">Base de Datos (Solo para problemas de SQL)</p>
-    <p class="text-sm">En caso de que sea un problema de SQL, suba el archivo de la base de datos en .sqlite comprimido
-        en .zip
-        que se utilizara para realizar las consultas.</p>
+<div id="sql_file" class="card border shadow-xs mb-3 p-3 @if ((isset($problema) && $problema->sql == false) || (!isset($problema) && old('sql', false) == false)) ) d-none @endif">
+    <h6 class="mb-1 text-sm font-weight-bold text-dark"><i class="fa fa-database text-warning me-2"></i>Base de Datos SQLite (Solo para problemas de SQL)</h6>
+    <p class="text-xs text-secondary mb-3">Suba el archivo de la base de datos en .sqlite comprimido en .zip que se utilizará para realizar la evaluación de consultas SQL.</p>
     <div class="mb-3">
         <input class="form-control form-control-sm" id="archivos_adicionales" name="archivos_adicionales"
             type="file">
         @error('archivos_adicionales')
             <p class="text-danger text-xs pt-1"> {{ $message }} </p>
         @enderror
-        <label for="archivos_adicionales">Formato: .zip</label>
+        <span class="text-xxs text-muted">Formato soportado: .zip</span>
     </div>
 </div>
 <hr>

@@ -5,5 +5,5 @@
     @include('informes.componentes.estadisticas_certamen', ['certamen_estadistica'=>$certamen_estadistica])
     @include('informes.componentes.graficas', ['estadistica_estados'=>$estadistica_estados])
     @include('informes.componentes.tabla_estudiantes_certamen', ['listado_resultados'=>$listado_resultados])
-    
+    @include('informes.componentes.tabla_envios', ['todos_envios'=>$todos_envios ?? []])
 @endsection

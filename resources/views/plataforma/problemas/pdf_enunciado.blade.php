@@ -94,6 +94,38 @@
     <hr style="margin-top: 5px; margin-bottom:5px;">
     <h3>Enunciado</h3>
     {!! Str::markdown($problema->body_problema) !!}
+
+    @php
+        $casos_ejemplo = $problema->casos_de_prueba()->where('ejemplo', true)->get();
+    @endphp
+
+    @if($casos_ejemplo->count() > 0)
+        <h3 style="margin-top: 20px;">Ejemplos de Entrada y Salida</h3>
+        @foreach($casos_ejemplo as $caso)
+            <div style="margin-bottom: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 5px; background-color: #fafafa;">
+                <strong style="font-size: 0.95rem;">Ejemplo #{{ $loop->iteration }}</strong>
+                <table style="width: 100%; margin-top: 8px; border-collapse: collapse;">
+                    <tr>
+                        @if(!is_null($caso->entradas) && trim($caso->entradas) !== '')
+                            <td style="width: 50%; vertical-align: top; padding-right: 8px;">
+                                <strong style="font-size: 0.85rem; text-transform: uppercase;">Entrada:</strong>
+                                <pre style="background: #ffffff; padding: 8px; border: 1px solid #ccc; font-family: monospace; font-size: 0.85rem; margin-top: 4px; white-space: pre-wrap; word-wrap: break-word;">{{ $caso->entradas }}</pre>
+                            </td>
+                            <td style="width: 50%; vertical-align: top;">
+                                <strong style="font-size: 0.85rem; text-transform: uppercase;">Salida Esperada:</strong>
+                                <pre style="background: #ffffff; padding: 8px; border: 1px solid #ccc; font-family: monospace; font-size: 0.85rem; margin-top: 4px; white-space: pre-wrap; word-wrap: break-word;">{{ $caso->salidas }}</pre>
+                            </td>
+                        @else
+                            <td style="width: 100%; vertical-align: top;">
+                                <strong style="font-size: 0.85rem; text-transform: uppercase;">Salida Esperada:</strong>
+                                <pre style="background: #ffffff; padding: 8px; border: 1px solid #ccc; font-family: monospace; font-size: 0.85rem; margin-top: 4px; white-space: pre-wrap; word-wrap: break-word;">{{ $caso->salidas }}</pre>
+                            </td>
+                        @endif
+                    </tr>
+                </table>
+            </div>
+        @endforeach
+    @endif
 </body>
 
 </html>

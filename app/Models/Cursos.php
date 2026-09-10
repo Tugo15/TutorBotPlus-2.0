@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Models\Problemas;
+use App\Models\Certamenes;
 use App\Models\EnvioSolucionProblema;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -43,6 +44,11 @@ class Cursos extends Model
     public function problemas(): BelongsToMany
     {
         return $this->belongsToMany(Problemas::class,'disponible','id_curso','id_problema');
+    }
+
+    public function certamenes(): HasMany
+    {
+        return $this->hasMany(Certamenes::class, 'id_curso');
     }
 
     public function envios(): HasManyThrough

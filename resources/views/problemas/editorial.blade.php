@@ -45,8 +45,11 @@
             height: '600px',
             initialEditType: 'markdown',
             placeholder: "La editorial es una forma para ayudar al estudiante para que pueda comprender el problema.",
-            initialValue: `{{ $problema->body_editorial }}`,
-        })
+            initialValue: @json($problema->body_editorial ?? ''),
+        });
+        editor.on('change', () => {
+            document.querySelector('#body_editorial').value = editor.getMarkdown();
+        });
         document.querySelector('#editorial_form').addEventListener('submit', e => {
             e.preventDefault();
             document.querySelector('#body_editorial').value = editor.getMarkdown();

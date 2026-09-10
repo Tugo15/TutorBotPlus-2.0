@@ -1,6 +1,6 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h6 class="mb-0 font-weight-bold text-primary"><i class="fa fa-code me-2"></i>Información del Lenguaje de Programación</h6>
+        <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-code me-2 text-warning"></i>Información del Lenguaje de Programación</h6>
         <p class="text-xs text-secondary mb-0">Verifique en Judge0 el ID del lenguaje antes de crearlo o editarlo.</p>
     </div>
     <span class="text-xs text-danger font-weight-bold">* Campo Obligatorio</span>

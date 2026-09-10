@@ -70,4 +70,24 @@ En el menu desplegable de resolucion de problemas de la plataforma, selecciona:
 - C++ (GCC 9.2.0)
 - Java (OpenJDK 13.0.1)
 
+--------------------------------------------------------------------------------
+9. EXPONER A INTERNET MEDIANTE TUNEL LOCAL (Localtunnel / Ngrok / Cloudflare)
+--------------------------------------------------------------------------------
+Con el servidor iniciado (`php artisan serve --port=8000`), puedes generar un
+enlace HTTPS público ejecutando cualquiera de las siguientes opciones:
+
+Opcion A (Localtunnel - listo para usar sin instalacion previa):
+    npm run tunnel
+    (Equivale a: npx localtunnel --port 8000)
+
+Opcion B (Ngrok - si lo tienes instalado):
+    npm run tunnel:ngrok
+    (Equivale a: ngrok http 8000)
+
+Opcion C (Cloudflare Tunnel):
+    npm run tunnel:cloudflared
+
+* El proyecto ya está configurado para confiar en proxies (TrustProxies) y
+  forzar HTTPS automáticamente para evitar errores de contenido mixto.
+
 ================================================================================

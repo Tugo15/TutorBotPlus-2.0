@@ -8,11 +8,11 @@
                 <div class="card-header pb-0 border-bottom mb-3">
                     <div class="d-flex justify-content-between align-items-center pb-3">
                         <div>
-                            <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-code me-2 text-primary"></i>Gestión de Lenguajes de Programación</h6>
+                            <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-code me-2 text-warning"></i>Gestión de Lenguajes de Programación</h6>
                             <p class="text-xs text-secondary mb-0">Administre los lenguajes soportados por el Juez Virtual (Judge0).</p>
                         </div>
                         @can('crear lenguaje de programación')
-                        <a class="btn btn-sm btn-primary mb-0" href="{{ route('lenguaje_programacion.crear') }}"><i class="fa fa-plus me-1"></i> Crear Lenguaje</a>
+                        <a class="btn btn-sm btn-dark mb-0" href="{{ route('lenguaje_programacion.crear') }}"><i class="fa fa-plus me-1"></i> Crear Lenguaje</a>
                         @endcan
                     </div>
                 </div>
@@ -36,24 +36,14 @@
                     <div class="table-responsive p-0">
                         <table class="table align-items-center mb-0" id="table">
                             <thead>
-                                <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Código Juez
-                                    </th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Nombre
-                                    </th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
-                                        Abreviatura
-                                    </th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
-                                        Extensión
-                                    </th>
-                                    <th
-                                        class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
-                                        Creado</th>
+                                <tr class="border-bottom">
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Código Juez</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Nombre</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7 ps-2">Abreviatura</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7 ps-2">Extensión</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Creado</th>
                                     @canany(['editar lenguaje de programación', 'eliminar lenguaje de programación'])
-                                        <th
-                                            class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
-                                            Acciones</th>
+                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Acciones</th>
                                     @endcanany
                                 </tr>
                             </thead>
@@ -63,48 +53,47 @@
                                         <td>
                                             <div class="d-flex px-3 py-1">
                                                 <div class="d-flex flex-column justify-content-center">
-                                                    <span class="badge bg-gradient-dark text-xs">{{ $item->codigo }}</span>
+                                                    <span class="badge border border-dark text-dark text-xxs px-2.5 py-1 bg-white">{{ $item->codigo }}</span>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>    
                                             <div class="d-flex px-3 py-1">
                                                 <div class="d-flex flex-column justify-content-center">
-                                                    <h6 class="mb-0 text-sm font-weight-bold">{{ $item->nombre }}</h6>
+                                                    <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $item->nombre }}</h6>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
                                             <div class="d-flex px-3 py-1">
                                                 <div class="d-flex flex-column justify-content-center">
-                                                    <span class="badge bg-gradient-info text-xs">{{ $item->abreviatura }}</span>
+                                                    <span class="badge border border-warning text-dark text-xxs px-2 py-1 bg-white">{{ $item->abreviatura }}</span>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
                                             <div class="d-flex px-3 py-1">
                                                 <div class="d-flex flex-column justify-content-center">
-                                                    <span class="badge bg-gradient-secondary text-xs">{{ $item->extension }}</span>
+                                                    <span class="badge border border-info text-info text-xxs px-2 py-1 bg-white">{{ $item->extension }}</span>
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="align-middle text-center text-sm">
-                                            <p class="text-sm font-weight-bold mb-0">
+                                            <p class="text-xs text-secondary font-weight-bold mb-0">
                                                 {{ $item->fecha ? $item->fecha : 'Desconocido' }}</p>
                                         </td>
                                         @canany(['editar lenguaje de programación', 'eliminar lenguaje de programación'])
                                             <td class="align-middle text-end">
-                                                <div class="d-flex px-3 py-1 justify-content-center align-items-center">
+                                                <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1">
                                                     @can('editar lenguaje de programación')
-                                                        <a class="btn btn-sm btn-outline-warning me-1" title="Editar Lenguaje"
-                                                            href="{{ route('lenguaje_programacion.editar', ['id' => $item->id]) }}"><i class="fa fa-pencil"></i></a>
+                                                        <a class="btn btn-xs btn-outline-info mb-0" title="Editar Lenguaje"
+                                                            href="{{ route('lenguaje_programacion.editar', ['id' => $item->id]) }}"><i class="fa fa-pencil me-1"></i> Editar</a>
                                                     @endcan
                                                     @can('eliminar lenguaje de programación')
                                                         <form action="{{ route('lenguaje_programacion.eliminar', ['id' => $item->id]) }}"
                                                             method="POST" onsubmit="event.preventDefault();submitFormEliminar('{{'el lenguaje '.$item->nombre}}', {{$item->id}})" id="eliminarForm_{{$item->id}}">
                                                             @csrf
-                                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Lenguaje"><i
-                                                                class="fa fa-fw fa-trash"></i></button>
+                                                            <button type="submit" class="btn btn-xs btn-outline-danger mb-0" title="Eliminar Lenguaje"><i class="fa fa-fw fa-trash me-1"></i> Eliminar</button>
                                                         </form>
                                                     @endcan
                                                 </div>

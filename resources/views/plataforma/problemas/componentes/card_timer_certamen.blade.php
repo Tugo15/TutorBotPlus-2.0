@@ -10,7 +10,10 @@
 
 @push('js')
     <script>
-        const fecha_termino = new Date(@json($res_certamen->certamen->fecha_termino));
+        @php
+            $certamenFechaTermino = (isset($res_certamen) && $res_certamen->certamen) ? $res_certamen->certamen->fecha_termino : null;
+        @endphp
+        const fecha_termino = new Date(@json($certamenFechaTermino));
         var x = setInterval(function() {
 
             var now = new Date().getTime();

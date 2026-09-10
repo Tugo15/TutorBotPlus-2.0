@@ -13,6 +13,46 @@
                             'html_input' => 'strip',
                             'allow_unsafe_links' => false,
                         ]) !!}
+
+                        @php
+                            $casos_ejemplo = $problema->casos_de_prueba()->where('ejemplo', true)->get();
+                        @endphp
+
+                        @if($casos_ejemplo->count() > 0)
+                            <div class="mt-4 pt-3 border-top">
+                                <h6 class="font-weight-bold text-primary mb-3"><i class="fa fa-vials me-2"></i>Ejemplos de Entrada y Salida</h6>
+                                <div class="row">
+                                    @foreach($casos_ejemplo as $caso)
+                                        <div class="col-12 mb-3">
+                                            <div class="card bg-gray-100 border shadow-none">
+                                                <div class="card-header py-1 px-3 bg-gray-200">
+                                                    <span class="text-xs font-weight-bold text-dark">Ejemplo #{{ $loop->iteration }}</span>
+                                                </div>
+                                                <div class="card-body p-3">
+                                                    <div class="row">
+                                                        @if(!is_null($caso->entradas) && trim($caso->entradas) !== '')
+                                                            <div class="col-md-6 mb-2 mb-md-0">
+                                                                <span class="text-xs font-weight-bold text-uppercase d-block mb-1 text-secondary">Entrada</span>
+                                                                <pre class="bg-white p-2 rounded border mb-0 text-dark" style="font-family: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; white-space: pre-wrap; font-size: 0.85rem;">{{ $caso->entradas }}</pre>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <span class="text-xs font-weight-bold text-uppercase d-block mb-1 text-secondary">Salida Esperada</span>
+                                                                <pre class="bg-white p-2 rounded border mb-0 text-dark" style="font-family: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; white-space: pre-wrap; font-size: 0.85rem;">{{ $caso->salidas }}</pre>
+                                                            </div>
+                                                        @else
+                                                            <div class="col-12">
+                                                                <span class="text-xs font-weight-bold text-uppercase d-block mb-1 text-secondary">Salida Esperada</span>
+                                                                <pre class="bg-white p-2 rounded border mb-0 text-dark" style="font-family: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; white-space: pre-wrap; font-size: 0.85rem;">{{ $caso->salidas }}</pre>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

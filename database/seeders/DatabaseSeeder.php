@@ -6,7 +6,6 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\App;
 
-
 class DatabaseSeeder extends Seeder
 {
     /**
@@ -16,7 +15,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        
         $this->call([
             CursosSeeder::class,
             RolesAndPermission::class,
@@ -24,11 +22,8 @@ class DatabaseSeeder extends Seeder
             LenguajesProgramacionesSeeder::class,
             CategoriaProblemaSeeder::class,
             JuecesVirtualesSeeder::class,
+            ProblemasSeeder::class,
+            CertamenesSeeder::class,
         ]);
-        if (App::environment('local')) {
-            $this->call([
-                ProblemasSeeder::class,
-            ]);
-        }
     }
 }

@@ -4,7 +4,7 @@ $old_roles = old('roles')? old('roles') : [];
 @endphp
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h6 class="mb-0 font-weight-bold text-primary"><i class="fa fa-user me-2"></i>Información Personal y Accesos</h6>
+        <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-user me-2 text-primary"></i>Información Personal y Accesos</h6>
         <p class="text-xs text-secondary mb-0">Ingrese los datos personales del usuario, asigne sus roles y cursos.</p>
     </div>
     <span class="text-xs text-danger font-weight-bold">* Campo Obligatorio</span>
@@ -107,7 +107,7 @@ $old_roles = old('roles')? old('roles') : [];
                                 <input type="checkbox" id="curso_{{ $curso->id }}" name="cursos[]" value="{{ $curso->id }}" @if($isChecked) checked @endif onchange="this.closest('.selection-card').classList.toggle('checked', this.checked)">
                                 <div class="selection-card-content">
                                     <div class="selection-card-title">{{ $curso->nombre }}</div>
-                                    <div class="selection-card-subtitle">Código: <span class="badge bg-gradient-primary text-xxs px-2 py-1">{{ $curso->codigo }}</span></div>
+                                    <div class="selection-card-subtitle">Código: <span class="badge border border-primary text-primary text-xxs px-2 py-1 bg-white">{{ $curso->codigo }}</span></div>
                                 </div>
                             </label>
                         </div>

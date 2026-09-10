@@ -10,16 +10,16 @@
             enctype="multipart/form-data" onsubmit="event.preventDefault();submitFormEditar('{{'el certamen '.$certamen->nombre}}')" id="editarForm">
             @csrf
             <div class="card shadow-xs border">
-                <div class="card-header pb-0">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0 font-weight-bold text-primary"><i class="fa fa-calendar-check me-2"></i>Editar Evaluación: {{ $certamen->nombre }}</h6>
+                <div class="card-header pb-0 border-bottom mb-3">
+                    <div class="d-flex justify-content-between align-items-center pb-3">
+                        <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-calendar-check me-2 text-warning"></i>Editar Evaluación: {{ $certamen->nombre }}</h6>
                         <a href="{{ route('certamen.index') }}" class="btn btn-sm btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                     </div>
                 </div>
                 <div class="card-body">
                     @include('certamen.form')
                     <div class="mt-4 pt-3 border-top">
-                        <button type="submit" class="btn btn-sm btn-primary me-2"><i class="fa fa-save me-1"></i> Guardar Cambios</button>
+                        <button type="submit" class="btn btn-sm btn-dark me-2"><i class="fa fa-save me-1"></i> Guardar Cambios</button>
                         <a href="{{ route('certamen.index') }}" class="btn btn-sm btn-outline-secondary"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                     </div>
                 </div>
@@ -48,9 +48,11 @@
             height: '600px',
             initialEditType: 'markdown',
             placeholder: 'Ingrese el enunciado del problema',
-            initialValue: `{{ isset($certamen) ? old('descripcion', $certamen->descripcion) : old('descripcion') }}`,
-        })
-
+            initialValue: @json(old('descripcion', $certamen->descripcion ?? '')),
+        });
+        editor.on('change', () => {
+            document.querySelector('#descripcion').value = editor.getMarkdown();
+        });
         document.querySelector('#editarForm').addEventListener('submit', e => {
             document.querySelector('#descripcion').value = editor.getMarkdown();
         });

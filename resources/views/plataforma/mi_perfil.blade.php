@@ -105,6 +105,23 @@
                 </form>
             </div>
         </div>
+
+        <div class="card border-warning mt-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <strong><i class="fa fa-shield me-2 text-warning"></i>Seguridad y Sesiones Activas</strong>
+            </div>
+            <div class="card-body px-5 py-4">
+                <p class="text-sm text-secondary">
+                    Si sospechas que tu cuenta está abierta en otro navegador o dispositivo no autorizado, puedes finalizar remotamente todas las demás sesiones activas.
+                </p>
+                <form action="{{ route('perfil.cerrar_otras_sesiones') }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas cerrar la sesión en todos los demás dispositivos?');">
+                    @csrf
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="fa fa-power-off me-1"></i> Cerrar todas mis otras sesiones activas
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 @endsection
 @push('js')

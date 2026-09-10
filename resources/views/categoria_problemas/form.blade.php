@@ -1,6 +1,6 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h6 class="mb-0 font-weight-bold text-primary"><i class="fa fa-tags me-2"></i>Información de la Categoría</h6>
+        <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-tags me-2 text-danger"></i>Información de la Categoría</h6>
         <p class="text-xs text-secondary mb-0">Ingrese el nombre de la categoría para agrupar problemas.</p>
     </div>
     <span class="text-xs text-danger font-weight-bold">* Campo Obligatorio</span>

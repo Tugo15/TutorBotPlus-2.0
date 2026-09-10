@@ -8,17 +8,17 @@
     <div class="container-fluid py-4">
         <form method="POST" action='{{ route('lenguaje_programacion.store') }}' onsubmit="event.preventDefault();submitFormCrear()" id="crearForm">
             @csrf
-            <div class="card shadow-xs border">
-                <div class="card-header pb-0">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0 font-weight-bold text-primary"><i class="fa fa-code me-2"></i>Crear Nuevo Lenguaje de Programación</h6>
-                        <a href="{{ route('lenguaje_programacion.index') }}" class="btn btn-sm btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+            <div class="card shadow-xs border mb-4">
+                <div class="card-header pb-0 border-bottom mb-3">
+                    <div class="d-flex justify-content-between align-items-center pb-3">
+                        <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-code me-2 text-warning"></i>Crear Nuevo Lenguaje</h6>
+                        <a href="{{ route('lenguaje_programacion.index') }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body pt-0">
                     @include('lenguaje_programacion.form')
                     <div class="mt-4 pt-3 border-top">
-                        <button type="submit" class="btn btn-sm btn-primary me-2"><i class="fa fa-save me-1"></i> Crear Lenguaje</button>
+                        <button type="submit" class="btn btn-sm btn-dark me-2"><i class="fa fa-save me-1"></i> Crear Lenguaje</button>
                         <a href="{{ route('lenguaje_programacion.index') }}" class="btn btn-sm btn-outline-secondary"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                     </div>
                 </div>

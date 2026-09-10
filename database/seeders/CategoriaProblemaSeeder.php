@@ -15,12 +15,13 @@ class CategoriaProblemaSeeder extends Seeder
     public function run(): void
     {
         $categorias = [
-            "Fácil",
-            "Intermedio",
-            "Difícil",
-            "Experto",
-            "Opcional",
-            "Obligatorio",
+            "Estructuras de Control",
+            "Arreglos y Vectores",
+            "Funciones y Recursión",
+            "Búsqueda y Ordenamiento",
+            "Consultas SQL",
+            "Estructuras de Datos Avanzadas",
+            "Programación Dinámica",
         ];
         foreach ($categorias as $categoria) {
             DB::table('categoria__problemas')->insert([

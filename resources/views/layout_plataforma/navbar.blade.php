@@ -13,10 +13,6 @@
                     <a class="nav-link {{ Route::is('cursos.*') || Route::is('problemas.*') ? 'active fw-bold' : '' }}"
                         aria-current="page" href="{{ route('cursos.listado') }}">Cursos</a>
                 </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link {{ Route::is('certamen.*') || Route::is('certamenes.*') ? 'active fw-bold' : '' }}" aria-current="page" href="{{route('certamenes.listado')}}">Evaluaciones</a>
-                </li>
                 <li class="nav-item">
                     <a class="nav-link {{ Route::is('envios.*') ? 'active fw-bold' : '' }}"
                         href="{{ route('envios.listado') }}">Envíos</a>

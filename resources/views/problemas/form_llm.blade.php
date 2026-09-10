@@ -1,4 +1,6 @@
-<p class="text-uppercase text-sm">Configuración de la Large Language Model</p>
+<div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom mt-4">
+    <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-robot text-info me-2"></i>Configuración de la Inteligencia Artificial (LLM)</h6>
+</div>
 <div class="row d-flex justify-content-start align-items-center">
     <div class="col">
         <div class="form-check form-switch">

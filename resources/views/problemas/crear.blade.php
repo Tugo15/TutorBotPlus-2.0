@@ -8,16 +8,16 @@
         <form method="POST" action='{{ route('problemas.store') }}' enctype="multipart/form-data" onsubmit="event.preventDefault();submitFormCrear()" id="crearForm">
             @csrf
             <div class="card shadow-xs border">
-                <div class="card-header pb-0">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0 font-weight-bold text-primary"><i class="fa fa-plus-circle me-2"></i>Crear Nuevo Problema</h6>
+                <div class="card-header pb-0 border-bottom mb-3">
+                    <div class="d-flex justify-content-between align-items-center pb-3">
+                        <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-plus-circle me-2 text-primary"></i>Crear Nuevo Problema</h6>
                         <a href="{{ route('problemas.index') }}" class="btn btn-sm btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                     </div>
                 </div>
                 <div class="card-body">
                     @include('problemas.form')
                     <div class="mt-4 pt-3 border-top">
-                        <button type="submit" class="btn btn-sm btn-primary me-2"><i class="fa fa-save me-1"></i> Crear Problema</button>
+                        <button type="submit" class="btn btn-sm btn-dark me-2"><i class="fa fa-save me-1"></i> Crear Problema</button>
                         <a href="{{ route('problemas.index') }}" class="btn btn-sm btn-outline-secondary"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                     </div>
                 </div>
@@ -47,8 +47,11 @@
             height: '600px',
             initialEditType: 'markdown',
             placeholder: 'Ingrese el enunciado del problema',
-            initialValue: `{{ isset($problema) ? old('body_problema', $problema->body_problema) : old('body_problema') }}`,
-        })
+            initialValue: @json(old('body_problema', $problema->body_problema ?? '')),
+        });
+        editor.on('change', () => {
+            document.querySelector('#body_problema').value = editor.getMarkdown();
+        });
         document.querySelector('#crearForm').addEventListener('submit', e => {
             document.querySelector('#body_problema').value = editor.getMarkdown();
         });

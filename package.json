@@ -14,7 +14,10 @@
         "test:k6": "C:\\PROGRA~1\\k6\\k6.exe run tests/qa/k6/smoke_test.js",
         "test:qa": "npm run test:jest",
         "test:all": "npm run test:jest && npm run test:pytest && npm run test:k6",
-        "test": "npm run test:all"
+        "test": "npm run test:all",
+        "tunnel": "npx localtunnel --port 8000 --subdomain tutorbotplus",
+        "tunnel:ngrok": "ngrok http 8000",
+        "tunnel:cloudflared": "npx cloudflared tunnel --url http://127.0.0.1:8000"
     },
     "devDependencies": {
         "axios": "^1.1.2",

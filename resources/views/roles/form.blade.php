@@ -1,5 +1,10 @@
-<p class="text-uppercase text-sm">Información del Rol</p>
-<p class="text-sm text-danger">* Obligatorio</p>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-shield-alt me-2 text-info"></i>Información del Rol</h6>
+        <p class="text-xs text-secondary mb-0">Ingrese el nombre del rol y gestione sus permisos asociados.</p>
+    </div>
+    <span class="text-xs text-danger font-weight-bold">* Campo Obligatorio</span>
+</div>
 <div class="row">
     <div class="col">
         <div class="form-group has-danger">

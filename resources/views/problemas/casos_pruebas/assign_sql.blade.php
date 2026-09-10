@@ -44,11 +44,11 @@
                                         <p class="text-danger text-xs pt-1"> {{ $message }} </p>
                                     @enderror
                                 </div>
-                                <button class="btn btn-primary" type="submit">Guardar</button>
-                                <button type="button" class="btn bg-outline-primary" data-bs-toggle="modal" data-bs-target="#ejemplo_modal">
-                                    Ver Ejemplo
+                                <button class="btn btn-dark" type="submit"><i class="fa fa-save me-1"></i> Guardar</button>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#ejemplo_modal">
+                                    <i class="fa fa-eye me-1"></i> Ver Ejemplo
                                 </button>
-                                <a href="{{route('problemas.index')}}" class="btn bg-outline-primary">Volver</a>
+                                <a href="{{route('problemas.index')}}" class="btn btn-outline-secondary"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                             </div>
                         </div>
                     </form>

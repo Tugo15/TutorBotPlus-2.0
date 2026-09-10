@@ -22,6 +22,11 @@ class ResolucionCertamenes extends Model
                 DB::beginTransaction();
                 $this->finalizado = true;
                 $certamen = $this->certamen;
+                if (!$certamen) {
+                    $this->save();
+                    DB::commit();
+                    return;
+                }
                 $_now = Carbon::now();
                 if ($_now->gte(Carbon::parse($certamen->fecha_inicio)) && $_now->lte(Carbon::parse($certamen->fecha_termino))) {
                     $this->fecha_finalizado = $_now;
@@ -39,8 +44,10 @@ class ResolucionCertamenes extends Model
                         $this->puntaje_obtenido += $envio->puntaje;
                         $this->problemas_resueltos += 1;
                     } else {
-                        if ($problemas_penalizacion[$envio->problema->id] < $certamen->cantidad_penalizacion) {
-                            $this->puntaje_obtenido -= $certamen->penalizacion_error;
+                        $pen_error = $certamen->penalizacion_error ?? 0;
+                        $cant_pen = $certamen->cantidad_penalizacion ?? 0;
+                        if (isset($envio->problema->id) && isset($problemas_penalizacion[$envio->problema->id]) && $problemas_penalizacion[$envio->problema->id] < $cant_pen) {
+                            $this->puntaje_obtenido -= $pen_error;
                             $problemas_penalizacion[$envio->problema->id] += 1;
                         }
                     }

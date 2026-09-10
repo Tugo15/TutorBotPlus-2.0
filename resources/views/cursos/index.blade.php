@@ -8,11 +8,11 @@
                 <div class="card-header pb-0 border-bottom mb-3">
                     <div class="d-flex justify-content-between align-items-center pb-3">
                         <div>
-                            <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-graduation-cap me-2 text-primary"></i>Gestión de Cursos</h6>
+                            <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-graduation-cap me-2 text-success"></i>Gestión de Cursos</h6>
                             <p class="text-xs text-secondary mb-0">Administre las asignaturas y secciones disponibles en la plataforma.</p>
                         </div>
                         @can('crear curso')
-                        <a class="btn btn-sm btn-primary mb-0" href="{{ route('cursos.crear') }}"><i class="fa fa-plus me-1"></i> Crear Curso</a>
+                        <a class="btn btn-sm btn-dark mb-0" href="{{ route('cursos.crear') }}"><i class="fa fa-plus me-1"></i> Crear Curso</a>
                         @endcan
                     </div>
                 </div>
@@ -36,19 +36,12 @@
                     <div class="table-responsive p-0">
                         <table class="table align-items-center mb-0" id="table">
                             <thead>
-                                <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Nombre
-                                    </th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
-                                        Código
-                                    </th>
-                                    <th
-                                        class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
-                                        Creado</th>
+                                <tr class="border-bottom">
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Nombre</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7 ps-2">Código</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Creado</th>
                                     @canany(['editar curso', 'eliminar curso', 'ver informe del curso'])
-                                        <th
-                                            class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
-                                            Acción</th>
+                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Acciones</th>
                                     @endcanany
                                 </tr>
                             </thead>
@@ -58,19 +51,19 @@
                                         <td>
                                             <div class="d-inline-flex align-items-center py-1">
                                                 <div class="d-flex flex-column justify-content-center ms-2">
-                                                    <h6 class="mb-0 text-sm font-weight-bold">{{ $curso->nombre }}</h6>
+                                                    <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $curso->nombre }}</h6>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
                                             <div class="d-flex px-3 py-1">
                                                 <div class="d-flex flex-column justify-content-center">
-                                                    <span class="badge bg-gradient-primary text-xs">{{ $curso->codigo }}</span>
+                                                    <span class="badge border border-primary text-primary text-xxs px-2.5 py-1 bg-white">{{ $curso->codigo }}</span>
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="align-middle text-center text-sm">
-                                            <p class="text-sm font-weight-bold mb-0">
+                                            <p class="text-xs text-secondary font-weight-bold mb-0">
                                                 {{ $curso->fecha ? $curso->fecha : 'Desconocido' }}</p>
                                         </td>
                                         @canany(['editar curso', 'eliminar curso', 'ver informe del curso'])
@@ -78,14 +71,21 @@
                                                 <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1">
                                                     @can('ver informe del curso')
                                                         <a class="btn btn-xs btn-outline-primary mb-0" title="Ver Informe del Curso"
-                                                            href="{{ route('informe.curso', ['id_curso' => $curso->id]) }}"><i class="fa fa-chart-bar"></i></a>
+                                                            href="{{ route('informe.curso', ['id_curso' => $curso->id]) }}"><i class="fa fa-chart-bar me-1"></i> Informe</a>
                                                         <a class="btn btn-xs btn-outline-info mb-0" title="Ver Envíos del Curso"
-                                                            href="{{ route('informe.envios.curso', ['id_curso' => $curso->id]) }}"><i class="fa fa-code"></i></a>
+                                                            href="{{ route('informe.envios.curso', ['id_curso' => $curso->id]) }}"><i class="fa fa-code me-1"></i> Envíos</a>
+                                                    @endcan
+                                                    @can('crear problemas')
+                                                        <a class="btn btn-xs btn-outline-success mb-0" title="Crear Problema en este Curso"
+                                                            href="{{ route('problemas.crear', ['id_curso' => $curso->id]) }}"><i class="fa fa-plus me-1"></i> Problema</a>
+                                                    @endcan
+                                                    @can('crear certamen')
+                                                        <a class="btn btn-xs btn-outline-warning mb-0" title="Crear Evaluación en este Curso"
+                                                            href="{{ route('certamen.crear', ['id_curso' => $curso->id]) }}"><i class="fa fa-plus me-1"></i> Evaluación</a>
                                                     @endcan
                                                     @can('editar curso')
-                                                        <a class="btn btn-xs btn-outline-warning mb-0" title="Editar Curso"
-                                                            href="{{ route('cursos.editar', ['id' => $curso->id]) }}"><i
-                                                                class="fa fa-pencil"></i></a>
+                                                        <a class="btn btn-xs btn-outline-info mb-0" title="Editar Curso"
+                                                            href="{{ route('cursos.editar', ['id' => $curso->id]) }}"><i class="fa fa-pencil me-1"></i> Editar</a>
                                                     @endcan
                                                     @can('eliminar curso')
                                                         <form action="{{ route('cursos.eliminar', ['id' => $curso->id]) }}"
@@ -93,8 +93,7 @@
                                                             onsubmit="event.preventDefault();submitFormEliminar('{{ 'el curso ' . $curso->nombre }}', {{ $curso->id }})"
                                                             id="eliminarForm_{{ $curso->id }}">
                                                             @csrf
-                                                            <button type="submit" class="btn btn-xs btn-outline-danger mb-0" title="Eliminar Curso"><i
-                                                                    class="fa fa-fw fa-trash"></i></button>
+                                                            <button type="submit" class="btn btn-xs btn-outline-danger mb-0" title="Eliminar Curso"><i class="fa fa-fw fa-trash me-1"></i> Eliminar</button>
                                                         </form>
                                                     @endcan
                                                 </div>
