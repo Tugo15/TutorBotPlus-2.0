@@ -11,11 +11,13 @@
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-code me-2 text-primary"></i>Gestión de Problemas</h6>
                             <p class="text-xs text-secondary mb-0">Administración de problemas de programación organizados por asignaturas.</p>
                         </div>
-                        @can('crear problemas')
-                            <a class="btn btn-sm btn-dark mb-0" href="{{ route('problemas.crear', isset($id_curso_activo) && $id_curso_activo ? ['id_curso' => $id_curso_activo] : []) }}">
-                                <i class="fa fa-plus me-1"></i> Crear Problema
-                            </a>
-                        @endcan
+                        @if(!isset($id_curso_activo) || !$id_curso_activo)
+                            @can('crear problemas')
+                                <a class="btn btn-sm btn-dark mb-0" href="{{ route('problemas.crear') }}">
+                                    <i class="fa fa-plus me-1"></i> Crear Problema
+                                </a>
+                            @endcan
+                        @endif
                     </div>
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">
@@ -144,7 +146,7 @@
                         </div>
                         
                         <div class="table-responsive p-0">
-                            <table class="table align-items-center mb-0" id="table">
+                            <table class="table align-items-center mb-0" id="table" style="width:100%">
                                 <thead>
                                     <tr class="border-bottom">
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Problema</th>
@@ -158,7 +160,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse ($problemas as $problema)
+                                    @foreach ($problemas as $problema)
                                         <tr>
                                             <td>
                                                 <div class="d-inline-flex align-items-center py-1">
@@ -227,13 +229,7 @@
                                                 </td>
                                             @endcan
                                         </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="6" class="text-center py-4 text-secondary">
-                                                No hay problemas registrados en este curso.
-                                            </td>
-                                        </tr>
-                                    @endforelse
+                                    @endforeach
                                 </tbody>
                             </table>
                         </div>

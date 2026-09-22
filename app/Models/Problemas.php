@@ -83,6 +83,15 @@ class Problemas extends Model
         }
         return $rules;
     }
+
+    public static function updateRules(bool $boolFechaInicio, bool $boolFechaTermino, $id = null, $sql = false){
+        $codigo = null;
+        if ($id) {
+            $problema = self::find($id) ?? self::where('codigo', $id)->first();
+            $codigo = $problema ? $problema->codigo : $id;
+        }
+        return self::createRules($boolFechaInicio, $boolFechaTermino, $codigo, $sql, true);
+    }
     public static $llm_config_rules = [
         "habilitar_llm" => ["boolean"],
         "limite_llm" => ["nullable","numeric"],

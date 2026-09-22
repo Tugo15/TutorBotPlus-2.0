@@ -1,4 +1,17 @@
-var indexLastColumn = $("#table").find('tr')[0].cells.length-2 //busca la penultima columna de la tabla, la penultima columna es siempre la fecha de creación.
+// Desactivar alertas emergentes (popups) de DataTables para manejar celdas vacías o faltantes de manera silenciosa
+if (typeof DataTable !== 'undefined') {
+    DataTable.ext.errMode = 'none';
+}
+if (typeof $.fn !== 'undefined' && $.fn.dataTable) {
+    $.fn.dataTable.ext.errMode = 'none';
+}
+
+var indexLastColumn = 0;
+var firstRow = $("#table").find('tr')[0];
+if (firstRow && firstRow.cells && firstRow.cells.length >= 2) {
+    indexLastColumn = firstRow.cells.length - 2;
+}
+
 const espaniol = {
     "aria": {
         "sortAscending": ": orden ascendente",
@@ -243,13 +256,31 @@ const espaniol = {
         "renameLabel": "Nombre nuevo para %s:",
         "renameTitle": "Renombrar Estado"
     }
+};
+
+if ($('#table').length > 0) {
+    new DataTable('#table', {
+        language : espaniol,
+        responsive: true,
+        columnDefs: [
+            { defaultContent: "-", targets: "_all" }
+        ],
+        order: [[indexLastColumn, 'desc']],
+        dom: "<'row mx-0 pb-3 pt-4 align-items-center'<'col-sm-12 col-lg-8 d-flex flex-wrap align-items-center gap-3 custom-filters-container'l><'col-sm-12 col-lg-4 d-flex justify-content-end'f>>" +
+             "<'row mx-0'<'col-sm-12 px-0'tr>>" +
+             "<'row mx-0 pt-3 pb-4 align-items-center'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>"
+    });
 }
 
-new DataTable('#table', {
-    language :  espaniol,
-    responsive: true,
-    order: [[indexLastColumn, 'desc']],
-    dom: "<'row pb-3 px-4 pt-4 align-items-center'<'col-sm-12 col-lg-8 d-flex flex-wrap align-items-center gap-3 custom-filters-container'l><'col-sm-12 col-lg-4 d-flex justify-content-end'f>>" +
-         "<'row'<'col-sm-12'tr>>" +
-         "<'row pt-3 px-4 pb-4 align-items-center'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>"
-})
+if ($('#table_evaluaciones').length > 0) {
+    new DataTable('#table_evaluaciones', {
+        language : espaniol,
+        responsive: true,
+        columnDefs: [
+            { defaultContent: "-", targets: "_all" }
+        ],
+        dom: "<'row mx-0 pb-3 pt-4 align-items-center'<'col-sm-12 col-lg-8 d-flex flex-wrap align-items-center gap-3 custom-filters-container'l><'col-sm-12 col-lg-4 d-flex justify-content-end'f>>" +
+             "<'row mx-0'<'col-sm-12 px-0'tr>>" +
+             "<'row mx-0 pt-3 pb-4 align-items-center'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>"
+    });
+}

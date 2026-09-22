@@ -67,15 +67,11 @@ class ProblemasController extends Controller
             $cursos = auth()->user()->cursos()->get();
         }
 
-        $id_curso_preseleccionado = $request->input('id_curso', $request->input('curso'));
-
-        if (!$id_curso_preseleccionado && $cursos->isNotEmpty()) {
-            $id_curso_preseleccionado = $cursos->first()->id;
-        }
-
-        if (!$id_curso_preseleccionado && $cursos->isEmpty()) {
+        if ($cursos->isEmpty()) {
             return redirect()->route('problemas.index')->with('error', 'Debe tener al menos un curso asignado para crear un problema.');
         }
+
+        $id_curso_preseleccionado = $request->input('id_curso', $request->input('curso'));
 
         $lenguajes = LenguajesProgramaciones::where('abreviatura', 'NOT LIKE', '%sql%')->get();
         return view('problemas.crear', compact('categorias', 'cursos', 'lenguajes', 'id_curso_preseleccionado'))->with('accion', "crear");
@@ -83,13 +79,16 @@ class ProblemasController extends Controller
 
     public function editar(Request $request)
     {
-        $problema = Problemas::find($request->id);
-        $problema->sql = $problema->lenguajes()->where('lenguajes_programaciones.nombre', 'LIKE', '%sql%')->exists();
+        $problema = Problemas::with(['cursos', 'categorias', 'lenguajes'])->find($request->id);
+        if (!$problema) {
+            return redirect()->route('problemas.index')->with('error', 'El problema no existe.');
+        }
+        $problema->sql = $problema->lenguajes()->where('nombre', 'LIKE', '%sql%')->exists();
         if(isset($problema->fecha_inicio)){
-            $problema->fecha_inicio = Carbon::parse($problema->fecha_inicio)->toDateTimeString();
+            $problema->fecha_inicio = Carbon::parse($problema->fecha_inicio)->format('Y-m-d H:i');
         }
         if(isset($problema->fecha_termino)){
-            $problema->fecha_termino = Carbon::parse($problema->fecha_termino)->toDateTimeString();
+            $problema->fecha_termino = Carbon::parse($problema->fecha_termino)->format('Y-m-d H:i');
         }
         if($problema->memoria_limite==0){
             $problema->memoria_limite = null;
@@ -170,6 +169,8 @@ class ProblemasController extends Controller
             if(isset($request->sql) && $request->sql==1){
                 $id_sql = LenguajesProgramaciones::where('nombre', 'LIKE', '%sql%')->pluck('id');
                 $problema->lenguajes()->sync($id_sql);
+            }else if(isset($request->lenguajes)){
+                $problema->lenguajes()->sync($request->input('lenguajes'));
             }
             if(isset($request->categorias)){
                 $problema->categorias()->sync($request->input('categorias'));
@@ -181,7 +182,7 @@ class ProblemasController extends Controller
     }
     public function update(Request $request)
     {
-        $validated = $request->validate(Problemas::updateRules(isset($request->fecha_inicio), isset($request->fecha_termino),$request->id, $request->sql));
+        $validated = $request->validate(Problemas::updateRules(isset($request->set_fecha_inicio) || isset($request->fecha_inicio), isset($request->set_fecha_termino) || isset($request->fecha_termino), $request->id, $request->sql));
         try {
             db::beginTransaction();
             $problema = Problemas::find($request->id);

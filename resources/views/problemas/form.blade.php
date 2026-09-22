@@ -149,7 +149,7 @@
                 <div class="row g-2" id="prob-cursos-container">
                     @foreach ($cursos as $curso)
                         @php
-                            $isChecked = (isset($problema) && $problema->cursos()->get()->contains($curso->id)) || (old('cursos') && in_array($curso->id, old('cursos'))) || (isset($id_curso_preseleccionado) && $id_curso_preseleccionado == $curso->id);
+                            $isChecked = (isset($problema) && $problema->cursos->pluck('id')->contains($curso->id)) || (old('cursos') && in_array($curso->id, old('cursos'))) || (isset($id_curso_preseleccionado) && $id_curso_preseleccionado == $curso->id);
                         @endphp
                         <div class="col-md-4 col-sm-6">
                             <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif" for="prob_curso_{{ $curso->id }}">
@@ -183,7 +183,7 @@
                 <div class="row g-2" id="prob-categorias-container">
                     @foreach ($categorias as $categoria)
                         @php
-                            $isChecked = (isset($problema) && $problema->categorias()->get()->contains($categoria->id)) || (old('categorias') && in_array($categoria->id, old('categorias')));
+                            $isChecked = (isset($problema) && $problema->categorias->pluck('id')->contains($categoria->id)) || (old('categorias') && in_array($categoria->id, old('categorias')));
                         @endphp
                         <div class="col-md-3 col-sm-6">
                             <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif" for="prob_cat_{{ $categoria->id }}">
@@ -225,8 +225,15 @@
                     <div class="row g-2" id="prob-lenguajes-container">
                         @foreach ($lenguajes as $lenguaje)
                             @php
-                                $isChecked = (isset($problema) && $problema->lenguajes()->get()->contains($lenguaje->id)) || (old('lenguajes') && in_array($lenguaje->id, old('lenguajes')));
                                 $isDisabled = (isset($problema) && $problema->sql) || old('sql');
+                                $hasSavedLenguajes = isset($problema) && $problema->lenguajes->isNotEmpty();
+                                if (old('lenguajes')) {
+                                    $isChecked = in_array($lenguaje->id, old('lenguajes'));
+                                } elseif ($hasSavedLenguajes) {
+                                    $isChecked = $problema->lenguajes->pluck('id')->contains($lenguaje->id);
+                                } else {
+                                    $isChecked = !$isDisabled;
+                                }
                             @endphp
                             <div class="col-md-3 col-sm-6">
                                 <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif @if($isDisabled) disabled @endif" for="prob_leng_{{ $lenguaje->id }}">

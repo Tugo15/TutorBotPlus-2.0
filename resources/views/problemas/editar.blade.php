@@ -39,12 +39,18 @@
         const checkbox_fecha_termino = document.getElementById('set_fecha_termino')
         const sql_file = document.getElementById("sql_file");
         const archivos_adicionales = document.getElementById("archivos_adicionales")
-        const fecha_inicio = flatpickr("#fecha_inicio", {enableTime: true,
-            dateFormat: "d-m-Y H:i",minDate: new Date(),}); 
-        const fecha_termino = flatpickr("#fecha_termino", {enableTime: true,
-            dateFormat: "d-m-Y H:i", minDate: new Date(),}); 
-        fecha_inicio.setDate(Date.parse("{{old('fecha_inicio', $problema->fecha_inicio)}}"))
-        fecha_termino.setDate(Date.parse("{{old('fecha_termino', $problema->fecha_termino)}}"))
+        const f_ini_val = @json(old('fecha_inicio', $problema->fecha_inicio));
+        const f_ter_val = @json(old('fecha_termino', $problema->fecha_termino));
+        const fecha_inicio = flatpickr("#fecha_inicio", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            defaultDate: f_ini_val ? f_ini_val : null
+        }); 
+        const fecha_termino = flatpickr("#fecha_termino", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            defaultDate: f_ter_val ? f_ter_val : null
+        });
         const editor = new Editor({
             el: document.querySelector('#editor'),
             height: '600px',

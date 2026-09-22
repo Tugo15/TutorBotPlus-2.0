@@ -21,60 +21,64 @@
 
                 <!-- VISTA 1 PRINCIPAL: PROBLEMAS DE PRÁCTICA DEL CURSO -->
                 <div id="seccion-problemas">
-                    <table id="table" class="table table-striped" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Puntos</th>
-                                <th>Categoria</th>
-                                <th>¿Resuelto?</th>
-                                <th>Creado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($problemas as $problema)
+                    <div class="table-responsive">
+                        <table id="table" class="table table-striped" style="width:100%">
+                            <thead>
                                 <tr>
-                                    <td><a href="{{ route('problemas.ver', ['codigo' => $problema->codigo, 'id_curso' => $curso->id]) }}">{{ $problema->nombre }}</a></td>
-                                    <td>{{ $problema->puntaje_total }}</td>
-                                    <td>{{ $problema->categorias }}</td>
-                                    <td>{{ $problema->resuelto ? 'Si' : 'No' }}</td>
-                                    <td>{{ $problema->creado }}</td>
+                                    <th>Nombre</th>
+                                    <th>Puntos</th>
+                                    <th>Categoria</th>
+                                    <th>¿Resuelto?</th>
+                                    <th>Creado</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach ($problemas as $problema)
+                                    <tr>
+                                        <td><a href="{{ route('problemas.ver', ['codigo' => $problema->codigo, 'id_curso' => $curso->id]) }}">{{ $problema->nombre }}</a></td>
+                                        <td>{{ $problema->puntaje_total }}</td>
+                                        <td>{{ $problema->categorias }}</td>
+                                        <td>{{ $problema->resuelto ? 'Si' : 'No' }}</td>
+                                        <td>{{ $problema->creado }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- VISTA 2: EVALUACIONES DEL CURSO -->
                 <div id="seccion-evaluaciones" style="display: none;">
-                    <table id="table_evaluaciones" class="table table-striped" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Cantidad Problemas</th>
-                                <th>Penalización por error</th>
-                                <th>¿Finalizado?</th>
-                                <th>Tiempo de Desarrollo</th>
-                                <th>Ejercicios Resueltos</th>
-                                <th>Fecha Inicio</th>
-                                <th>Fecha Termino</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($evaluaciones as $evaluacion)
+                    <div class="table-responsive">
+                        <table id="table_evaluaciones" class="table table-striped" style="width:100%">
+                            <thead>
                                 <tr>
-                                    <td><a href="{{ route('certamenes.ver', ['id_certamen' => $evaluacion->id]) }}">{{ $evaluacion->nombre }}</a></td>
-                                    <td>{{ $evaluacion->cantidad_problemas }}</td>
-                                    <td>{{ $evaluacion->penalizacion_error }}</td>
-                                    <td>{{ $evaluacion->estado_finalizado ? 'Si' : 'No' }}</td>
-                                    <td>{{ isset($evaluacion->estado_finalizado) && isset($evaluacion->tiempo_desarrollo) ? gmdate('H:i:s', $evaluacion->tiempo_desarrollo) : "-" }}</td>
-                                    <td>{{ isset($evaluacion->maximo_resuelto) ? $evaluacion->maximo_resuelto . '/' . $evaluacion->cantidad_problemas : '-/' . $evaluacion->cantidad_problemas }}</td>
-                                    <td>{{ $evaluacion->fecha_inicio_formatted ?? $evaluacion->fecha_inicio }}</td>
-                                    <td>{{ $evaluacion->fecha_termino_formatted ?? $evaluacion->fecha_termino }}</td>
+                                    <th>Nombre</th>
+                                    <th>Cantidad Problemas</th>
+                                    <th>Penalización por error</th>
+                                    <th>¿Finalizado?</th>
+                                    <th>Tiempo de Desarrollo</th>
+                                    <th>Ejercicios Resueltos</th>
+                                    <th>Fecha Inicio</th>
+                                    <th>Fecha Termino</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach ($evaluaciones as $evaluacion)
+                                    <tr>
+                                        <td><a href="{{ route('certamenes.ver', ['id_certamen' => $evaluacion->id]) }}">{{ $evaluacion->nombre }}</a></td>
+                                        <td>{{ $evaluacion->cantidad_problemas }}</td>
+                                        <td>{{ $evaluacion->penalizacion_error }}</td>
+                                        <td>{{ $evaluacion->estado_finalizado ? 'Si' : 'No' }}</td>
+                                        <td>{{ isset($evaluacion->estado_finalizado) && isset($evaluacion->tiempo_desarrollo) ? gmdate('H:i:s', $evaluacion->tiempo_desarrollo) : "-" }}</td>
+                                        <td>{{ isset($evaluacion->maximo_resuelto) ? $evaluacion->maximo_resuelto . '/' . $evaluacion->cantidad_problemas : '-/' . $evaluacion->cantidad_problemas }}</td>
+                                        <td>{{ $evaluacion->fecha_inicio_formatted ?? $evaluacion->fecha_inicio }}</td>
+                                        <td>{{ $evaluacion->fecha_termino_formatted ?? $evaluacion->fecha_termino }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
             </div>
