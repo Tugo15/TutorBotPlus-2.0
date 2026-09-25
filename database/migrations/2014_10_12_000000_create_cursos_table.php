@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('cursos', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
-            $table->text('descripcion')->default('Este es un curso de programación');
+            $table->string('descripcion', 500)->default('Este es un curso de programación');
             $table->string('codigo')->unique();
             $table->timestamps();
         });
