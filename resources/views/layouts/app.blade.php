@@ -21,7 +21,7 @@
     <script src="{{ asset('assets/js/disable_devtools.js') }}"></script>
     <script src="{{ mix('js/app.js') }}" defer></script>
     <link rel="stylesheet" href="{{ mix('assets/css/argon-dashboard.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/datatables_argon_fix.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/datatables_argon_fix.css') }}?v={{ filemtime(public_path('assets/css/datatables_argon_fix.css')) }}">
     <link rel="stylesheet" href="{{ asset('assets/css/selection_cards.css') }}">
 
     @stack('css')
