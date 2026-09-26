@@ -5,8 +5,8 @@
     <div class="row mt-4 mx-4">
         <div class="col-12">
             <div class="card shadow-xs border mb-4">
-                <div class="card-header pb-0 border-bottom mb-3">
-                    <div class="d-flex justify-content-between align-items-center pb-3">
+                <div class="card-header pb-0 border-bottom mb-1">
+                    <div class="d-flex justify-content-between align-items-center pb-2">
                         <div>
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-graduation-cap me-2 text-success"></i>Gestión de Cursos</h6>
                             <p class="text-xs text-secondary mb-0">Administre las asignaturas y secciones disponibles en la plataforma.</p>

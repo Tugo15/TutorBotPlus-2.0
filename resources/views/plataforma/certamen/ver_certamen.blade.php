@@ -5,7 +5,7 @@
         @include('components.alert')
         <div class="row mb-3">
             <div class="col-sm-8 col-xs-12">
-                <div class="card border-danger overflow-auto" style="height:40rem">
+                <div class="card border-danger shadow-sm h-100" style="min-height:40rem">
                     <div class="card-header">
                         Descripción
                     </div>

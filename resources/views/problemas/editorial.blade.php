@@ -44,16 +44,41 @@
             el: document.querySelector('#editor'),
             height: '600px',
             initialEditType: 'markdown',
+            previewStyle: 'vertical',
             placeholder: "La editorial es una forma para ayudar al estudiante para que pueda comprender el problema.",
             initialValue: @json($problema->body_editorial ?? ''),
+            extendedAutolinks: true,
+            customHTMLRenderer: {
+                codeBlock(node, { innerHTML }) {
+                    if (node.info === 'katex' || node.info === 'math' || node.info === 'latex') {
+                        try {
+                            const html = window.katex ? window.katex.renderToString(innerHTML, { displayMode: true, throwOnError: false }) : innerHTML;
+                            return {
+                                type: 'html',
+                                content: `<div class="katex-block my-2 text-center">${html}</div>`
+                            };
+                        } catch (e) {
+                            return { type: 'html', content: `<pre>${innerHTML}</pre>` };
+                        }
+                    }
+                }
+            }
         });
+
+        if (typeof window.attachKaTeXToEditor === 'function') {
+            window.attachKaTeXToEditor(editor, '#editor');
+        }
+
         editor.on('change', () => {
             document.querySelector('#body_editorial').value = editor.getMarkdown();
         });
+
         document.querySelector('#editorial_form').addEventListener('submit', e => {
             e.preventDefault();
             document.querySelector('#body_editorial').value = editor.getMarkdown();
             e.target.submit();
         });
+
+
     </script>
 @endpush

@@ -24,8 +24,8 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
 
-        if (request()->server->get('HTTP_X_FORWARDED_PROTO') === 'https' || request()->header('x-forwarded-proto') === 'https') {
-            URL::forceScheme('https');
-        }
+        // if (request()->server->get('HTTP_X_FORWARDED_PROTO') === 'https' || request()->header('x-forwarded-proto') === 'https') {
+        //     URL::forceScheme('https');
+        // }
     }
 }

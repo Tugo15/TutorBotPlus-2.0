@@ -5,8 +5,8 @@
     <div class="row mt-4 mx-4">
         <div class="col-12">
             <div class="card shadow-xs border mb-4">
-                <div class="card-header pb-0 border-bottom mb-3">
-                    <div class="d-flex justify-content-between align-items-center pb-3">
+                <div class="card-header pb-0 border-bottom mb-1">
+                    <div class="d-flex justify-content-between align-items-center pb-2">
                         <div>
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-calendar-check me-2 text-warning"></i>Gestión de Evaluaciones</h6>
                             <p class="text-xs text-secondary mb-0">Administración de certámenes organizados por asignaturas.</p>
@@ -80,8 +80,8 @@
                         </div>
                     @else
                         <!-- VISTA 2: DENTRO DEL CURSO -->
-                        <div class="px-4 pb-2">
-                            <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                        <div class="px-4 pb-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1 pb-2 border-bottom">
                                 <div class="d-flex align-items-center">
                                     <a href="{{ route('certamen.index') }}" class="btn btn-xs btn-outline-secondary mb-0 me-3">
                                         <i class="fa fa-arrow-left me-1"></i> Volver a Cursos

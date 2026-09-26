@@ -47,15 +47,40 @@
             el: document.querySelector('#editor'),
             height: '600px',
             initialEditType: 'markdown',
+            previewStyle: 'vertical',
             placeholder: 'Ingrese el enunciado del problema',
             initialValue: @json(old('descripcion', $certamen->descripcion ?? '')),
+            extendedAutolinks: true,
+            customHTMLRenderer: {
+                codeBlock(node, { innerHTML }) {
+                    if (node.info === 'katex' || node.info === 'math' || node.info === 'latex') {
+                        try {
+                            const html = window.katex ? window.katex.renderToString(innerHTML, { displayMode: true, throwOnError: false }) : innerHTML;
+                            return {
+                                type: 'html',
+                                content: `<div class="katex-block my-2 text-center">${html}</div>`
+                            };
+                        } catch (e) {
+                            return { type: 'html', content: `<pre>${innerHTML}</pre>` };
+                        }
+                    }
+                }
+            }
         });
+
+        if (typeof window.attachKaTeXToEditor === 'function') {
+            window.attachKaTeXToEditor(editor, '#editor');
+        }
+
         editor.on('change', () => {
             document.querySelector('#descripcion').value = editor.getMarkdown();
         });
+
         document.querySelector('#editarForm').addEventListener('submit', e => {
             document.querySelector('#descripcion').value = editor.getMarkdown();
         });
+
+
 
     </script>
 @endpush

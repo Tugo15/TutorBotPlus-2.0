@@ -11,7 +11,7 @@
         @include('components.alert')
         <div class="row mb-3 row-cols-2">
             <div class="col-sm-8 col-xs-12">
-                <div class="card border-danger overflow-auto" style="height:40rem">
+                <div class="card border-danger shadow-sm h-100" style="min-height:40rem">
                     <div class="card-header">
                         Enunciado
                     </div>
@@ -85,28 +85,29 @@
                         </form>
                     </div>
                 </div>
-                <div class="card border-danger" style="height:28rem">
-                    <div class="card-body px-3">
-                        <div class="row px-5 mt-2">
-                            <a class="btn btn-primary btn-sm btn-block @if ($problemas[0]->resuelto == true) disabled @endif"
+                <div class="card border-danger shadow-sm mb-3">
+                    <div class="card-body p-3">
+                        <div class="d-grid gap-2 px-2 mt-1">
+                            <a class="btn btn-primary btn-sm @if ($problemas[0]->resuelto == true) disabled @endif"
                                 href="{{ $problemas[0]->resolver_ruta }}" role="button" id="boton_resolver">
                                 {{ $problemas[0]->resuelto == true ? 'Problema Resuelto' : 'Resolver Problema' }}</a>
-                            <a class="btn btn-outline-secondary btn-sm btn-block mt-2" href="{{ $problemas[0]->pdf_ruta }}"
+                            <a class="btn btn-outline-secondary btn-sm" href="{{ $problemas[0]->pdf_ruta }}"
                                 id="boton_pdf" target="_blank" role="button">Descargar PDF del Enunciado</a>
                         </div>
-                        <hr>
-                        <h6 class="ms-3 mt-3"><strong>Información:</strong></h6>
-                        <ul class="list-group mt-3">
-                            <li class="list-group-item"><strong>Puntos:</strong>
-                                <span id="puntaje_total">{{ $problemas[0]->puntaje_total }}</span>
+                        <hr class="my-3">
+                        <h6 class="px-2 font-weight-bold text-dark mb-2"><i class="fa fa-info-circle me-1 text-primary"></i> Información:</h6>
+                        <ul class="list-group list-group-flush border rounded shadow-none mx-1">
+                            <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                <strong>Puntos:</strong>
+                                <span class="badge bg-primary rounded-pill" id="puntaje_total">{{ $problemas[0]->puntaje_total }}</span>
                             </li>
-                            <li class="list-group-item"><strong>Límite de Tiempo:</strong>
-                                <span
-                                    id="tiempo_limite">{{ $problemas[0]->tiempo_limite ? $problemas[0]->tiempo_limite . ' s' : 'No definido' }}</span>
+                            <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                <strong>Límite de Tiempo:</strong>
+                                <span id="tiempo_limite">{{ $problemas[0]->tiempo_limite ? $problemas[0]->tiempo_limite . ' s' : 'No definido' }}</span>
                             </li>
-                            <li class="list-group-item"><strong>Límite de Memoria:</strong>
-                                <span
-                                    id="memoria_limite">{{ $problemas[0]->memoria_limite ? $problemas[0]->memoria_limite . ' KB' : 'No definido' }}</span>
+                            <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                <strong>Límite de Memoria:</strong>
+                                <span id="memoria_limite">{{ $problemas[0]->memoria_limite ? $problemas[0]->memoria_limite . ' KB' : 'No definido' }}</span>
                             </li>
                         </ul>
                     </div>
@@ -191,7 +192,11 @@
                     htmlEnunciado += '</div></div>';
                 }
                 document.getElementById("enunciado").innerHTML = htmlEnunciado;
+                if (typeof window.renderFormulas === 'function') {
+                    window.renderFormulas(document.getElementById("enunciado"));
+                }
                 document.getElementById("titulo_problema").innerHTML = problemas[item]["nombre"];
+
                 document.getElementById("puntaje_total").innerHTML = problemas[item]["puntaje_total"];
                 if (problemas[item]["tiempo_limite"] == null) {
                     document.getElementById("tiempo_limite").innerHTML = "No Definido";

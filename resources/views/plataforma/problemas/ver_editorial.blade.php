@@ -19,15 +19,20 @@
 @endsection
 @push('js')
 <script>
-    var table = document.querySelector("#body_markdown table")
-    if(table != null){
-        var table_body = table.querySelector("tbody")
-        table.classList.add("table")
-        table.classList.add("table-bordered")
-        table.classList.add("table-hover")
-        table.classList.add("mt-3") 
-        table.style.width = "auto"
-        table_body.classList.add("table-group-divider")
-    }
+    document.addEventListener('DOMContentLoaded', function() {
+        var table = document.querySelector("#body_markdown table");
+        if(table != null){
+            var table_body = table.querySelector("tbody");
+            if (table_body) {
+                table.classList.add("table", "table-bordered", "table-hover", "mt-3");
+                table.style.width = "auto";
+                table_body.classList.add("table-group-divider");
+            }
+        }
+        if (typeof window.renderFormulas === 'function') {
+            window.renderFormulas(document.querySelector('#body_markdown') || document.body);
+        }
+    });
 </script>
 @endpush
+

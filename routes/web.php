@@ -36,9 +36,9 @@ use App\Http\Controllers\LlmController;
 use App\Models\EnvioSolucionProblema;
 use App\Models\JuecesVirtuales;
 
-if (env('APP_ENV') === 'production') {
-    \URL::forceScheme('https');
-}
+// if (env('APP_ENV') === 'production') {
+//     \URL::forceScheme('https');
+// }
 //Autenticación
 Route::get('/home', function () {
 	return redirect()->route('login');

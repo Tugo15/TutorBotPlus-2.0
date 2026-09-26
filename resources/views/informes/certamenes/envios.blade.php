@@ -7,8 +7,8 @@
     <div class="row mt-4 mx-4">
         <div class="col-12">
             <div class="card shadow-xs border mb-4">
-                <div class="card-header pb-0 border-bottom mb-3">
-                    <div class="d-flex justify-content-between align-items-center pb-3">
+                <div class="card-header pb-0 border-bottom mb-1">
+                    <div class="d-flex justify-content-between align-items-center pb-2">
                         <div>
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-file-alt me-2 text-primary"></i>Resultados y Envíos</h6>
                             <p class="text-xs text-secondary mb-0">Revisa los resultados obtenidos y envíos de esta evaluación.</p>

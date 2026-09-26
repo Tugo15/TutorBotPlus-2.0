@@ -12,8 +12,8 @@ services:
     image: judge0/judge0:1.13.0
     volumes:
       - ./judge0.conf:/judge0.conf:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
     tmpfs:
-      - /sys/fs/cgroup/memory
       - /box
     ports:
       - "2358:2358"
@@ -26,8 +26,8 @@ services:
     command: ["./scripts/workers"]
     volumes:
       - ./judge0.conf:/judge0.conf:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
     tmpfs:
-      - /sys/fs/cgroup/memory
       - /box
     privileged: true
     <<: *default-logging

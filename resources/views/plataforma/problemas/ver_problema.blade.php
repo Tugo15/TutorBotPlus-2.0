@@ -4,7 +4,7 @@
         @include('components.alert')
         <div class="row mb-3">
             <div class="col-sm-8 col-xs-12">
-                <div class="card border-danger overflow-auto" style="height:40rem">
+                <div class="card border-danger shadow-sm h-100" style="min-height:40rem">
                     <div class="card-header">
                         Enunciado
                     </div>
@@ -57,66 +57,76 @@
                 </div>
             </div>
             <div class="col-sm-4 col-xs-12">
-                <div class="card border-danger" style="height:40rem">
-                    <div class="card-body px-3">
-                        <div class="row px-5">
-                            <a class="btn btn-primary text-nowrap btn-block {{ $problema->disponible ? '' : 'disabled' }}"
-                                @if (isset($id_curso)) href="{{ route('problemas.resolver', ['codigo' => $problema->codigo, 'id_curso' => $id_curso]) }}" @endif
-                                role="button">{{ $problema->disponible ? 'Resolver Problema' : 'Problema No Disponible' }}</a>
-                        </div>
-                        <div class="row px-5 mt-2">
-                            <a class="btn btn-outline-secondary btn-sm btn-block"
-                                href="{{ route('problemas.pdf_enunciado', ['id_problema' => $problema->id]) }}"
-                                target="_blank" role="button">Descargar PDF del Enunciado</a>
-                        </div>
-                        <div class="row px-5 mt-2">
-                            <a class="btn btn-outline-secondary text-nowrap btn-sm btn-block {{ isset($problema->body_editorial) ? '' : 'disabled' }}"
-                                href="{{ route('problemas.ver_editorial', ['codigo' => $problema->codigo, 'id_curso' => $id_curso]) }}"
-                                role="button">{{ isset($problema->body_editorial) ? 'Ver Pistas' : 'Pistas No Disponible' }}</a>
-                        </div>
-                        @can('ver informe del problema')
-                            <div class="row px-5 mt-2 mb-2">
-                                <a class="btn btn-outline-secondary text-nowrap btn-sm btn-block"
-                                    href="{{ route('informe.problema', ['id_curso' => $id_curso, 'id_problema' => $problema->id]) }}"
-                                    role="button">Ver Informe del Problema</a>
+                <div class="card border-danger shadow-sm mb-3" style="min-height:40rem;">
+                    <div class="card-body p-3.5 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-grid gap-2 px-1">
+                                <a class="btn btn-primary text-nowrap {{ $problema->disponible ? '' : 'disabled' }}"
+                                    @if (isset($id_curso)) href="{{ route('problemas.resolver', ['codigo' => $problema->codigo, 'id_curso' => $id_curso]) }}" @endif
+                                    role="button">{{ $problema->disponible ? 'Resolver Problema' : 'Problema No Disponible' }}</a>
+                                <a class="btn btn-outline-secondary btn-sm"
+                                    href="{{ route('problemas.pdf_enunciado', ['id_problema' => $problema->id]) }}"
+                                    target="_blank" role="button">Descargar PDF Enunciado</a>
+                                <a class="btn btn-outline-secondary text-nowrap btn-sm {{ isset($problema->body_editorial) ? '' : 'disabled' }}"
+                                    href="{{ route('problemas.ver_editorial', ['codigo' => $problema->codigo, 'id_curso' => $id_curso]) }}"
+                                    role="button">{{ isset($problema->body_editorial) ? 'Ver Pistas' : 'Pistas No Disponible' }}</a>
+                                @can('ver informe del problema')
+                                    <a class="btn btn-outline-secondary text-nowrap btn-sm"
+                                        href="{{ route('informe.problema', ['id_curso' => $id_curso, 'id_problema' => $problema->id]) }}"
+                                        role="button">Ver Informe del Problema</a>
+                                @endcan
+                                <a class="btn btn-outline-secondary text-nowrap btn-sm"
+                                    href="{{ route('envios.listado', ['id_problema' => $problema->id]) }}" role="button">Ver Mis Envios</a>
                             </div>
-                        @endcan
-                        <div class="row px-5 mt-2">
-                            <a class="btn btn-outline-secondary text-nowrap btn-sm btn-block"
-                                href="{{ route('envios.listado', ['id_problema' => $problema->id]) }}" role="button">Ver Mis
-                                Envios</a>
-                        </div>
-                        <hr>
-                        <h6 class="ms-3 mt-3"><strong>Información:</strong></h6>
-                        <ul class="list-group mt-3">
-                            <li class="list-group-item"><strong>Puntos:</strong>
-                                {{ $problema->casos_de_prueba()->sum('puntos') }}</li>
-                            <li class="list-group-item"><strong>Límite de Tiempo:</strong>
-                                {{ $problema->tiempo_limite ? $problema->tiempo_limite . ' s' : 'No definido' }}</li>
-                            <li class="list-group-item"><strong>Límite de Memoria:</strong>
-                                {{ $problema->memoria_limite ? $problema->memoria_limite . ' KB' : 'No definido' }}</li>
-                            <li class="list-group-item"><strong>Curso(s):</strong>
-                                {{ implode(', ', $problema->cursos()->where('cursos.id', '=', $id_curso)->pluck('nombre')->toArray()) }}
-                            </li>
-                            <li class="list-group-item"><strong>Estado:</strong> <span
-                                    class="badge {{ $problema->estado ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $problema->estado ? 'Resuelto' : 'No Resuelto' }}</span>
-                            </li>
-                            <li class="list-group-item"><strong>Categorías:</strong>
-                                {{ implode(', ', $problema->categorias()->get()->pluck('nombre')->toArray()) }}</li>
-                            <li class="list-group-item"><strong>Lenguajes:</strong>
-                                @foreach($problema->lenguajes()->get()->pluck('abreviatura')->unique() as $item) 
-                                <span class="badge text-bg-secondary">{{strtoupper($item)}}</span>
-                                @endforeach
-                            </li>
-                            @if (isset($problema->fecha_inicio))
-                                <li class="list-group-item"><strong>Fecha de Inicio:</strong> {{ $problema->fecha_inicio }}
+                            <hr class="my-3">
+                            <h6 class="px-1 font-weight-bold text-dark mb-2" style="font-size: 0.95rem;"><i class="fa fa-info-circle me-1 text-primary"></i> Información:</h6>
+                            <ul class="list-group list-group-flush border rounded shadow-none" style="font-size: 0.875rem;">
+                                <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                    <strong>Puntos:</strong>
+                                    <span class="badge bg-primary rounded-pill" style="font-size: 0.8rem;">{{ $problema->casos_de_prueba()->sum('puntos') }}</span>
                                 </li>
-                            @endif
-                            @if (isset($problema->fecha_termino))
-                                <li class="list-group-item"><strong>Fecha de Termino:</strong>
-                                    {{ $problema->fecha_termino }}</li>
-                            @endif
-                        </ul>
+                                <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                    <strong>Límite Tiempo:</strong>
+                                    <span>{{ $problema->tiempo_limite ? $problema->tiempo_limite . ' s' : 'No definido' }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                    <strong>Límite Memoria:</strong>
+                                    <span>{{ $problema->memoria_limite ? $problema->memoria_limite . ' KB' : 'No definido' }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                    <strong>Curso(s):</strong>
+                                    <span class="text-secondary text-end ms-2">{{ implode(', ', $problema->cursos()->where('cursos.id', '=', $id_curso)->pluck('nombre')->toArray()) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                    <strong>Estado:</strong>
+                                    <span class="badge {{ $problema->estado ? 'bg-success' : 'bg-secondary' }}" style="font-size: 0.8rem;">{{ $problema->estado ? 'Resuelto' : 'No Resuelto' }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                    <strong>Categorías:</strong>
+                                    <span class="text-secondary text-end ms-2">{{ implode(', ', $problema->categorias()->get()->pluck('nombre')->toArray()) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                    <strong>Lenguajes:</strong>
+                                    <div class="d-flex flex-wrap gap-1 justify-content-end ms-2">
+                                        @foreach($problema->lenguajes()->get()->pluck('abreviatura')->unique() as $item) 
+                                            <span class="badge bg-secondary" style="font-size: 0.75rem;">{{strtoupper($item)}}</span>
+                                        @endforeach
+                                    </div>
+                                </li>
+                                @if (isset($problema->fecha_inicio))
+                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                        <strong>Fecha Inicio:</strong>
+                                        <span class="text-secondary">{{ $problema->fecha_inicio }}</span>
+                                    </li>
+                                @endif
+                                @if (isset($problema->fecha_termino))
+                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                        <strong>Fecha Término:</strong>
+                                        <span class="text-secondary">{{ $problema->fecha_termino }}</span>
+                                    </li>
+                                @endif
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -126,18 +136,22 @@
 
 @push('js')
     <script>
-        var table = document.querySelectorAll("#body_markdown table")
-        if (table != null) {
-            for(var i = 0; i<table.length; i++){
-                var table_body = table[i].querySelector("tbody")
-                table[i].classList.add("table")
-                table[i].classList.add("table-bordered")
-                table[i].classList.add("table-hover")
-                table[i].classList.add("mt-3")
-                table[i].style.width = "auto"
-                table_body.classList.add("table-group-divider")
+        document.addEventListener('DOMContentLoaded', function() {
+            var table = document.querySelectorAll("#body_markdown table");
+            if (table != null) {
+                for(var i = 0; i < table.length; i++){
+                    var table_body = table[i].querySelector("tbody");
+                    if (table_body) {
+                        table[i].classList.add("table", "table-bordered", "table-hover", "mt-3");
+                        table[i].style.width = "auto";
+                        table_body.classList.add("table-group-divider");
+                    }
+                }
             }
-            
-        }
+            if (typeof window.renderFormulas === 'function') {
+                window.renderFormulas(document.querySelector('#body_markdown') || document.body);
+            }
+        });
     </script>
 @endpush
+
