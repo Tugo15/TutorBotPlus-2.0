@@ -266,7 +266,7 @@ if ($('#table').length > 0) {
             { defaultContent: "-", targets: "_all" }
         ],
         order: [[indexLastColumn, 'desc']],
-        dom: "<'row mx-0 px-4 pb-3 pt-4 align-items-center'<'col-sm-12 col-lg-8 d-flex flex-wrap align-items-center gap-3 custom-filters-container'l><'col-sm-12 col-lg-4 d-flex justify-content-end'f>>" +
+        dom: "<'row mx-0 px-4 pb-2 pt-1 align-items-center'<'col-sm-12 col-lg-8 d-flex flex-wrap align-items-center gap-3 custom-filters-container'l><'col-sm-12 col-lg-4 d-flex justify-content-end'f>>" +
              "<'row mx-0'<'col-sm-12 px-0'tr>>" +
              "<'row mx-0 px-4 pt-3 pb-4 align-items-center'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>"
     });
@@ -279,7 +279,7 @@ if ($('#table_evaluaciones').length > 0) {
         columnDefs: [
             { defaultContent: "-", targets: "_all" }
         ],
-        dom: "<'row mx-0 px-4 pb-3 pt-4 align-items-center'<'col-sm-12 col-lg-8 d-flex flex-wrap align-items-center gap-3 custom-filters-container'l><'col-sm-12 col-lg-4 d-flex justify-content-end'f>>" +
+        dom: "<'row mx-0 px-4 pb-2 pt-1 align-items-center'<'col-sm-12 col-lg-8 d-flex flex-wrap align-items-center gap-3 custom-filters-container'l><'col-sm-12 col-lg-4 d-flex justify-content-end'f>>" +
              "<'row mx-0'<'col-sm-12 px-0'tr>>" +
              "<'row mx-0 px-4 pt-3 pb-4 align-items-center'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>"
     });

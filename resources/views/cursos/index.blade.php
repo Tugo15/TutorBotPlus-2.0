@@ -116,6 +116,6 @@
 
     <script src="{{ asset('assets/js/DataTables/datatables.min.js') }}"></script>
 
-    <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}"></script>
+    <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}?v={{ filemtime(public_path('assets/js/DataTables/gestion_initialize_es_cl.js')) }}"></script>
     <script src="{{ asset('assets/js/alertas_administracion.js') }}"></script>
 @endpush
