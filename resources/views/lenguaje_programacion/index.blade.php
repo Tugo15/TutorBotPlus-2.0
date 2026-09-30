@@ -5,14 +5,16 @@
     <div class="row mt-4 mx-4">
         <div class="col-12">
             <div class="card shadow-xs border mb-4">
-                <div class="card-header pb-0 border-bottom mb-1">
-                    <div class="d-flex justify-content-between align-items-center pb-2">
-                        <div>
+                <div class="card-header pb-0 border-bottom mb-0">
+                    <div class="d-flex justify-content-center align-items-center pb-2 position-relative w-100">
+                        <div class="text-center">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-code me-2 text-warning"></i>Gestión de Lenguajes de Programación</h6>
                             <p class="text-xs text-secondary mb-0">Administre los lenguajes soportados por el Juez Virtual (Judge0).</p>
                         </div>
                         @can('crear lenguaje de programación')
-                        <a class="btn btn-sm btn-dark mb-0" href="{{ route('lenguaje_programacion.crear') }}"><i class="fa fa-plus me-1"></i> Crear Lenguaje</a>
+                        <div class="position-absolute end-0">
+                            <a class="btn btn-sm btn-dark mb-0" href="{{ route('lenguaje_programacion.crear') }}"><i class="fa fa-plus me-1"></i> Crear Lenguaje</a>
+                        </div>
                         @endcan
                     </div>
                 </div>
@@ -37,10 +39,10 @@
                         <table class="table align-items-center mb-0" id="table">
                             <thead>
                                 <tr class="border-bottom">
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Código Juez</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Nombre</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7 ps-2">Abreviatura</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7 ps-2">Extensión</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Código Juez</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Nombre</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Abreviatura</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Extensión</th>
                                     <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Creado</th>
                                     @canany(['editar lenguaje de programación', 'eliminar lenguaje de programación'])
                                         <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Acciones</th>
@@ -50,29 +52,29 @@
                             <tbody>
                                 @foreach ($lenguajes as $item)
                                     <tr>
-                                        <td>
-                                            <div class="d-flex px-3 py-1">
+                                        <td class="align-middle text-center">
+                                            <div class="d-flex px-3 py-1 justify-content-center">
                                                 <div class="d-flex flex-column justify-content-center">
                                                     <span class="badge border border-dark text-dark text-xxs px-2.5 py-1 bg-white">{{ $item->codigo }}</span>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>    
-                                            <div class="d-flex px-3 py-1">
-                                                <div class="d-flex flex-column justify-content-center">
+                                        <td class="align-middle text-center">    
+                                            <div class="d-flex px-3 py-1 justify-content-center">
+                                                <div class="d-flex flex-column justify-content-center text-center">
                                                     <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $item->nombre }}</h6>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
-                                            <div class="d-flex px-3 py-1">
+                                        <td class="align-middle text-center">
+                                            <div class="d-flex px-3 py-1 justify-content-center">
                                                 <div class="d-flex flex-column justify-content-center">
                                                     <span class="badge border border-warning text-dark text-xxs px-2 py-1 bg-white">{{ $item->abreviatura }}</span>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
-                                            <div class="d-flex px-3 py-1">
+                                        <td class="align-middle text-center">
+                                            <div class="d-flex px-3 py-1 justify-content-center">
                                                 <div class="d-flex flex-column justify-content-center">
                                                     <span class="badge border border-info text-info text-xxs px-2 py-1 bg-white">{{ $item->extension }}</span>
                                                 </div>
@@ -83,7 +85,7 @@
                                                 {{ $item->fecha ? $item->fecha : 'Desconocido' }}</p>
                                         </td>
                                         @canany(['editar lenguaje de programación', 'eliminar lenguaje de programación'])
-                                            <td class="align-middle text-end">
+                                            <td class="align-middle text-center">
                                                 <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1">
                                                     @can('editar lenguaje de programación')
                                                         <a class="btn btn-xs btn-outline-info mb-0" title="Editar Lenguaje"

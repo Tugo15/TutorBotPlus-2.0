@@ -5,15 +5,18 @@
     <div class="row mt-4 mx-4">
         <div class="col-12">
             <div class="card shadow-xs border mb-4">
-                <div class="card-header pb-0 border-bottom mb-1">
-                    <div class="d-flex justify-content-between align-items-center pb-2">
-                        <div>
+                <div class="card-header pb-0 border-bottom mb-0">
+                    <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
+                        <div class="d-none d-lg-block" style="flex: 1;"></div>
+                        <div class="text-center" style="flex: 2;">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-tags me-2 text-danger"></i>Gestión de Categorías de Problemas</h6>
                             <p class="text-xs text-secondary mb-0">Administre las categorías temáticas empleadas para clasificar los ejercicios.</p>
                         </div>
-                        @can('crear categoría de problema')
-                        <a class="btn btn-sm btn-dark mb-0" href="{{ route('categorias.crear') }}"><i class="fa fa-plus me-1"></i> Crear Categoría</a>
-                        @endcan
+                        <div class="text-end" style="flex: 1;">
+                            @can('crear categoría de problema')
+                                <a class="btn btn-sm btn-dark mb-0" href="{{ route('categorias.crear') }}"><i class="fa fa-plus me-1"></i> Crear Categoría</a>
+                            @endcan
+                        </div>
                     </div>
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">
@@ -37,7 +40,7 @@
                         <table class="table align-items-center mb-0" id="table">
                             <thead>
                                 <tr class="border-bottom">
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Nombre</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Nombre</th>
                                     <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Creado</th>
                                     @canany(['editar categoría de problema', 'eliminar categoría de problema'])
                                         <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Acciones</th>
@@ -47,9 +50,9 @@
                             <tbody>
                                 @foreach ($categorias as $categoria)
                                     <tr>
-                                        <td>
-                                            <div class="d-flex px-3 py-1">
-                                                <div class="d-flex flex-column justify-content-center">
+                                        <td class="align-middle text-center">
+                                            <div class="d-flex px-3 py-1 justify-content-center">
+                                                <div class="d-flex flex-column justify-content-center text-center">
                                                     <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $categoria->nombre }}</h6>
                                                 </div>
                                             </div>
@@ -59,7 +62,7 @@
                                                 {{ $categoria->fecha ? $categoria->fecha : 'Desconocido' }}</p>
                                         </td>
                                         @canany(['editar categoría de problema', 'eliminar categoría de problema'])
-                                            <td class="align-middle text-end">
+                                            <td class="align-middle text-center">
                                                 <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1">
                                                     @can('editar categoría de problema')
                                                         <a class="btn btn-xs btn-outline-info mb-0" title="Editar Categoría"

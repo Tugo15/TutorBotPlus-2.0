@@ -1,17 +1,20 @@
 <div class="row mt-4 mx-4">
     <div class="col-12">
         <div class="card shadow-xs border mb-4">
-            <div class="card-header pb-0 border-bottom mb-3">
-                <div class="d-flex justify-content-between align-items-center pb-3">
-                    <div>
+            <div class="card-header pb-0 border-bottom mb-0">
+                <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
+                    <div class="d-none d-lg-block" style="flex: 1;">
+                        <a href="{{route('cursos.index')}}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver a Cursos</a>
+                    </div>
+                    <div class="text-center" style="flex: 2;">
                         <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-users me-2 text-primary"></i>Informe de Estudiantes</h6>
                         <p class="text-xs text-secondary mb-0">Rendimiento de los estudiantes en este curso.</p>
                     </div>
-                    <a href="{{route('cursos.index')}}" class="btn btn-sm btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                    <div class="d-none d-lg-block" style="flex: 1;"></div>
                 </div>
             </div>
 
-            <div class="card-body pb-0">
+            <div class="card-body pb-0 pt-0">
                 <div class="table-responsive p-0">
                     <table class="table align-items-center mb-0" id="tabla_estudiantes">
                         <thead>

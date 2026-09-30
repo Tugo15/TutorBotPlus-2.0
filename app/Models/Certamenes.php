@@ -16,6 +16,8 @@ class Certamenes extends Model
 {
     use HasFactory;
 
+    protected $guarded = [];
+
     public static $rules = 
     [
         "nombre" => ["string", "required"],

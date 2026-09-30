@@ -117,4 +117,133 @@ class CasosPruebasController extends Controller
 
         return redirect()->route('casos_pruebas.assign', ["id" => $caso->id_problema])->with('success', 'El caso de prueba #' . $caso->id . ' ha sido modificado exitosamente.');
     }
+
+    public function bulk_add_casos(Request $request)
+    {
+        $id_problema = $request->input('id_problema', $request->input('id'));
+
+        $request->validate([
+            'contenido_masivo' => ['required', 'string'],
+            'puntos_defecto' => ['nullable', 'numeric'],
+        ]);
+
+        $problema = Problemas::findOrFail($id_problema);
+        $rawContent = trim($request->contenido_masivo);
+        $puntosDefecto = $request->filled('puntos_defecto') ? (float)$request->puntos_defecto : 10;
+        $ejemploDefecto = $request->has('ejemplo_defecto') ? true : false;
+
+        $casosParaInsertar = [];
+
+        // 1. Probar formato JSON
+        if (\Illuminate\Support\Str::startsWith($rawContent, '[') || \Illuminate\Support\Str::startsWith($rawContent, '{')) {
+            $decoded = json_decode($rawContent, true);
+            if (is_array($decoded)) {
+                $items = (isset($decoded['entradas']) || isset($decoded['salidas'])) ? [$decoded] : $decoded;
+                foreach ($items as $item) {
+                    if (is_array($item) && (isset($item['salidas']) || isset($item['output']))) {
+                        $casosParaInsertar[] = [
+                            'entradas' => (string)($item['entradas'] ?? $item['input'] ?? ''),
+                            'salidas' => (string)($item['salidas'] ?? $item['output'] ?? ''),
+                            'puntos' => isset($item['puntos']) ? (float)$item['puntos'] : (isset($item['points']) ? (float)$item['points'] : $puntosDefecto),
+                            'ejemplo' => isset($item['ejemplo']) ? (bool)$item['ejemplo'] : (isset($item['example']) ? (bool)$item['example'] : $ejemploDefecto),
+                        ];
+                    }
+                }
+            }
+        }
+
+        // 2. Probar formato por bloques con delimitadores (=== o --- o etiquetas INPUT/OUTPUT)
+        if (empty($casosParaInsertar)) {
+            if (\Illuminate\Support\Str::contains($rawContent, 'INPUT:') || \Illuminate\Support\Str::contains($rawContent, 'ENTRADA:') || \Illuminate\Support\Str::contains($rawContent, '===') || \Illuminate\Support\Str::contains($rawContent, '---')) {
+                $blocks = preg_split('/(={3,}|-{3,})/', $rawContent);
+                foreach ($blocks as $block) {
+                    $block = trim($block);
+                    if (empty($block)) continue;
+
+                    $entradas = '';
+                    $salidas = '';
+                    $puntos = $puntosDefecto;
+                    $ejemplo = $ejemploDefecto;
+
+                    if (preg_match('/(?:INPUT|ENTRADA)\s*:\s*(.*?)(?=(?:OUTPUT|SALIDA|PUNTOS|POINTS|EJEMPLO|EXAMPLE)\s*:|$)/s', $block, $mIn)) {
+                        $entradas = trim($mIn[1]);
+                    }
+                    if (preg_match('/(?:OUTPUT|SALIDA)\s*:\s*(.*?)(?=(?:INPUT|ENTRADA|PUNTOS|POINTS|EJEMPLO|EXAMPLE)\s*:|$)/s', $block, $mOut)) {
+                        $salidas = trim($mOut[1]);
+                    }
+                    if (preg_match('/(?:PUNTOS|POINTS)\s*:\s*(\d+(?:\.\d+)?)/i', $block, $mPts)) {
+                        $puntos = (float)$mPts[1];
+                    }
+                    if (preg_match('/(?:EJEMPLO|EXAMPLE)\s*:\s*(1|true|si|yes)/i', $block)) {
+                        $ejemplo = true;
+                    }
+
+                    if ($salidas !== '' || $entradas !== '') {
+                        $casosParaInsertar[] = [
+                            'entradas' => $entradas,
+                            'salidas' => $salidas,
+                            'puntos' => $puntos,
+                            'ejemplo' => $ejemplo,
+                        ];
+                    }
+                }
+            }
+        }
+
+        // 3. Probar formato de líneas separadas por Pipe (|) o Flecha (=>)
+        if (empty($casosParaInsertar)) {
+            $lines = explode("\n", str_replace("\r", "", $rawContent));
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (empty($line)) continue;
+
+                if (\Illuminate\Support\Str::contains($line, '|')) {
+                    $parts = explode('|', $line, 2);
+                    $casosParaInsertar[] = [
+                        'entradas' => trim($parts[0]),
+                        'salidas' => trim($parts[1]),
+                        'puntos' => $puntosDefecto,
+                        'ejemplo' => $ejemploDefecto,
+                    ];
+                } elseif (\Illuminate\Support\Str::contains($line, '=>')) {
+                    $parts = explode('=>', $line, 2);
+                    $casosParaInsertar[] = [
+                        'entradas' => trim($parts[0]),
+                        'salidas' => trim($parts[1]),
+                        'puntos' => $puntosDefecto,
+                        'ejemplo' => $ejemploDefecto,
+                    ];
+                }
+            }
+        }
+
+        if (empty($casosParaInsertar)) {
+            return redirect()->back()->with('error', 'No se pudieron reconocer casos de prueba válidos. Verifique el formato e intente nuevamente.');
+        }
+
+        try {
+            DB::beginTransaction();
+            $insertados = 0;
+            foreach ($casosParaInsertar as $data) {
+                $caso = new Casos_Pruebas();
+                $caso->id_problema = $problema->id;
+                $caso->entradas = $data['entradas'];
+                $caso->salidas = $data['salidas'];
+                $caso->puntos = $data['puntos'];
+                $caso->ejemplo = $data['ejemplo'];
+                $caso->save();
+                $insertados++;
+            }
+
+            $problema->puntaje_total = $problema->casos_de_prueba()->sum('puntos');
+            $problema->save();
+            DB::commit();
+
+            return redirect()->route('casos_pruebas.assign', ['id' => $problema->id])
+                ->with('success', "¡Inyección masiva exitosa! Se han insertado {$insertados} casos de prueba en el problema.");
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->with('error', 'Error al inyectar masivamente los casos de prueba: ' . $e->getMessage());
+        }
+    }
 }

@@ -38,12 +38,12 @@ class ProblemasController extends Controller
 
         if ($id_curso_activo) {
             $curso_activo = Cursos::find($id_curso_activo);
-            $query = Problemas::whereHas('cursos', function (Builder $q) use ($id_curso_activo) {
+            $query = Problemas::with(['cursos', 'categorias', 'lenguajes'])->whereHas('cursos', function (Builder $q) use ($id_curso_activo) {
                 $q->where('cursos.id', $id_curso_activo);
             });
         } else {
             $cursos_ids = $cursos->pluck('id')->toArray();
-            $query = Problemas::whereHas('cursos', function (Builder $q) use ($cursos_ids) {
+            $query = Problemas::with(['cursos', 'categorias', 'lenguajes'])->whereHas('cursos', function (Builder $q) use ($cursos_ids) {
                 $q->whereIn('cursos.id', $cursos_ids);
             });
         }

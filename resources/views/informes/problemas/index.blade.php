@@ -7,13 +7,22 @@
     <div class="row mt-4 mx-4">
         <div class="col-12">
             <div class="card shadow-xs border mb-4">
-                <div class="card-header pb-0 border-bottom mb-1">
-                    <div class="d-flex justify-content-between align-items-center pb-2">
-                        <div>
-                            <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-chart-bar me-2 text-primary"></i>Cursos Asociados al Problema</h6>
-                            <p class="text-xs text-secondary mb-0">Seleccione un curso para ver el rendimiento y envíos de los estudiantes.</p>
+                <div class="card-header pb-0 border-bottom mb-3">
+                    <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
+                        <div class="d-none d-lg-block" style="flex: 1;">
+                            <a href="{{ route('problemas.index') }}" class="btn btn-xs btn-outline-secondary mb-0">
+                                <i class="fa fa-arrow-left me-1"></i> Volver
+                            </a>
                         </div>
-                        <a href="{{route('problemas.index')}}" class="btn btn-sm btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver al Problema</a>
+                        <div class="text-center" style="flex: 2;">
+                            <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-chart-bar me-2 text-warning"></i>Cursos Asociados: {{ $problema->nombre }}</h6>
+                            <p class="text-xs text-secondary mb-0">Consulte el rendimiento del problema en un curso específico o de forma consolidada.</p>
+                        </div>
+                        <div class="d-none d-lg-flex justify-content-end" style="flex: 1;">
+                            <a href="{{ route('informe.problema', ['id_curso' => 'todos', 'id_problema' => $problema->id]) }}" class="btn btn-xs btn-dark mb-0">
+                                <i class="fa fa-chart-pie me-1"></i> Informe Consolidado
+                            </a>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">
@@ -33,23 +42,47 @@
                         <table class="table align-items-center mb-0" id="table">
                             <thead>
                                 <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Curso
-                                    </th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2 text-center">
-                                        Métricas de Rendimiento
-                                    </th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Curso</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2 text-center">Métricas de Rendimiento</th>
                                     @canany(['ver informe del problema'])
-                                        <th
-                                            class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
-                                            Acciones</th>
+                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Acciones</th>
                                     @endcanany
                                 </tr>
                             </thead>
                             <tbody>
+                                <tr class="bg-light">
+                                    <td class="align-middle">
+                                        <div class="d-inline-flex px-3 py-1 align-items-center">
+                                            <div class="icon icon-shape bg-primary text-white rounded-circle text-center d-flex align-items-center justify-content-center me-3 p-2" style="width: 36px; height: 36px;">
+                                                <i class="fa fa-layer-group"></i>
+                                            </div>
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm font-weight-bold text-primary">Todos los Cursos Juntos (Consolidado)</h6>
+                                                <p class="text-xs text-secondary mb-0">Métricas acumuladas de todas las asignaturas</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle text-center text-sm">
+                                        <span class="badge badge-sm bg-gradient-info me-2" title="Intentos Totales">Intentos: {{ $cursos->sum('cantidad_intentos') }}</span>
+                                        <span class="badge badge-sm bg-gradient-success" title="Ejercicios Resueltos">Resueltos: {{ $cursos->sum('cantidad_resueltos') }}</span>
+                                    </td>
+                                    @canany(['ver informe del problema'])
+                                        <td class="align-middle text-end">
+                                            <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1">
+                                                @can('ver informe del problema')
+                                                    <a class="btn btn-xs btn-outline-info mb-0" title="Ver Envíos de Todos los Cursos"
+                                                        href="{{ route('informe.envios.problema', ['id_curso' => 'todos', 'id_problema' => $problema->id]) }}"><i class="fa fa-code me-1"></i> Envíos</a>
+                                                    <a class="btn btn-xs btn-primary mb-0" title="Ver Informe Consolidado"
+                                                        href="{{ route('informe.problema', ['id_curso' => 'todos', 'id_problema' => $problema->id]) }}"><i class="fa fa-chart-pie me-1"></i> Informe Consolidado</a>
+                                                @endcan
+                                            </div>
+                                        </td>
+                                    @endcanany
+                                </tr>
                                 @foreach ($cursos as $curso)
                                     <tr>
-                                        <td>
-                                            <div class="d-flex px-3 py-1">
+                                        <td class="align-middle">
+                                            <div class="d-inline-flex px-3 py-1">
                                                 <div class="d-flex flex-column justify-content-center">
                                                     <h6 class="mb-0 text-sm font-weight-bold">{{ $curso->nombre }}</h6>
                                                     <p class="text-xs text-secondary mb-0">Código: <span class="badge bg-gradient-primary text-xxs">{{ $curso->codigo }}</span></p>
@@ -76,7 +109,6 @@
                                 @endforeach
                             </tbody>
                         </table>
-
                     </div>
                 </div>
             </div>
@@ -86,8 +118,6 @@
 
 @push('js')
     <link href="{{ asset('assets/js/DataTables/datatables.min.css') }}" rel="stylesheet">
-
     <script src="{{ asset('assets/js/DataTables/datatables.min.js') }}"></script>
-
     <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}"></script>
 @endpush

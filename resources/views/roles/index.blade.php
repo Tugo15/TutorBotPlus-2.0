@@ -5,14 +5,16 @@
     <div class="row mt-4 mx-4">
         <div class="col-12">
             <div class="card shadow-xs border mb-4">
-                <div class="card-header pb-0 border-bottom mb-1">
-                    <div class="d-flex justify-content-between align-items-center pb-2">
-                        <div>
+                <div class="card-header pb-0 border-bottom mb-0">
+                    <div class="d-flex justify-content-center align-items-center pb-2 position-relative w-100">
+                        <div class="text-center">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-shield-alt me-2 text-info"></i>Gestión de Roles y Permisos</h6>
                             <p class="text-xs text-secondary mb-0">Administre los roles del sistema y controle el nivel de acceso y permisos asignados.</p>
                         </div>
                         @can('crear rol')
-                        <a class="btn btn-sm btn-dark mb-0" href="{{ route('roles.crear') }}"><i class="fa fa-plus me-1"></i> Crear Rol</a>
+                        <div class="position-absolute end-0">
+                            <a class="btn btn-sm btn-dark mb-0" href="{{ route('roles.crear') }}"><i class="fa fa-plus me-1"></i> Crear Rol</a>
+                        </div>
                         @endcan
                     </div>
                 </div>
@@ -37,8 +39,8 @@
                         <table class="table align-items-center mb-0" id="table">
                             <thead>
                                 <tr class="border-bottom">
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Nombre</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7 ps-2">Permisos</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Nombre</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Permisos</th>
                                     <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Creado</th>
                                     @canany(['editar rol', 'eliminar rol'])
                                         <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Acciones</th>
@@ -48,15 +50,15 @@
                             <tbody>
                                 @foreach ($roles as $rol)
                                     <tr>
-                                        <td>
-                                            <div class="d-inline-flex align-items-center py-1">
-                                                <div class="d-flex flex-column justify-content-center ms-2">
+                                        <td class="align-middle text-center">
+                                            <div class="d-flex px-2 py-1 justify-content-center text-center">
+                                                <div class="d-flex flex-column justify-content-center text-center">
                                                     <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $rol->name }}</h6>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
-                                            <div class="d-flex flex-wrap gap-1 py-1">
+                                        <td class="align-middle text-center">
+                                            <div class="d-flex flex-wrap gap-1 py-1 justify-content-center">
                                                 @foreach ($rol->permissions as $perm)
                                                     <span class="badge border border-info text-info text-xxs px-2 py-1 bg-white">{{ $perm->name }}</span>
                                                 @endforeach
@@ -67,7 +69,7 @@
                                                 {{ $rol->fecha ? $rol->fecha : 'Desconocido' }}</p>
                                         </td>
                                         @canany(['editar rol', 'eliminar rol'])
-                                            <td class="align-middle text-end">
+                                            <td class="align-middle text-center">
                                                 <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1">
                                                     @can('editar rol')
                                                         <a class="btn btn-xs btn-outline-info mb-0" title="Editar Rol"

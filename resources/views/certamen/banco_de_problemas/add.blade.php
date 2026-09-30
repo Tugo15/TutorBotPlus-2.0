@@ -7,9 +7,16 @@
     <div class="row mt-4 mx-4">
         <div class="col-12">
             <div class="card mb-4">
-                <div class="card-header pb-0">
-                    <div class="d-flex justify-content-between">
-                        <h6>Banco de Problemas</h6>
+                <div class="card-header pb-0 border-bottom mb-3">
+                    <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
+                        <div class="d-none d-lg-block" style="flex: 1;">
+                            <a href="{{ route('certamen.index') }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                        </div>
+                        <div class="text-center" style="flex: 2;">
+                            <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-folder-open me-2 text-warning"></i>Banco de Problemas: {{ $certamen->nombre }}</h6>
+                            <p class="text-xs text-secondary mb-0">Gestión de categorías de problemas para este certamen.</p>
+                        </div>
+                        <div class="d-none d-lg-block" style="flex: 1;"></div>
                     </div>
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">
@@ -33,12 +40,9 @@
                         <table class="table align-items-center mb-0" id="table">
                             <thead>
                                 <tr>
-                                    <th>Categoria
-                                    </th>
-                                    </th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Categoría</th>
                                     @canany(['editar certamen'])
-                                        <th>
-                                            Acción</th>
+                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Acción</th>
                                     @endcanany
                                 </tr>
                             </thead>

@@ -1,12 +1,12 @@
 <div class="row mt-4 mx-4">
     <div class="col-12">
         <div class="card shadow-xs border mb-4">
-            <div class="card-header pb-0 border-bottom mb-3">
-                <div class="d-flex justify-content-between pb-3">
+            <div class="card-header pb-0 border-bottom mb-0">
+                <div class="text-center pb-2">
                     <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-chart-line me-2 text-primary"></i>Estadísticas de Problemas del Curso</h6>
                 </div>
             </div>
-            <div class="card-body px-5 pt-0 pb-2">
+            <div class="card-body px-5 pt-3 pb-2">
                 <div class="row">
                     @if (!empty($lenguajes_estadistica) || !empty($estadistica_estados))
                         <span><strong>Problema más resuelto:</strong></span>
@@ -21,7 +21,10 @@
                             {{ $problema_mas_intentado->cantidad_intentos }} intentos)</a>
                         <canvas id="grafica_problemas" width="300" height="100"></canvas>
                     @else
-                        <h6 class="ms-4">No hay datos disponibles para graficar</h6>
+                        <div class="col-12 text-center py-4">
+                            <i class="fa fa-chart-bar text-muted opacity-5 fa-3x mb-3"></i>
+                            <h6 class="text-secondary mb-0">No hay datos disponibles para graficar</h6>
+                        </div>
                     @endif
                 </div>
             </div>

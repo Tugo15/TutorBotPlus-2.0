@@ -9,13 +9,19 @@
         <form method="POST" action='{{ route('usuarios.bulk_store') }}' onsubmit="event.preventDefault();submitFormCrear()" id="crearForm" enctype="multipart/form-data">
             @csrf
             <div class="card shadow-xs border mb-4">
-                <div class="card-header pb-0 border-bottom mb-3">
-                    <div class="d-flex justify-content-between align-items-center pb-3">
-                        <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-file-upload me-2 text-primary"></i>Inserción Masiva de Usuarios</h6>
-                        <a href="{{ route('usuarios.index') }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                <div class="card-header pb-0 border-bottom mb-0">
+                    <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
+                        <div class="d-none d-lg-block" style="flex: 1;">
+                            <a href="{{ route('usuarios.index') }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                        </div>
+                        <div class="text-center" style="flex: 2;">
+                            <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-file-upload me-2 text-primary"></i>Inserción Masiva de Usuarios</h6>
+                            <p class="text-xs text-secondary mb-0">Registre múltiples cuentas subiendo un archivo CSV.</p>
+                        </div>
+                        <div class="d-none d-lg-block" style="flex: 1;"></div>
                     </div>
                 </div>
-                <div class="card-body pt-0">
+                <div class="card-body pt-3">
                     <div class="alert alert-info text-white text-xs mb-3" role="alert">
                         <i class="fa fa-info-circle me-1"></i> Suba un archivo CSV o TXT delimitado por punto y coma (;) para registrar múltiples usuarios simultáneamente.
                     </div>
@@ -53,9 +59,8 @@
                         <p class="text-xs text-danger font-weight-bold mt-2 mb-0">⚠️ Nota: El archivo NO debe incluir fila de encabezados.</p>
                     </div>
 
-                    <div class="mt-4 pt-3 border-top">
-                        <button type="submit" class="btn btn-sm btn-dark me-2"><i class="fa fa-upload me-1"></i> Procesar e Insertar Usuarios</button>
-                        <a href="{{ route('usuarios.index') }}" class="btn btn-sm btn-outline-secondary"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-center">
+                        <button type="submit" class="btn btn-sm btn-dark mb-0"><i class="fa fa-upload me-1"></i> Procesar e Insertar Usuarios</button>
                     </div>
                 </div>
             </div>            

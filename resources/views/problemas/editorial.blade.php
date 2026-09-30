@@ -12,24 +12,26 @@
             action="{{ route('problemas.update_editorial', ['id' => $problema->id]) }}" enctype="multipart/form-data">
             @csrf
             <div class="card shadow-xs border">
-                <div class="card-header pb-0">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-0 font-weight-bold text-primary"><i class="fa fa-book me-2"></i>Editorial del Problema: {{ $problema->nombre }}</h6>
+                <div class="card-header pb-0 border-bottom mb-0">
+                    <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
+                        <div class="d-none d-lg-block" style="flex: 1;">
+                            <a href="{{ route('problemas.index') }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                        </div>
+                        <div class="text-center" style="flex: 2;">
+                            <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-book me-2 text-warning"></i>Editorial del Problema: {{ $problema->nombre }}</h6>
                             <p class="text-xs text-secondary mb-0">Redacte la solución guiada o explicativa para orientar al estudiante.</p>
                         </div>
-                        <a href="{{ route('problemas.index') }}" class="btn btn-sm btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                        <div class="d-none d-lg-block" style="flex: 1;"></div>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body pt-3">
                     <input type="hidden" name="body_editorial" id="body_editorial">
                     <label for="editor" class="form-control-label font-weight-bold text-sm mb-2">Contenido de la Editorial</label>
                     <div class="flex flex-col space-y-2 mb-3">
-                        <div id="editor" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                        <div id="editor" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" style="position: relative; z-index: 9999;"></div>
                     </div>
-                    <div class="mt-4 pt-3 border-top">
-                        <button type="submit" class="btn btn-sm btn-primary me-2"><i class="fa fa-save me-1"></i> Guardar Editorial</button>
-                        <a href="{{ route('problemas.index') }}" class="btn btn-sm btn-outline-secondary"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-center">
+                        <button type="submit" class="btn btn-sm btn-dark mb-0"><i class="fa fa-save me-1"></i> Guardar Editorial</button>
                     </div>
                 </div>
             </div>
@@ -43,7 +45,7 @@
         const editor = new Editor({
             el: document.querySelector('#editor'),
             height: '600px',
-            initialEditType: 'markdown',
+            initialEditType: 'wysiwyg',
             previewStyle: 'vertical',
             placeholder: "La editorial es una forma para ayudar al estudiante para que pueda comprender el problema.",
             initialValue: @json($problema->body_editorial ?? ''),

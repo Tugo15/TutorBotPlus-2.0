@@ -1,5 +1,3 @@
-version: '2'
-
 x-logging:
   &default-logging
   logging:
@@ -10,9 +8,10 @@ x-logging:
 services:
   server:
     image: judge0/judge0:1.13.0
-    volumes:
-      - ./judge0.conf:/judge0.conf:ro
-      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    env_file: judge0.conf
+    environment:
+      - ISOLATE_ENABLE_CGROUPS=false
+      - ENABLE_CGROUPS=false
     tmpfs:
       - /box
     ports:
@@ -24,9 +23,10 @@ services:
   workers:
     image: judge0/judge0:1.13.0
     command: ["./scripts/workers"]
-    volumes:
-      - ./judge0.conf:/judge0.conf:ro
-      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    env_file: judge0.conf
+    environment:
+      - ISOLATE_ENABLE_CGROUPS=false
+      - ENABLE_CGROUPS=false
     tmpfs:
       - /box
     privileged: true

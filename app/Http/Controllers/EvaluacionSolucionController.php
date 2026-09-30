@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
 
+use Illuminate\Support\Facades\Artisan;
+
 class EvaluacionSolucionController extends Controller
 {
 
@@ -22,6 +24,17 @@ class EvaluacionSolucionController extends Controller
         if(!isset($envio)){
             return redirect()->route('envios.listado')->with('error', 'El envio no existe');
         }
+
+        // Si existen evaluaciones pendientes en proceso, evaluar de forma sincrónica con Judge0 inmediatamente
+        if ($envio->evaluaciones()->where('estado', '=', 'En Proceso')->exists()) {
+            try {
+                Artisan::call('app:evaluar-envios');
+                $envio->refresh();
+            } catch (\Exception $e) {
+                // Continuar si ocurre alguna excepción no crítica
+            }
+        }
+
         $problema = $envio->problema;
         $highlightjs_choice = EnvioSolucionProblema::$higlightjs_language[strtolower($envio->lenguaje->abreviatura)];
         $juez = $envio->juez_virtual;
@@ -47,6 +60,13 @@ class EvaluacionSolucionController extends Controller
             if(!isset($envio)){
                 return response('El envio no existe', 400);
             }
+
+            // Si al consultar vía AJAX existen evaluaciones pendientes, forzar actualización sincrónica
+            if ($envio->evaluaciones()->where('estado', '=', 'En Proceso')->exists()) {
+                Artisan::call('app:evaluar-envios');
+                $envio->refresh();
+            }
+
             $evaluaciones = $envio->evaluaciones()->with('casos_pruebas')->get()->map(function($item){
                 if(isset($item->stout)){
                     $item->stout = base64_decode($item->stout);

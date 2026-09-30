@@ -15,11 +15,10 @@
     </div>
 </div>
 <div class="row">
-<div class="col d-flex justify-content-end">
-    <button class="btn btn-primary mt-2" type="submit" id="add_button">Añadir</button>
-    <button type="button" class="btn bg-outline-primary mt-2" data-bs-toggle="modal" data-bs-target="#ejemplo_modal">
-        Ayuda
-    </button>
-    <a href="{{route('certamen.index')}}" class="btn bg-outline-primary mt-2 me-5">Volver</a>
-</div>
+    <div class="col d-flex justify-content-end gap-2 me-4">
+        <button type="button" class="btn btn-sm btn-outline-secondary mt-2 mb-0" data-bs-toggle="modal" data-bs-target="#ejemplo_modal">
+            <i class="fa fa-question-circle me-1"></i> Ayuda
+        </button>
+        <button class="btn btn-sm btn-dark mt-2 mb-0" type="submit" id="add_button"><i class="fa fa-plus me-1"></i> Añadir</button>
+    </div>
 </div>

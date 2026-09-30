@@ -5,12 +5,14 @@
     <div class="row mt-4 mx-4">
         <div class="col-12">
             <div class="card shadow-xs border mb-4">
-                <div class="card-header pb-0 border-bottom mb-1">
-                    <div class="d-flex justify-content-between align-items-center pb-2">
-                        <div>
+                <div class="card-header pb-0 border-bottom mb-0">
+                    <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
+                        <div class="d-none d-lg-block" style="flex: 1;"></div>
+                        <div class="text-center" style="flex: 2;">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-calendar-check me-2 text-warning"></i>Gestión de Evaluaciones</h6>
                             <p class="text-xs text-secondary mb-0">Administración de certámenes organizados por asignaturas.</p>
                         </div>
+                        <div class="d-none d-lg-block" style="flex: 1;"></div>
                     </div>
                 </div>
 
@@ -34,21 +36,19 @@
 
                     @if (!isset($id_curso_activo) || !$id_curso_activo)
                         <!-- VISTA 1: CARPETAS DE CURSOS -->
-                        <div class="px-4 pb-4">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <div>
-                                    <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-folder-open me-2 text-warning"></i>Cursos Asignados</h6>
-                                    <p class="text-xs text-secondary mb-0">Seleccione un curso para gestionar sus evaluaciones.</p>
-                                </div>
+                        <div class="px-4 pb-4 mt-3">
+                            <div class="mb-3 text-center">
+                                <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-folder-open me-2 text-warning"></i>Cursos Asignados</h6>
+                                <p class="text-xs text-secondary mb-0">Seleccione un curso para gestionar sus evaluaciones.</p>
                             </div>
 
                             <div class="row g-3">
                                 @forelse ($cursos as $curso)
                                     <div class="col-md-4 col-sm-6">
                                         <div class="card border shadow-xs h-100 hover-shadow transition">
-                                            <div class="card-body p-3 d-flex flex-column justify-content-between">
-                                                <div>
-                                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <div class="card-body p-3 d-flex flex-column justify-content-between text-center">
+                                                <div class="d-flex flex-column align-items-center">
+                                                    <div class="d-flex justify-content-between align-items-center mb-3 w-100">
                                                         <div class="icon icon-shape bg-light text-dark border rounded-circle text-center d-flex align-items-center justify-content-center p-2" style="width: 44px; height: 44px;">
                                                             <i class="fa fa-folder text-warning fa-lg"></i>
                                                         </div>
@@ -57,7 +57,7 @@
                                                     <h6 class="font-weight-bold text-dark mb-1 text-sm">{{ $curso->nombre }}</h6>
                                                     <p class="text-xs text-secondary mb-3">{{ $curso->certamenes_count ?? 0 }} Evaluación(es)</p>
                                                 </div>
-                                                <div class="pt-2 border-top d-flex justify-content-between align-items-center gap-1">
+                                                <div class="pt-2 border-top d-flex justify-content-center align-items-center gap-1">
                                                     <a href="{{ route('certamen.index', ['id_curso' => $curso->id]) }}" class="btn btn-xs btn-outline-warning mb-0 w-100">
                                                         <i class="fa fa-folder-open me-1"></i> Ver Evaluaciones
                                                     </a>
@@ -80,24 +80,26 @@
                         </div>
                     @else
                         <!-- VISTA 2: DENTRO DEL CURSO -->
-                        <div class="px-4 pb-1">
-                            <div class="d-flex justify-content-between align-items-center mb-1 pb-2 border-bottom">
-                                <div class="d-flex align-items-center">
-                                    <a href="{{ route('certamen.index') }}" class="btn btn-xs btn-outline-secondary mb-0 me-3">
+                        <div class="px-4 pb-1 mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1 pb-2 border-bottom flex-wrap gap-2">
+                                <div style="flex: 1;">
+                                    <a href="{{ route('certamen.index') }}" class="btn btn-xs btn-outline-secondary mb-0">
                                         <i class="fa fa-arrow-left me-1"></i> Volver a Cursos
                                     </a>
-                                    <div>
-                                        <h6 class="mb-0 font-weight-bold text-dark">
-                                            <i class="fa fa-folder-open me-2 text-warning"></i>Curso: <span class="text-dark">{{ $curso_activo->nombre ?? '' }}</span>
-                                        </h6>
-                                        <p class="text-xs text-secondary mb-0">Código: <strong>{{ $curso_activo->codigo ?? '' }}</strong></p>
-                                    </div>
                                 </div>
-                                @can('crear certamen')
-                                    <a class="btn btn-sm btn-dark mb-0" href="{{ route('certamen.crear', ['id_curso' => $curso_activo->id]) }}">
-                                        <i class="fa fa-plus me-1"></i> Crear Evaluación
-                                    </a>
-                                @endcan
+                                <div class="text-center" style="flex: 2;">
+                                    <h6 class="mb-0 font-weight-bold text-dark">
+                                        <i class="fa fa-folder-open me-2 text-warning"></i>Curso: <span class="text-dark">{{ $curso_activo->nombre ?? '' }}</span>
+                                    </h6>
+                                    <p class="text-xs text-secondary mb-0">Código: <strong>{{ $curso_activo->codigo ?? '' }}</strong></p>
+                                </div>
+                                <div class="text-end" style="flex: 1;">
+                                    @can('crear certamen')
+                                        <a class="btn btn-sm btn-dark mb-0" href="{{ route('certamen.crear', ['id_curso' => $curso_activo->id]) }}">
+                                            <i class="fa fa-plus me-1"></i> Crear Evaluación
+                                        </a>
+                                    @endcan
+                                </div>
                             </div>
                         </div>
 
@@ -113,15 +115,15 @@
                             </div>
                         </div>
 
-                        <div class="table-responsive p-0">
+                        <div class="table-responsive p-0 mt-3">
                             <table class="table align-items-center mb-0" id="table">
                                 <thead>
                                     <tr class="border-bottom">
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Evaluación</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7 ps-2">Curso y Dificultad</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7 ps-2">Acceso Red</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7 ps-2 text-center">Configuración</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7 ps-2">Disponibilidad</th>
+                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Evaluación</th>
+                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Curso y Dificultad</th>
+                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Acceso Red</th>
+                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Configuración</th>
+                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Disponibilidad</th>
                                         @canany(['editar certamen', 'eliminar certamen', 'ver informe del certamen'])
                                             <th class="none text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Acciones</th>
                                         @endcanany
@@ -130,17 +132,17 @@
                                 <tbody>
                                     @forelse ($certamenes as $certamen)
                                         <tr>
-                                            <td>
-                                                <div class="d-inline-flex align-items-center py-1">
-                                                    <div class="d-flex flex-column justify-content-center ms-2">
+                                            <td class="align-middle text-center">
+                                                <div class="d-inline-flex px-2 py-1 justify-content-center text-center align-items-center">
+                                                    <div class="d-flex flex-column justify-content-center text-start">
                                                         <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $certamen->nombre }}</h6>
                                                         <p class="text-xs text-secondary mb-0 mt-1">ID: <span class="badge border border-secondary text-secondary text-xxs px-2 py-0 bg-white">#{{ $certamen->id }}</span></p>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td>
-                                                <div class="d-flex flex-column gap-1 py-1">
-                                                    <div class="d-flex align-items-center gap-1">
+                                            <td class="align-middle text-center">
+                                                <div class="d-flex flex-column gap-1 py-1 justify-content-center">
+                                                    <div class="d-flex align-items-center justify-content-center gap-1">
                                                         <span class="badge border border-primary text-primary text-xxs bg-white">{{ $certamen->curso->codigo }}</span>
                                                         @php
                                                             $difBadgeClass = ($certamen->dificultad == 'Fácil') ? 'border-success text-success' : (($certamen->dificultad == 'Difícil') ? 'border-danger text-danger' : 'border-warning text-warning');
@@ -149,15 +151,17 @@
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td class="align-middle text-center">
+                                                <div class="d-flex justify-content-center">
                                                 @if($certamen->restriccion_red)
                                                     <span class="badge border border-warning text-dark text-xxs bg-white"><i class="fa fa-university me-1 text-warning"></i>Red Institucional</span>
                                                 @else
                                                     <span class="badge border border-info text-info text-xxs bg-white"><i class="fa fa-globe me-1"></i>Acceso Libre</span>
                                                 @endif
+                                                </div>
                                             </td>
-                                            <td class="text-center">
-                                                <div class="d-flex flex-column align-items-center gap-1">
+                                            <td class="align-middle text-center">
+                                                <div class="d-flex flex-column align-items-center justify-content-center gap-1">
                                                     <span class="text-xs text-dark font-weight-bold">
                                                         <i class="fa fa-list-ol text-secondary me-1"></i> {{ $certamen->cantidad_problemas }} Ejercicio(s)
                                                     </span>
@@ -166,15 +170,15 @@
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td>
-                                                <div class="d-flex flex-column justify-content-center">
+                                            <td class="align-middle text-center">
+                                                <div class="d-flex flex-column justify-content-center text-center">
                                                     <span class="text-xs font-weight-bold text-dark">Inicio: {{ $certamen->fecha_inicio ? $certamen->fecha_inicio : 'No Definido' }}</span>
                                                     <span class="text-xs text-secondary">Término: {{ $certamen->fecha_termino ? $certamen->fecha_termino : 'No Definido' }}</span>
                                                 </div>
                                             </td>
                                             @canany(['editar problemas', 'eliminar problemas', 'editar certamen', 'crear certamen'])
-                                                <td class="align-middle text-end">
-                                                    <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1">
+                                                <td class="align-middle text-center">
+                                                    <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1 flex-wrap">
                                                         @can('ver informe del certamen')
                                                             <a class="btn btn-xs btn-outline-primary mb-0" title="Ver Informe" href="{{ route('informe.certamen', ['id_certamen' => $certamen->id]) }}"><i class="fa fa-chart-bar me-1"></i> Informe</a>
                                                         @endcan

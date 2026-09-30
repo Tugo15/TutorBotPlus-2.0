@@ -143,25 +143,37 @@
         table.dataTable thead th.sorting,
         table.dataTable thead th.sorting_asc,
         table.dataTable thead th.sorting_desc {
-            position: relative !important;
-            padding-right: 28px !important;
             cursor: pointer !important;
+            padding-right: 10px !important; /* Normal padding, no huge gap */
         }
 
+        table.dataTable thead th.sorting:before,
         table.dataTable thead th.sorting:after,
+        table.dataTable thead th.sorting_asc:before,
         table.dataTable thead th.sorting_asc:after,
+        table.dataTable thead th.sorting_desc:before,
         table.dataTable thead th.sorting_desc:after {
-            position: absolute !important;
-            right: 10px !important;
-            top: 50% !important;
-            transform: translateY(-50%) !important;
-            opacity: 0.5 !important;
+            position: static !important;
+            display: inline-block !important;
+            right: auto !important;
+            top: auto !important;
+            transform: none !important;
+            margin-left: 3px !important;
+            opacity: 0.3 !important;
         }
 
-        table.dataTable thead th.sorting_asc:after,
+        table.dataTable thead th.sorting_asc:before,
         table.dataTable thead th.sorting_desc:after {
             opacity: 1 !important;
             color: #5e72e4 !important;
+        }
+
+        /* Fix ToastUI Editor Toolbar conflict with Bootstrap .table class */
+        button.toastui-editor-toolbar-icons.table {
+            width: 32px !important;
+            height: 32px !important;
+            margin-bottom: 0 !important;
+            vertical-align: middle !important;
         }
     </style>
 
