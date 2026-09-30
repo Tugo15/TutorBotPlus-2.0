@@ -178,6 +178,7 @@ Route::group(['middleware' => 'auth'], function () {
 		Route::get('/{id}/casos', [CasosPruebasController::class, 'asignacion_casos'])->name('casos_pruebas.assign')->middleware('can:editar problemas'); 
 		Route::post('/casos/eliminar', [CasosPruebasController::class, 'eliminar_caso'])->name('casos_pruebas.eliminar')->middleware('can:editar problemas'); 
 		Route::post('/casos/add', [CasosPruebasController::class, 'add_caso'])->name('casos_pruebas.add')->middleware('can:editar problemas'); 
+		Route::post('/casos/bulk_add', [CasosPruebasController::class, 'bulk_add_casos'])->name('casos_pruebas.bulk_add')->middleware('can:editar problemas'); 
 		Route::post('/casos/update', [CasosPruebasController::class, 'update_caso'])->name('casos_pruebas.update')->middleware('can:editar problemas'); 
 		Route::post('/casos/sql', [CasosPruebasController::class, 'caso_sql'])->name('casos_pruebas.set_sql')->middleware('can:editar problemas'); 
 	});

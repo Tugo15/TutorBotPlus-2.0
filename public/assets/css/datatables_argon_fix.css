@@ -11,34 +11,7 @@ html body div.dataTables_wrapper div.dataTables_length label {
     font-weight: 600 !important;
 }
 
-select[name$="_length"],
-.dataTables_length select,
-div.dataTables_length select,
-.dataTables_wrapper .dataTables_length select,
-html body div.dataTables_wrapper div.dataTables_length select {
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    appearance: none !important;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") !important;
-    background-repeat: no-repeat !important;
-    background-position: calc(100% - 10px) center !important;
-    background-size: 14px 12px !important;
-    background-color: #ffffff !important;
-    padding-left: 14px !important;
-    padding-right: 42px !important;
-    min-width: 95px !important;
-    width: 95px !important;
-    height: 38px !important;
-    line-height: 1.5 !important;
-    border-radius: 0.5rem !important;
-    border: 1px solid #d2d6da !important;
-    box-sizing: border-box !important;
-    font-size: 0.875rem !important;
-    color: #495057 !important;
-    cursor: pointer !important;
-    display: inline-block !important;
-    margin: 0 0.5rem !important;
-}
+/* Custom select styling removed to fix dropdown not opening */
 
 html body div.dataTables_wrapper div.dataTables_filter label {
     display: inline-flex !important;
@@ -61,39 +34,39 @@ html body div.dataTables_wrapper div.dataTables_filter input {
     outline: none !important;
 }
 
-/* ABSOLUTE CARD HEADER DIVIDER GAP REDUCTION */
+/* ELEGANT CARD HEADER & TABLE SEPARATION SPACING */
 html body .card-header.mb-3,
 html body div.card-header.mb-3,
 html body .card-header.border-bottom,
 html body .card-header[class*="mb-"] {
-    margin-bottom: 0.25rem !important;
+    margin-bottom: 0 !important;
 }
 
 html body .card-header .pb-3,
 html body .card-header div.pb-3,
 html body .card-header [class*="pb-"],
 html body .card-header div.d-flex.pb-3 {
-    padding-bottom: 0.4rem !important;
+    padding-bottom: 0.25rem !important;
 }
 
 html body .table-responsive,
 html body div.table-responsive,
 html body .card-body > .table-responsive {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
+    padding-top: 0.75rem !important;
+    margin-top: 0.5rem !important;
 }
 
 html body div.dataTables_wrapper {
-    padding: 0 !important;
+    padding-top: 0.5rem !important;
 }
 
 html body div.dataTables_wrapper,
 html body div.dataTables_wrapper > div:first-child,
 html body div.dataTables_wrapper div.dataTables_length,
 html body div.dataTables_wrapper div.dataTables_filter {
-    margin-top: 0.25rem !important;
-    margin-bottom: 0.75rem !important;
-    padding-top: 0 !important;
+    margin-top: 0.5rem !important;
+    margin-bottom: 1rem !important;
+    padding-top: 0.25rem !important;
 }
 
 
@@ -422,12 +395,12 @@ html body .list-group-item {
 }
 
 /* ==========================================================================
-   COMPACT TABLE HEADERS & DATATABLES CONTROLS SPACING FIX
+   ELEGANT TABLE HEADERS & DATATABLES CONTROLS SPACING FIX
    ========================================================================== */
 html body .card-header.border-bottom {
     padding-top: 0.75rem !important;
-    padding-bottom: 0.5rem !important;
-    margin-bottom: 0.25rem !important;
+    padding-bottom: 0.75rem !important;
+    margin-bottom: 0 !important;
 }
 
 html body .card-body .dataTables_wrapper {
@@ -436,19 +409,44 @@ html body .card-body .dataTables_wrapper {
 
 html body .dataTables_wrapper .row:first-child {
     margin-top: 0 !important;
-    margin-bottom: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
     padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    align-items: center !important;
 }
 
 html body div.dataTables_wrapper div.dataTables_length,
 html body div.dataTables_wrapper div.dataTables_filter {
     margin-top: 0 !important;
-    margin-bottom: 0.25rem !important;
+    margin-bottom: 0 !important;
     padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    height: 32px !important;
 }
 
+html body div.dataTables_wrapper div.dataTables_filter label {
+    margin-bottom: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 32px !important;
+    line-height: 1 !important;
+}
 
+html body div.dataTables_wrapper div.dataTables_filter input {
+    height: 32px !important;
+    max-height: 32px !important;
+    min-height: 32px !important;
+    line-height: 1.2 !important;
+    padding: 0.25rem 0.5rem !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    margin-left: 0.35rem !important;
+    box-sizing: border-box !important;
+    vertical-align: middle !important;
+}
 
-
-
-
+html body .table-responsive {
+    margin-top: 0.5rem !important;
+}

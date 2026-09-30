@@ -55,24 +55,59 @@ class EvaluarEnvios extends Command
             }
             try{
                 DB::beginTransaction();
-                foreach ($data["submissions"] as $item) {
+                $comparator = app(\App\Services\OutputComparatorService::class);
+                
+                foreach ($data["submissions"] as $index => $item) {
+                    // Si Judge0 devuelve null para un token no existente (ej. tokens creados antes del cambio de juez)
+                    if (is_null($item)) {
+                        $tokensKeys = array_keys($evaluacion_arr);
+                        if (isset($tokensKeys[$index]) && isset($evaluacion_arr[$tokensKeys[$index]])) {
+                            $evaluacionHuerfana = $evaluacion_arr[$tokensKeys[$index]];
+                            $evaluacionHuerfana->estado = "Error";
+                            $evaluacionHuerfana->resultado = "Token No Encontrado";
+                            $evaluacionHuerfana->error_compilacion = "El token de evaluación expiró o pertenecía a una instancia previa del juez.";
+                            $evaluacionHuerfana->save();
+                        }
+                        continue;
+                    }
+
+                    if (!isset($item["token"]) || !isset($evaluacion_arr[$item["token"]])) {
+                        continue;
+                    }
+
                     $evaluacion = $evaluacion_arr[$item["token"]];
-                    $evaluacion->resultado = $item['status']["description"];
-                    if ($item['status']["id"] != 1 && $item['status']["id"] != 2) {
-                        $evaluacion->tiempo = $item['time'];
-                        $evaluacion->memoria = $item['memory'];
-                        //Previene almacenar salidas muy largas debido a loops infinito en códigos que imprimen de manera infinita strings
-                        if(strlen($item['stdout'])<=65535){
-                            $evaluacion->stout = $item['stdout'];
-                        }else{
+                    $evaluacion->resultado = $item['status']["description"] ?? 'Error';
+                    
+                    if (isset($item['status']["id"]) && $item['status']["id"] != 1 && $item['status']["id"] != 2) {
+                        $evaluacion->tiempo = $item['time'] ?? null;
+                        $evaluacion->memoria = $item['memory'] ?? null;
+                        
+                        $stdout = $item['stdout'] ?? '';
+                        if (strlen($stdout) <= 65535) {
+                            $evaluacion->stout = $stdout;
+                        } else {
                             $evaluacion->stout = base64_encode("Error: El texto de salida es muy largo.");
                         }
+
                         if (isset($item["stderr"])) {
                             $evaluacion->error_compilacion = $item["stderr"];
                         } else {
-                            $evaluacion->error_compilacion = $item["compile_output"];
+                            $evaluacion->error_compilacion = $item["compile_output"] ?? null;
                         }
-                        if ($item['status']["id"] == 3) {
+                        
+                        $isAccepted = ($item['status']["id"] == 3);
+                        if (!$isAccepted && $item['status']["id"] == 4 && isset($evaluacion->casos_pruebas)) {
+                            // Decodificar la salida estándar de Judge0 si viene en Base64
+                            $actualOutput = base64_decode($stdout) ?: $stdout;
+                            $expectedOutput = $evaluacion->casos_pruebas->salidas;
+                            
+                            if ($comparator->isMatch($actualOutput, $expectedOutput)) {
+                                $isAccepted = true;
+                                $evaluacion->resultado = "Aceptado (Variación de Formato)";
+                            }
+                        }
+
+                        if ($isAccepted) {
                             $evaluacion->estado = "Aceptado";
                             $envio->cant_casos_resuelto = $envio->cant_casos_resuelto + 1;
                             if(isset($evaluacion->casos_pruebas->puntos)){
@@ -99,9 +134,9 @@ class EvaluarEnvios extends Command
                 }
                 $envio->save();
                 DB::commit();
-            } catch (\PDOException $e) {
+            } catch (\Throwable $e) {
                 DB::rollBack();
-                $this->error("Error en la conexión con la base de datos");
+                $this->error("Error al procesar evaluación: " . $e->getMessage());
             }
         }
         $this->info("Se ha verificado las evaluaciones pendientes (".sizeof($envios).")");

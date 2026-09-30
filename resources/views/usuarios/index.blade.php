@@ -5,14 +5,14 @@
     <div class="row mt-4 mx-4">
         <div class="col-12">
             <div class="card shadow-xs border mb-4">
-                <div class="card-header pb-0 border-bottom mb-1">
-                    <div class="d-flex justify-content-between align-items-center pb-2">
-                        <div>
+                <div class="card-header pb-0 border-bottom mb-0">
+                    <div class="d-flex justify-content-center align-items-center pb-2 position-relative w-100">
+                        <div class="text-center">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-users me-2 text-primary"></i>Gestión de Usuarios</h6>
                             <p class="text-xs text-secondary mb-0">Administre los usuarios registrados, asigne roles, edite información y gestione accesos.</p>
                         </div>
                         @can('crear usuario')
-                        <div>
+                        <div class="position-absolute end-0">
                             <a class="btn btn-sm btn-dark mb-0 me-2" href="{{ route('usuarios.crear') }}"><i class="fa fa-user-plus me-1"></i> Crear Usuario</a>
                             <a class="btn btn-sm btn-outline-primary mb-0" href="{{ route('usuarios.bulk') }}"><i class="fa fa-file-upload me-1"></i> Inserción Masiva</a>
                         </div>
@@ -91,10 +91,10 @@
                         <table class="table align-items-center mb-0" id="table">
                             <thead>
                                 <tr class="border-bottom">
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Usuario</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7 ps-2">Roles</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7 ps-2">Cursos</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bold opacity-7 ps-2">Email</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Usuario</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Roles</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Cursos</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Email</th>
                                     <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Creado</th>
                                     @canany(['editar usuario', 'eliminar usuario'])
                                         <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Acciones</th>
@@ -104,30 +104,30 @@
                             <tbody>
                                 @foreach ($users as $user)
                                     <tr>
-                                        <td>
-                                            <div class="d-inline-flex align-items-center py-1">
-                                                <div class="d-flex flex-column justify-content-center ms-2">
+                                        <td class="align-middle text-center">
+                                            <div class="d-flex px-2 py-1 justify-content-center text-center">
+                                                <div class="d-flex flex-column justify-content-center text-center">
                                                     <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $user->firstname ? $user->firstname . ' ' . $user->lastname : $user->username }}</h6>
                                                     <p class="text-xs text-secondary mb-0">{{ $user->username }} | {{ $user->rut }}</p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
-                                            <div class="d-flex flex-wrap gap-1">
+                                        <td class="align-middle text-center">
+                                            <div class="d-flex flex-wrap gap-1 justify-content-center">
                                                 @foreach ($user->getRoleNames() as $rol)
                                                     <span class="badge border border-info text-info text-xxs px-2 py-1 bg-white">{{ $rol }}</span>
                                                 @endforeach
                                             </div>
                                         </td>
-                                        <td>
-                                            <div class="d-flex flex-wrap gap-1">
+                                        <td class="align-middle text-center">
+                                            <div class="d-flex flex-wrap gap-1 justify-content-center">
                                                 @foreach ($user->cursos()->get() as $curso)
                                                     <span class="badge border border-primary text-primary text-xxs px-2 py-1 bg-white" title="{{ $curso->nombre }}">{{ $curso->codigo }}</span>
                                                 @endforeach
                                             </div>
                                         </td>
-                                        <td>
-                                            <div class="d-flex px-3 py-1">
+                                        <td class="align-middle text-center">
+                                            <div class="d-flex px-3 py-1 justify-content-center">
                                                 <div class="d-flex flex-column justify-content-center">
                                                     <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $user->email }}</h6>
                                                 </div>
@@ -138,7 +138,7 @@
                                                 {{ $user->fecha ? $user->fecha : 'Desconocido' }}</p>
                                         </td>
                                         @canany(['editar usuario', 'eliminar usuario'])
-                                            <td class="align-middle text-end">
+                                            <td class="align-middle text-center">
                                                 <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1">
                                                      @can('editar usuario')
                                                          <a class="btn btn-xs btn-outline-info mb-0" title="Editar Usuario"

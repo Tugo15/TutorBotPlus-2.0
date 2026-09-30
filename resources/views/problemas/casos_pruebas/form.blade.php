@@ -29,10 +29,9 @@
             <input class="form-check-input" type="checkbox" role="switch" id="ejemplo" name="ejemplo" value="1" @if(old('ejemplo', true)) checked @endif>
             <label class="form-check-label" for="ejemplo">Es un caso de ejemplo (mostrar entradas y salidas en los resultados)</label>
         </div>
-        <button class="btn btn-dark mt-2" type="submit" id="boton_crear"><i class="fa fa-plus me-1"></i> Añadir</button>
-        <button type="button" class="btn btn-outline-secondary mt-2" data-bs-toggle="modal" data-bs-target="#ejemplo_modal">
+        <button class="btn btn-sm btn-dark mt-2 mb-0" type="submit" id="boton_crear"><i class="fa fa-plus me-1"></i> Añadir</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary mt-2 mb-0" data-bs-toggle="modal" data-bs-target="#ejemplo_modal">
             <i class="fa fa-eye me-1"></i> Ver Ejemplo
         </button>
-        <a href="{{route('problemas.index')}}" class="btn btn-outline-secondary mt-2"><i class="fa fa-arrow-left me-1"></i> Volver</a>
     </div>
 </div>

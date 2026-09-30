@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom">
     <div>
         <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-tags me-2 text-danger"></i>Información de la Categoría</h6>
         <p class="text-xs text-secondary mb-0">Ingrese el nombre de la categoría para agrupar problemas.</p>

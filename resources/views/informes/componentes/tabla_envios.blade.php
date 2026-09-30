@@ -6,18 +6,16 @@
 <div class="row mt-4 mx-3">
     <div class="col-12">
         <div class="card shadow-xs border mb-4">
-            <div class="card-header pb-0 border-bottom mb-3">
-                <div class="d-flex flex-wrap justify-content-between align-items-center pb-3 gap-2">
-                    <div>
-                        <h6 class="mb-0 font-weight-bold text-dark">
-                            <i class="fa fa-list-alt me-2 text-primary"></i>Registro General de Envíos e Intentos
-                        </h6>
-                        <p class="text-xs text-secondary mb-0">Listado detallado de envíos, códigos de solución e IP de origen.</p>
-                    </div>
+            <div class="card-header pb-0 border-bottom mb-0">
+                <div class="text-center pb-2 w-100">
+                    <h6 class="mb-0 font-weight-bold text-dark">
+                        <i class="fa fa-list-alt me-2 text-primary"></i>Registro General de Envíos e Intentos
+                    </h6>
+                    <p class="text-xs text-secondary mb-0">Listado detallado de envíos, códigos de solución e IP de origen.</p>
                 </div>
 
                 <!-- Filtros de Búsqueda Avanzados -->
-                <div class="row g-2 pb-3 pt-2 bg-light rounded px-2 align-items-end border">
+                <div class="row g-2 pb-3 pt-2 bg-light rounded px-2 align-items-end border mb-0 mt-3">
                     <div class="col-md-3 col-sm-6">
                         <label for="filtroEstadoEnvio" class="form-label text-xs font-weight-bold text-dark mb-1">
                             <i class="fa fa-filter text-primary me-1"></i>Estado del Envío:
@@ -60,18 +58,18 @@
                 </div>
             </div>
 
-            <div class="card-body px-0 pt-0 pb-2">
+            <div class="card-body px-0 pt-2 pb-2">
                 <div class="table-responsive p-0">
                     <table class="table align-items-center mb-0" id="tabla_envios_list">
                         <thead>
                             <tr>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Estudiante</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Problema</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2 text-center">Lenguaje</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2 text-center">IP Origen</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2 text-center">Estado</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2 text-center">Métricas</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2 text-center">Fecha</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Estudiante</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Problema</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Lenguaje</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">IP Origen</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Estado</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Métricas</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Fecha</th>
                                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Acciones</th>
                             </tr>
                         </thead>
@@ -86,17 +84,17 @@
                                     $codigoFuente = $envio->fuente_codigo ?? $envio->codigo ?? '// No se registró código en este envío';
                                 @endphp
                                 <tr>
-                                    <td>
-                                        <div class="d-flex px-3 py-1">
-                                            <div class="d-flex flex-column justify-content-center">
+                                    <td class="text-center align-middle">
+                                        <div class="d-inline-flex px-2 py-1 justify-content-center text-center align-items-center">
+                                            <div class="d-flex flex-column justify-content-center text-start">
                                                 <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $nombreEstudiante }}</h6>
                                                 <p class="text-xs text-secondary mb-0">RUT: {{ $envio->rut ?? 'N/A' }}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td>
-                                        <div class="d-flex px-2 py-1">
-                                            <div class="d-flex flex-column justify-content-center">
+                                    <td class="text-center align-middle">
+                                        <div class="d-flex px-2 py-1 justify-content-center text-center">
+                                            <div class="d-flex flex-column justify-content-center text-center">
                                                 <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $nombreProb }}</h6>
                                             </div>
                                         </div>
@@ -185,13 +183,15 @@
 @push('js')
     <link href="{{ asset('assets/js/DataTables/datatables.min.css') }}" rel="stylesheet">
     <script src="{{ asset('assets/js/DataTables/datatables.min.js') }}"></script>
+    <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             if (window.jQuery && $.fn.DataTable && !$.fn.DataTable.isDataTable('#tabla_envios_list')) {
                 var tableEnvios = $('#tabla_envios_list').DataTable({
+                    language: typeof espaniol !== 'undefined' ? espaniol : {},
                     responsive: true,
                     order: [[6, 'desc']],
-                    dom: "<'row pb-3 px-4 pt-4 align-items-center'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6 d-flex justify-content-end'f>>" +
+                    dom: "<'row pb-2 px-4 pt-2 align-items-center'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6 d-flex justify-content-end'f>>" +
                          "<'row'<'col-sm-12'tr>>" +
                          "<'row pt-3 px-4 pb-4 align-items-center'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>"
                 });

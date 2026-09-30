@@ -37,12 +37,12 @@
 </div>
 <div class="row">
     <div class="col-12 mb-3">
-        <div class="form-group">
+        <div class="form-group" style="position: relative; z-index: 9999;">
             <label for="descripcion" class="form-control-label font-weight-bold text-sm">Descripción del Certamen*</label>
             <input type="hidden" id="descripcion" name="descripcion"
                 value="{{ isset($certamen) ? old('descripcion', $certamen->descripcion) : old('descripcion') }}">
             <div class="flex flex-col space-y-2">
-                <div id="editor" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                <div id="editor" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" style="position: relative; z-index: 9999;"></div>
             </div>
         </div>
         @error('descripcion')
