@@ -43,7 +43,7 @@ use App\Models\JuecesVirtuales;
 Route::get('/home', function () {
 	return redirect()->route('login');
 })->middleware('guest');
-Route::get('/', function () {return redirect('/inicio');})->middleware('auth');
+Route::get('/', function () {return redirect()->route('home');})->middleware('auth');
 //Route::get('/register', [RegisterController::class, 'create'])->middleware('guest')->name('register');
 //Route::post('/register', [RegisterController::class, 'store'])->middleware('guest')->name('register.perform');
 Route::get('/login', [LoginController::class, 'show'])->middleware('guest')->name('login');

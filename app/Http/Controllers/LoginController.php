@@ -39,7 +39,13 @@ class LoginController extends Controller
             // Register current session as the only active session for this user
             $this->sessionService->registerSession(Auth::user(), $request->session()->getId());
 
-            return redirect()->intended('cursos');
+            // Limpiar redirecciones residuales que apunten a la raíz del host o fuera de /tutorbot
+            $intended = session('url.intended');
+            if ($intended && (!str_contains($intended, '/tutorbot') || rtrim($intended, '/') === 'https://cernicalo.ucsc.cl' || rtrim($intended, '/') === 'http://cernicalo.ucsc.cl')) {
+                session()->forget('url.intended');
+            }
+
+            return redirect()->intended(url('/cursos'));
         }
 
         return back()->withErrors([
