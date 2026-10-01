@@ -123,6 +123,31 @@
             display: inline-block !important;
         }
 
+        /* Control de tamaño para íconos SVG y botones (elimina íconos gigantes y desalineados) */
+        svg.svg-inline--fa,
+        .svg-inline--fa {
+            display: inline-block !important;
+            height: 1em !important;
+            width: 1em !important;
+            max-width: 1.25em !important;
+            max-height: 1.25em !important;
+            vertical-align: -0.125em !important;
+            overflow: visible !important;
+        }
+
+        .btn .svg-inline--fa,
+        .btn i.fa,
+        .btn i.ni {
+            font-size: 0.75rem !important;
+            vertical-align: middle !important;
+        }
+
+        .icon-shape i.ni,
+        .icon-shape .svg-inline--fa {
+            font-size: 1rem !important;
+            line-height: 0 !important;
+        }
+
         /* ABSOLUTE FIX FOR DATATABLES LENGTH SELECT ARROW OVERLAP */
         .dataTables_length label,
         div.dataTables_length label {
