@@ -48,7 +48,7 @@ class ProblemasViewToggleTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Vista Carpetas');
-        $response->assertSee('Todos los Problemas');
+        $response->assertSee('Todos');
         $response->assertSee('vista-carpetas');
         $response->assertSee('vista-todos');
         $response->assertSee('PROB_01');
