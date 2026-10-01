@@ -35,20 +35,30 @@ class AppServiceProvider extends ServiceProvider
                 URL::forceRootUrl('http://' . $httpHost);
             } else {
                 $appUrl = config('app.url');
+                $isHttps = (request()->server->get('HTTP_X_FORWARDED_PROTO') === 'https'
+                    || request()->header('x-forwarded-proto') === 'https'
+                    || request()->isSecure()
+                    || str_starts_with($appUrl ?? '', 'https://'));
+
                 if (!empty($appUrl) && !str_contains($appUrl, 'localhost')) {
-                    URL::forceRootUrl(rtrim($appUrl, '/'));
-                    if (str_starts_with($appUrl, 'https://')) {
+                    $root = rtrim($appUrl, '/');
+                    if ($isHttps) {
+                        $root = preg_replace('/^http:/', 'https:', $root);
                         URL::forceScheme('https');
                     } else {
                         URL::forceScheme('http');
                     }
+                    URL::forceRootUrl($root);
                 } else {
-                    if (request()->server->get('HTTP_X_FORWARDED_PROTO') === 'https' || request()->header('x-forwarded-proto') === 'https') {
+                    if ($isHttps) {
                         URL::forceScheme('https');
                     }
 
                     $currentRoot = request()->root();
                     if (!empty($currentRoot)) {
+                        if ($isHttps) {
+                            $currentRoot = preg_replace('/^http:/', 'https:', $currentRoot);
+                        }
                         URL::forceRootUrl($currentRoot);
                     }
                 }
