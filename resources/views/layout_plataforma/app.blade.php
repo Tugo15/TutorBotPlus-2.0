@@ -8,8 +8,9 @@
     <title>{{ $title_html ? $title_html . ' - ' : '' }}Tutorbot+</title>
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
     <link rel="icon" type="image/x-icon" href="{{ asset('img/favicon.ico') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/plataforma.css') }}?v={{ filemtime(public_path('assets/css/plataforma.css')) }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/datatables_argon_fix.css') }}?v={{ filemtime(public_path('assets/css/datatables_argon_fix.css')) }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="{{ asset('assets/css/plataforma.css') }}?v={{ @filemtime(public_path('assets/css/plataforma.css')) ?: '1.0' }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/datatables_argon_fix.css') }}?v={{ @filemtime(public_path('assets/css/datatables_argon_fix.css')) ?: '1.0' }}">
     <script src="{{ asset('assets/js/disable_devtools.js') }}"></script>
     <script src="{{ mix('js/plataforma.js') }}" defer></script>
     <link rel="stylesheet" href="{{ mix('css/plataforma.css') }}">

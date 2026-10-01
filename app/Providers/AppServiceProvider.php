@@ -24,8 +24,17 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
 
-        // if (request()->server->get('HTTP_X_FORWARDED_PROTO') === 'https' || request()->header('x-forwarded-proto') === 'https') {
-        //     URL::forceScheme('https');
-        // }
+        // Adaptar dinámicamente la URL base de rutas y assets a la petición actual
+        // (resuelve túneles SSH localhost:8080, reverse proxies, IPs de red y dominios sin configurar .env)
+        if (!app()->runningInConsole()) {
+            if (request()->server->get('HTTP_X_FORWARDED_PROTO') === 'https' || request()->header('x-forwarded-proto') === 'https') {
+                URL::forceScheme('https');
+            }
+
+            $currentRoot = request()->root();
+            if (!empty($currentRoot)) {
+                URL::forceRootUrl($currentRoot);
+            }
+        }
     }
 }

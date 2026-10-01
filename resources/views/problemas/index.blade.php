@@ -139,7 +139,7 @@
 @push('js')
     <link href="{{ asset('assets/js/DataTables/datatables.min.css') }}" rel="stylesheet">
     <script src="{{ asset('assets/js/DataTables/datatables.min.js') }}"></script>
-    <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}?v={{ filemtime(public_path('assets/js/DataTables/gestion_initialize_es_cl.js')) }}"></script>
+    <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}?v={{ @filemtime(public_path('assets/js/DataTables/gestion_initialize_es_cl.js')) ?: '1.0' }}"></script>
     <script src="{{ asset('assets/js/alertas_administracion.js') }}"></script> 
     <script>
         function switchVista(mode) {

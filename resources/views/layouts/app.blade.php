@@ -13,16 +13,16 @@
     <!-- Nucleo Icons -->
     <link href="{{asset('assets/css/nucleo-icons.css')}}" rel="stylesheet" />
     <link href="{{asset('assets/css/nucleo-svg.css')}}" rel="stylesheet" />
-    <!-- Font Awesome Icons -->
-    <script src="{{asset('assets/js/fontawesome/all.min.js')}}" crossorigin="anonymous"></script>
-    <link href="{{asset('assets/css/nucleo-svg.css')}}" rel="stylesheet" />
-    <!-- CSS Files -->
+    <!-- Font Awesome Icons (CDN confiable + fallback local para íconos/emojis garantizados) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link href="{{asset('assets/css/fontawesome/all.min.css')}}" rel="stylesheet">
+    <link href="{{asset('assets/css/fontawesome/v4-shims.min.css')}}" rel="stylesheet">
+    <!-- CSS Files -->
     <script src="{{ asset('assets/js/disable_devtools.js') }}"></script>
-    <script src="{{ mix('js/app.js') }}" defer></script>
-    <link rel="stylesheet" href="{{ mix('assets/css/argon-dashboard.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/datatables_argon_fix.css') }}?v={{ filemtime(public_path('assets/css/datatables_argon_fix.css')) }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/selection_cards.css') }}?v={{ filemtime(public_path('assets/css/selection_cards.css')) }}">
+    <script src="{{ asset('js/app.js') }}" defer></script>
+    <link rel="stylesheet" href="{{ asset('assets/css/argon-dashboard.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/datatables_argon_fix.css') }}?v={{ @filemtime(public_path('assets/css/datatables_argon_fix.css')) ?: '1.0' }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/selection_cards.css') }}?v={{ @filemtime(public_path('assets/css/selection_cards.css')) ?: '1.0' }}">
 
     @stack('css')
 </head>
@@ -69,7 +69,6 @@
     <script async defer src="https://buttons.github.io/buttons.js"></script>
     <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
     @stack('js')
-    <link rel="stylesheet" href="{{ asset('assets/css/datatables_argon_fix.css') }}">
     <style>
         /* ABSOLUTE FIX FOR DATATABLES LENGTH SELECT ARROW OVERLAP */
         .dataTables_length label,
