@@ -17,6 +17,7 @@
     <link href="{{asset('assets/css/nucleo-svg.css')}}" rel="stylesheet" />
     <!-- Font Awesome Icons (CDN confiable + fallback local para íconos/emojis garantizados) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/v4-shims.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link href="{{asset('assets/css/fontawesome/all.min.css')}}" rel="stylesheet">
     <link href="{{asset('assets/css/fontawesome/v4-shims.min.css')}}" rel="stylesheet">
     <!-- CSS Files -->
@@ -72,9 +73,54 @@
     <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
     @stack('js')
     <style>
-        /* Force correct typography across entire application */
-        body, h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6, p, span, a, input, button, select, textarea, table, th, td, label {
+        /* Definición robusta de NucleoIcons con ruta directa generada por asset() */
+        @font-face {
+            font-family: 'NucleoIcons';
+            src: url("{{ asset('assets/fonts/nucleo-icons.woff2') }}") format('woff2'),
+                 url("{{ asset('assets/fonts/nucleo-icons.woff') }}") format('woff'),
+                 url("{{ asset('assets/fonts/nucleo-icons.ttf') }}") format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        /* Tipografía Open Sans aplicada únicamente a textos (excluyendo cualquier ícono) */
+        body, h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6, p, input, button, select, textarea, table, th, td, label {
             font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+        }
+
+        /* PROTECCIÓN ABSOLUTA PARA ÍCONOS */
+        i.ni, .ni, [class*=" ni-"], [class^="ni-"] {
+            font-family: 'NucleoIcons' !important;
+            font-style: normal !important;
+            font-weight: normal !important;
+            font-variant: normal !important;
+            text-transform: none !important;
+            line-height: 1 !important;
+            display: inline-block !important;
+            -webkit-font-smoothing: antialiased !important;
+            -moz-osx-font-smoothing: grayscale !important;
+        }
+
+        i.fa, .fa, i.fas, .fas, .fa-solid, [class*=" fa-"]:not(.ni), [class^="fa-"]:not(.ni) {
+            font-family: "Font Awesome 6 Free", "FontAwesome" !important;
+            font-weight: 900 !important;
+            font-style: normal !important;
+            display: inline-block !important;
+        }
+
+        i.far, .far, .fa-regular {
+            font-family: "Font Awesome 6 Free", "FontAwesome" !important;
+            font-weight: 400 !important;
+            font-style: normal !important;
+            display: inline-block !important;
+        }
+
+        i.fab, .fab, .fa-brands {
+            font-family: "Font Awesome 6 Brands", "FontAwesome" !important;
+            font-weight: 400 !important;
+            font-style: normal !important;
+            display: inline-block !important;
         }
 
         /* ABSOLUTE FIX FOR DATATABLES LENGTH SELECT ARROW OVERLAP */

@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="{{ asset('img/favicon.ico') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/v4-shims.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ asset('assets/css/plataforma.css') }}?v={{ @filemtime(public_path('assets/css/plataforma.css')) ?: '1.0' }}">
     <link rel="stylesheet" href="{{ asset('assets/css/datatables_argon_fix.css') }}?v={{ @filemtime(public_path('assets/css/datatables_argon_fix.css')) ?: '1.0' }}">
     <script src="{{ asset('assets/js/disable_devtools.js') }}"></script>
@@ -37,10 +38,29 @@
                 url('{{asset("fonts/roboto-v32-latin-regular.svg")}}#Roboto') format('svg');
             /* Legacy iOS */
         }
-        body, h1, h2, h3, h4, h5, h6, p, span, a, input, button, select, table, th, td, label {
+        body, h1, h2, h3, h4, h5, h6, p, a, input, button, select, table, th, td, label {
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", "Open Sans", "Helvetica Neue", Arial, sans-serif !important;
         }
 
+        /* PROTECCIÓN ABSOLUTA PARA ÍCONOS */
+        i.fa, .fa, i.fas, .fas, .fa-solid, [class*=" fa-"], [class^="fa-"] {
+            font-family: "Font Awesome 6 Free", "FontAwesome" !important;
+            font-weight: 900 !important;
+            font-style: normal !important;
+            display: inline-block !important;
+        }
+        i.far, .far, .fa-regular {
+            font-family: "Font Awesome 6 Free", "FontAwesome" !important;
+            font-weight: 400 !important;
+            font-style: normal !important;
+            display: inline-block !important;
+        }
+        i.fab, .fab, .fa-brands {
+            font-family: "Font Awesome 6 Brands", "FontAwesome" !important;
+            font-weight: 400 !important;
+            font-style: normal !important;
+            display: inline-block !important;
+        }
     </style>
     @stack('css')
 </head>
