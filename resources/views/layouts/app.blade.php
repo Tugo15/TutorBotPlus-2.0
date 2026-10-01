@@ -9,7 +9,9 @@
         @if(isset($title_url)){{$title_url}} - @endif TutorBot+
     </title>
     <!--     Fonts and icons     -->
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <!-- Nucleo Icons -->
     <link href="{{asset('assets/css/nucleo-icons.css')}}" rel="stylesheet" />
     <link href="{{asset('assets/css/nucleo-svg.css')}}" rel="stylesheet" />
@@ -70,6 +72,11 @@
     <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
     @stack('js')
     <style>
+        /* Force correct typography across entire application */
+        body, h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6, p, span, a, input, button, select, textarea, table, th, td, label {
+            font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+        }
+
         /* ABSOLUTE FIX FOR DATATABLES LENGTH SELECT ARROW OVERLAP */
         .dataTables_length label,
         div.dataTables_length label {

@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{{ $title_html ? $title_html . ' - ' : '' }}Tutorbot+</title>
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="{{ asset('img/favicon.ico') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ asset('assets/css/plataforma.css') }}?v={{ @filemtime(public_path('assets/css/plataforma.css')) ?: '1.0' }}">
@@ -35,9 +37,8 @@
                 url('{{asset("fonts/roboto-v32-latin-regular.svg")}}#Roboto') format('svg');
             /* Legacy iOS */
         }
-        body{
-            font-family: Roboto;
-            
+        body, h1, h2, h3, h4, h5, h6, p, span, a, input, button, select, table, th, td, label {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", "Open Sans", "Helvetica Neue", Arial, sans-serif !important;
         }
 
     </style>
