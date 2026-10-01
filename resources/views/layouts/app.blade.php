@@ -16,10 +16,11 @@
     <link href="{{asset('assets/css/nucleo-icons.css')}}" rel="stylesheet" />
     <link href="{{asset('assets/css/nucleo-svg.css')}}" rel="stylesheet" />
     <!-- Font Awesome Icons (CDN confiable + fallback local para íconos/emojis garantizados) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/v4-shims.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link href="{{asset('assets/css/fontawesome/all.min.css')}}" rel="stylesheet">
     <link href="{{asset('assets/css/fontawesome/v4-shims.min.css')}}" rel="stylesheet">
+    <link href="{{asset('assets/css/fontawesome/v5-font-face.min.css')}}" rel="stylesheet">
     <!-- CSS Files -->
     <script src="{{ asset('assets/js/disable_devtools.js') }}"></script>
     <script src="{{ asset('js/app.js') }}" defer></script>

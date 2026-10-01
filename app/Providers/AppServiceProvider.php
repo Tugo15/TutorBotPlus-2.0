@@ -27,13 +27,21 @@ class AppServiceProvider extends ServiceProvider
         // Adaptar dinámicamente la URL base de rutas y assets a la petición actual
         // (resuelve túneles SSH localhost:8080, reverse proxies, IPs de red y dominios sin configurar .env)
         if (!app()->runningInConsole()) {
-            if (request()->server->get('HTTP_X_FORWARDED_PROTO') === 'https' || request()->header('x-forwarded-proto') === 'https') {
-                URL::forceScheme('https');
-            }
+            $httpHost = request()->server->get('HTTP_HOST') ?? request()->header('host');
 
-            $currentRoot = request()->root();
-            if (!empty($currentRoot)) {
-                URL::forceRootUrl($currentRoot);
+            // Si se accede mediante túnel SSH o localmente (localhost:8080, 127.0.0.1, etc.)
+            if ($httpHost && (str_contains($httpHost, 'localhost') || str_contains($httpHost, '127.0.0.1'))) {
+                URL::forceScheme('http');
+                URL::forceRootUrl('http://' . $httpHost);
+            } else {
+                if (request()->server->get('HTTP_X_FORWARDED_PROTO') === 'https' || request()->header('x-forwarded-proto') === 'https') {
+                    URL::forceScheme('https');
+                }
+
+                $currentRoot = request()->root();
+                if (!empty($currentRoot)) {
+                    URL::forceRootUrl($currentRoot);
+                }
             }
         }
     }
