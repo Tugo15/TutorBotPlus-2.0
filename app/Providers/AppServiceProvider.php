@@ -32,7 +32,10 @@ class AppServiceProvider extends ServiceProvider
             // Si se accede mediante túnel SSH o localmente (localhost:8080, 127.0.0.1, etc.)
             if ($httpHost && (str_contains($httpHost, 'localhost') || str_contains($httpHost, '127.0.0.1'))) {
                 URL::forceScheme('http');
-                URL::forceRootUrl('http://' . $httpHost);
+                $localRoot = 'http://' . $httpHost;
+                URL::forceRootUrl($localRoot);
+                config(['app.asset_url' => $localRoot]);
+                config(['app.mix_url' => $localRoot]);
             } else {
                 $appUrl = config('app.url');
                 $isHttps = (request()->server->get('HTTP_X_FORWARDED_PROTO') === 'https'
@@ -49,6 +52,8 @@ class AppServiceProvider extends ServiceProvider
                         URL::forceScheme('http');
                     }
                     URL::forceRootUrl($root);
+                    config(['app.asset_url' => $root]);
+                    config(['app.mix_url' => $root]);
                 } else {
                     if ($isHttps) {
                         URL::forceScheme('https');
@@ -60,9 +65,16 @@ class AppServiceProvider extends ServiceProvider
                             $currentRoot = preg_replace('/^http:/', 'https:', $currentRoot);
                         }
                         URL::forceRootUrl($currentRoot);
+                        config(['app.asset_url' => $currentRoot]);
+                        config(['app.mix_url' => $currentRoot]);
                     }
                 }
             }
+
+            // Forzar al Paginator a usar el path correcto con el Root URL forzado
+            Paginator::currentPathResolver(function () {
+                return url()->current();
+            });
         }
     }
 }
