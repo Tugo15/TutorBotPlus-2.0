@@ -53,8 +53,8 @@
                                 <tr class="bg-light">
                                     <td class="align-middle">
                                         <div class="d-inline-flex px-3 py-1 align-items-center">
-                                            <div class="icon icon-shape bg-primary text-white rounded-circle text-center d-flex align-items-center justify-content-center me-3 p-2" style="width: 36px; height: 36px;">
-                                                <i class="fa fa-layer-group"></i>
+                                            <div class="bg-primary text-white rounded-circle text-center d-flex align-items-center justify-content-center me-3 p-2" style="width: 36px; height: 36px;">
+                                                <i class="fa fa-layer-group" style="top: 0; position: relative;"></i>
                                             </div>
                                             <div class="d-flex flex-column justify-content-center">
                                                 <h6 class="mb-0 text-sm font-weight-bold text-primary">Todos los Cursos Juntos (Consolidado)</h6>

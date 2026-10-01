@@ -49,8 +49,8 @@
                                             <div class="card-body p-3 d-flex flex-column justify-content-between text-center">
                                                 <div class="d-flex flex-column align-items-center">
                                                     <div class="d-flex justify-content-between align-items-center mb-3 w-100">
-                                                        <div class="icon icon-shape bg-light text-dark border rounded-circle text-center d-flex align-items-center justify-content-center p-2" style="width: 44px; height: 44px;">
-                                                            <i class="fa fa-folder text-warning fa-lg"></i>
+                                                        <div class="bg-light text-dark border rounded-circle text-center d-flex align-items-center justify-content-center p-2" style="width: 44px; height: 44px;">
+                                                            <i class="fa fa-folder text-warning fa-lg" style="top: 0; position: relative;"></i>
                                                         </div>
                                                         <span class="badge border border-primary text-primary text-xxs px-2.5 py-1 bg-white">{{ $curso->codigo }}</span>
                                                     </div>
