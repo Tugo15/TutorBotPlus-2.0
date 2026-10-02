@@ -219,7 +219,8 @@ class InformeController extends Controller
     }
 
     public function ver_informe_curso(Request $request){
-        if(!Cursos::exists($request->id_curso)){
+        $curso = Cursos::find($request->id_curso);
+        if(!isset($curso)){
             return redirect()->route('cursos.index')->with("error", "El curso no existe");
         }
         if(!auth()->user()->hasRole('administrador') && !auth()->user()->cursos()->where('cursos.id', '=', $request->id_curso)->exists()){
@@ -247,11 +248,24 @@ class InformeController extends Controller
         ->where('cursos.id', '=', $request->id_curso)
         ->groupBy('cursos.id', 'cursos.nombre')
         ->first();
+
+        if(!$curso_estadistica && $curso){
+            $curso_estadistica = (object)[
+                'id' => $curso->id,
+                'nombre' => $curso->nombre,
+                'sum_cantidad_resueltos' => 0,
+                'sum_cantidad_intentos' => 0,
+                'sum_tiempo_total' => 0,
+                'sum_cant_ra_solicitada' => 0,
+                'tiempo_promedio' => '00:00:00',
+            ];
+        }
+
         //Consulta del problemas más resuelto y el problema con más intentos
         $dataset_problemas = DB::table('problemas')
         ->leftJoin('disponible', 'disponible.id_problema', '=', 'problemas.id')
         ->where('disponible.id_curso', '=', $request->id_curso)  
-        ->select('problemas.nombre', 'problemas.codigo', 'problemas.id', DB::raw('coalesce(disponible.cantidad_intentos, 0) as cantidad_intentos'), DB::raw('coalesce(disponible.cantidad_resueltos) as cantidad_resueltos'), DB::raw('coalesce(disponible.cant_retroalimentacion_solicitada) as cant_retroalimentacion_solicitada'), DB::raw('coalesce(disponible.tiempo_total,0) as tiempo_total'))
+        ->select('problemas.nombre', 'problemas.codigo', 'problemas.id', DB::raw('coalesce(disponible.cantidad_intentos, 0) as cantidad_intentos'), DB::raw('coalesce(disponible.cantidad_resueltos, 0) as cantidad_resueltos'), DB::raw('coalesce(disponible.cant_retroalimentacion_solicitada, 0) as cant_retroalimentacion_solicitada'), DB::raw('coalesce(disponible.tiempo_total,0) as tiempo_total'))
         ->distinct();
         $problema_mas_intentado = clone $dataset_problemas;
         $problema_mas_resuelto = clone $dataset_problemas;
@@ -264,7 +278,7 @@ class InformeController extends Controller
         ->join('resolver', 'resolver.id', '=', 'envio_solucion_problemas.id_resolver')
         ->join('problemas', 'resolver.id_problema', '=', 'problemas.id')
         ->join('cursa', 'cursa.id', '=', 'envio_solucion_problemas.id_cursa')
-        ->select('cursa.id_usuario', DB::raw('count(envio_solucion_problemas.id) as cantidad_intentos'), DB::raw('CAST(sum(envio_solucion_problemas.solucionado) AS int) as cantidad_resueltos'), DB::raw('count(solicitud_ra_llms.id) as cantidad_ra'))
+        ->select('cursa.id_usuario', DB::raw('count(envio_solucion_problemas.id) as cantidad_intentos'), DB::raw('sum(CASE WHEN envio_solucion_problemas.solucionado IS TRUE THEN 1 ELSE 0 END) as cantidad_resueltos'), DB::raw('count(solicitud_ra_llms.id) as cantidad_ra'))
         ->whereNull('id_certamen')
         ->where('cursa.id_curso', '=', $request->id_curso)
         ->orderByDesc('cantidad_intentos')
@@ -278,8 +292,8 @@ class InformeController extends Controller
         }else if(isset($curso_estadistica)){
             $curso_estadistica->tiempo_promedio = 0;
         }
-        if(isset($curso_estadistica)){
-            $curso_estadistica->tiempo_promedio = gmdate('H:i:s', $curso_estadistica->tiempo_promedio);
+        if(isset($curso_estadistica) && is_numeric($curso_estadistica->tiempo_promedio)){
+            $curso_estadistica->tiempo_promedio = gmdate('H:i:s', (int)$curso_estadistica->tiempo_promedio);
         }
 
         $ultima_evaluacion_sub = DB::table('evaluacion_solucions')

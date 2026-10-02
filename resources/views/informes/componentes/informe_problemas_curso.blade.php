@@ -8,14 +8,14 @@
             </div>
             <div class="card-body px-5 pt-3 pb-2">
                 <div class="row">
-                    @if (!empty($lenguajes_estadistica) || !empty($estadistica_estados))
+                    @if ((!empty($lenguajes_estadistica) || !empty($estadistica_estados)) && isset($problema_mas_resuelto) && isset($problema_mas_intentado))
                         <span><strong>Problema más resuelto:</strong></span>
-                        <a href="{{ route('problemas.ver', ['id_curso' => $curso_estadistica->id, 'codigo' => $problema_mas_resuelto->codigo]) }}"
+                        <a href="{{ route('problemas.ver', ['id_curso' => $curso_estadistica->id ?? '', 'codigo' => $problema_mas_resuelto->codigo]) }}"
                             class="mb-3">{{ $problema_mas_resuelto->nombre }}
                             ({{ $problema_mas_resuelto->cantidad_resueltos }} soluciones y
                             {{ $problema_mas_resuelto->cantidad_intentos }} intentos)</a>
                         <span><strong>Problema con más intentos: </strong></span>
-                        <a href="{{ route('problemas.ver', ['id_curso' => $curso_estadistica->id, 'codigo' => $problema_mas_intentado->codigo]) }}"
+                        <a href="{{ route('problemas.ver', ['id_curso' => $curso_estadistica->id ?? '', 'codigo' => $problema_mas_intentado->codigo]) }}"
                             class="mb-3">{{ $problema_mas_intentado->nombre }}
                             ({{ $problema_mas_intentado->cantidad_resueltos }} soluciones y
                             {{ $problema_mas_intentado->cantidad_intentos }} intentos)</a>
