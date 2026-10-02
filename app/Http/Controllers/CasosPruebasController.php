@@ -10,16 +10,20 @@ use App\Models\LenguajesProgramaciones;
 class CasosPruebasController extends Controller
 {
     public function asignacion_casos(Request $request){
-        $problema = Problemas::find($request->id);
-        $sql_language = $problema->lenguajes()->where('abreviatura', '=', 'sql')->exists();
-        if(!$sql_language){
+        $problema = Problemas::findOrFail($request->id);
+        
+        $has_non_sql_language = $problema->lenguajes()
+            ->where('abreviatura', 'NOT LIKE', '%sql%')
+            ->where('nombre', 'NOT LIKE', '%sql%')
+            ->exists();
+
+        if ($has_non_sql_language || !$problema->lenguajes()->exists()) {
             $casos = $problema->casos_de_prueba()->orderBy('created_at','desc')->get();
             return view("problemas.casos_pruebas.assign", compact('problema', 'casos'));
-        }else{
+        } else {
             $caso = $problema->casos_de_prueba()->orderBy('created_at','desc')->first();
             return view("problemas.casos_pruebas.assign_sql", compact('problema', 'caso'));
         }
-        
     }
 
     public function eliminar_caso(Request $request){
