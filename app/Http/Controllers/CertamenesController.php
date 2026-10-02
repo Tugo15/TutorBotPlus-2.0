@@ -53,7 +53,7 @@ class CertamenesController extends Controller
 
         if ($id_curso_preseleccionado) {
             $curso_modelo = Cursos::find($id_curso_preseleccionado);
-            $todos_problemas = $curso_modelo ? $curso_modelo->problemas()->with('categorias')->get() : Problemas::with('categorias')->get();
+            $todos_problemas = $curso_modelo ? $curso_modelo->problemas()->with('categorias')->get() : collect();
         } else {
             return redirect()->route('certamen.index')->with('error', 'Debe seleccionar un curso para crear una evaluación.');
         }
@@ -63,10 +63,21 @@ class CertamenesController extends Controller
     public function editar(Request $request){
         $cursos = auth()->user()->cursos()->get();
         $certamen = Certamenes::find($request->id);
+        if (!$certamen) {
+            return redirect()->route('certamen.index')->with('error', 'La evaluación no existe.');
+        }
         $certamen->fecha_inicio = Carbon::parse($certamen->fecha_inicio);
         $certamen->fecha_termino = Carbon::parse($certamen->fecha_termino);
-        $todos_problemas = Problemas::with('categorias')->get();
-        $problemas_seleccionados = $certamen->categorias()->pluck('categoria__problemas.id')->toArray();
+        $todos_problemas = $certamen->curso ? $certamen->curso->problemas()->with('categorias')->get() : collect();
+        
+        $categorias_ids = $certamen->categorias()->pluck('categoria__problemas.id')->toArray();
+        $problemas_seleccionados = DB::table('pertenece')
+            ->whereIn('id_categoria', $categorias_ids)
+            ->whereIn('id_problema', $todos_problemas->pluck('id'))
+            ->pluck('id_problema')
+            ->unique()
+            ->toArray();
+
         $categorias_existentes = \App\Models\Categoria_Problema::orderBy('nombre')->get();
         return view('certamen.editar', compact('cursos', 'certamen', 'todos_problemas', 'problemas_seleccionados', 'categorias_existentes'));
     }

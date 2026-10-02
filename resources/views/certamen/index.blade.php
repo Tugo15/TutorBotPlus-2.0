@@ -183,7 +183,6 @@
                                                             <a class="btn btn-xs btn-outline-primary mb-0" title="Ver Informe" href="{{ route('informe.certamen', ['id_certamen' => $certamen->id]) }}"><i class="fa fa-chart-bar me-1"></i> Informe</a>
                                                         @endcan
                                                         @can('editar certamen')
-                                                            <a class="btn btn-xs btn-outline-info mb-0" title="Banco de Problemas" href="{{ route('certamen.banco_problemas', ['id_certamen' => $certamen->id]) }}"><i class="fa fa-database me-1"></i> Banco</a>
                                                             <a class="btn btn-xs btn-outline-warning mb-0" title="Editar Evaluación" href="{{ route('certamen.editar', ['id' => $certamen->id]) }}"><i class="fa fa-pencil me-1"></i> Editar</a>
                                                         @endcan
                                                         @can('crear certamen')
