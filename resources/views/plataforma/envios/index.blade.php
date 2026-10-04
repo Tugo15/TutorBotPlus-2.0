@@ -12,6 +12,7 @@
                                 <th>Lenguaje</th>
                                 <th>Curso</th>
                                 <th>Estado</th>
+                                <th>Restricción</th>
                                 <th>Casos Resueltos</th>
                                 <th>Puntaje</th>
                                 <th>Inicio</th>
@@ -27,6 +28,19 @@
                                     <td>{{$envio->nombre_lenguaje}}</td>
                                     <td><a href="{{route('problemas.listado', ["id"=>$envio->id_curso])}}">{{$envio->nombre_curso}}</a></td>
                                     <td><span class="badge @if($envio->solucionado==true) text-bg-success @elseif($envio->estado == "Error" || $envio->estado == "Rechazado") text-bg-danger @else text-bg-warning @endif">{{$envio->solucionado == true? 'Accepted' : ($envio->estado=="Rechazado" || $envio->estado=="Error"? $envio->resultado : "In Process")}}</span></td>
+                                    <td>
+                                        @if(isset($envio->restricciones) && trim($envio->restricciones) !== '')
+                                            @if($envio->cumple_restricciones === 1 || $envio->cumple_restricciones === true)
+                                                <span class="badge text-bg-success" title="{{ $envio->restricciones }}">Cumple</span>
+                                            @elseif($envio->cumple_restricciones === 0 || $envio->cumple_restricciones === false)
+                                                <span class="badge text-bg-danger" title="{{ $envio->restricciones }}">No cumple</span>
+                                            @else
+                                                <span class="badge text-bg-warning" title="{{ $envio->restricciones }}">Pendiente</span>
+                                            @endif
+                                        @else
+                                            <span class="text-muted text-xs">-</span>
+                                        @endif
+                                    </td>
                                     <td>{{$envio->cant_casos_resuelto}} de {{$envio->total_casos}}</td>
                                     <td>{{$envio->puntaje}}</td>
                                     <td>{{$envio->inicio}}</td>

@@ -9,6 +9,14 @@
                         Enunciado
                     </div>
                     <div class="card-body p-4 text-wrap" id="body_markdown">
+                        @if(isset($problema->restricciones) && trim($problema->restricciones) !== '')
+                            <div class="alert alert-warning border-warning d-flex align-items-center mb-4" role="alert">
+                                <i class="fa fa-exclamation-triangle text-warning me-2 fs-5"></i>
+                                <div>
+                                    <strong>Restricción:</strong> {{ $problema->restricciones }}
+                                </div>
+                            </div>
+                        @endif
                         {!! Str::markdown($problema->body_problema, [
                             'html_input' => 'strip',
                             'allow_unsafe_links' => false,
@@ -119,10 +127,17 @@
                                         <span class="text-secondary">{{ $problema->fecha_inicio }}</span>
                                     </li>
                                 @endif
-                                @if (isset($problema->fecha_termino))
+                                 @if (isset($problema->fecha_termino))
                                     <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
                                         <strong>Fecha Término:</strong>
                                         <span class="text-secondary">{{ $problema->fecha_termino }}</span>
+                                    </li>
+                                @endif
+                                @if (isset($problema->restricciones) && trim($problema->restricciones) !== '')
+                                    <li class="list-group-item py-2 px-3 border-warning bg-light">
+                                        <strong class="text-dark d-block mb-1"><i class="fa fa-exclamation-triangle text-warning me-1"></i> Restricciones de Código:</strong>
+                                        <span class="text-danger font-weight-bold" style="font-size: 0.82rem;">{{ $problema->restricciones }}</span>
+                                        <small class="d-block text-muted mt-1" style="font-size: 0.72rem;">* El bot integrado verificará si tu código <strong>Cumple</strong> o <strong>No cumple</strong>.</small>
                                     </li>
                                 @endif
                             </ul>

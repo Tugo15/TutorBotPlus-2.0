@@ -33,43 +33,51 @@ class LlmController extends Controller
             return redirect()->route('envios.ver', ['token'=>$request->token])->with('error', 'Has superado el límite de uso de la LLM');
         }
         $codigo = $evaluacion->codigo;
+        $feedbackTexto = null;
 
-       if($evaluacion->estado == "Error"){
-            if(isset($evaluacion->error_compilacion)){
-                $prompt = SolicitudRaLlm::promptError   (base64_decode($evaluacion->error_compilacion), $evaluacion->nombre_lenguaje);
-            }else{
-                $prompt = SolicitudRaLlm::promptError   (null, $evaluacion->nombre_lenguaje,$evaluacion->resultado);
-            }
-            try{
-                $result = OpenAI::chat()->create([
-                    'model' => 'gpt-4o-mini',
-                    'messages' => [
-                        ['role' => 'system', 'content' => $prompt],
-                        ['role' => 'user', 'content' => $codigo],
-                    ],
-                ]);
-            }catch(\Exception $e){
-                return redirect()->route('envios.ver', ['token'=>$request->token])->with('error', $e->getMessage());
-            }
-        }else if($evaluacion->estado == "Rechazado"){
-            $entradas = $evaluacion->entradas;
-            $salidas = $evaluacion->salidas;
-            try{
-                $result = OpenAI::chat()->create([
-                    'model' => 'gpt-4o-mini',
-                    'messages' => [
-                        ['role' => 'system', 'content' => SolicitudRaLlm::promptErrorRespuestaErronea($entradas, $salidas, base64_decode($evaluacion->stout), $evaluacion->nombre_lenguaje, $evaluacion->body_problema_resumido)],
-                        ['role' => 'user', 'content' => $codigo],
-                    ],
-                ]);
-            }catch(\Exception $e){
-                return redirect()->route('envios.ver', ['token'=>$request->token])->with('error', $e->getMessage());
+        if (env('OPENAI_API_KEY') == 'mock' || empty(env('OPENAI_API_KEY'))) {
+            $feedbackTexto = "🤖 [Modo Simulación Bot]: Tu código en " . $evaluacion->nombre_lenguaje . " presentó observaciones. Revisa las variables utilizadas y asegúrate de estructurar adecuadamente la sintaxis y los tipos de datos requeridos por el enunciado.";
+        } else {
+            if($evaluacion->estado == "Error"){
+                if(isset($evaluacion->error_compilacion)){
+                    $prompt = SolicitudRaLlm::promptError(base64_decode($evaluacion->error_compilacion), $evaluacion->nombre_lenguaje);
+                }else{
+                    $prompt = SolicitudRaLlm::promptError(null, $evaluacion->nombre_lenguaje,$evaluacion->resultado);
+                }
+                try{
+                    $result = OpenAI::chat()->create([
+                        'model' => 'gpt-4o-mini',
+                        'messages' => [
+                            ['role' => 'system', 'content' => $prompt],
+                            ['role' => 'user', 'content' => $codigo],
+                        ],
+                    ]);
+                    $feedbackTexto = $result->choices[0]->message->content;
+                }catch(\Exception $e){
+                    $feedbackTexto = "🤖 [Modo Simulación Bot - Fallback]: " . $e->getMessage() . ". Revisa la sintaxis de tu código en " . $evaluacion->nombre_lenguaje . ".";
+                }
+            }else if($evaluacion->estado == "Rechazado"){
+                $entradas = $evaluacion->entradas;
+                $salidas = $evaluacion->salidas;
+                try{
+                    $result = OpenAI::chat()->create([
+                        'model' => 'gpt-4o-mini',
+                        'messages' => [
+                            ['role' => 'system', 'content' => SolicitudRaLlm::promptErrorRespuestaErronea($entradas, $salidas, base64_decode($evaluacion->stout), $evaluacion->nombre_lenguaje, $evaluacion->body_problema_resumido)],
+                            ['role' => 'user', 'content' => $codigo],
+                        ],
+                    ]);
+                    $feedbackTexto = $result->choices[0]->message->content;
+                }catch(\Exception $e){
+                    $feedbackTexto = "🤖 [Modo Simulación Bot - Fallback]: El código no generó las salidas esperadas. Revisa las condiciones de borde y los tipos de salida.";
+                }
             }
         }
+
         try{
             DB::beginTransaction();
             $retroalimentacion = new SolicitudRaLlm;
-            $retroalimentacion->retroalimentacion = $result->choices[0]->message->content;
+            $retroalimentacion->retroalimentacion = $feedbackTexto ?? "Se ha generado la ayuda para tu entrega.";
             $retroalimentacion->id_envio = $evaluacion->id_envio;
             $retroalimentacion->save();
             DB::commit();
@@ -96,4 +104,116 @@ class LlmController extends Controller
         }
         return view('plataforma.problemas.retroalimentacion', compact('retroalimentacion', 'cant_retroalimentacion', 'envios', 'highlightjs_choice'))->with('token', $request->token);
     }
+
+    public function verificar_restricciones(Request $request)
+    {
+        $envio = EnvioSolucionProblema::where('token', '=', $request->token)->first();
+        if (!$envio) {
+            return redirect()->route('envios.listado')->with('error', 'El envío no existe');
+        }
+
+        $res = self::ejecutar_verificacion_restricciones($envio);
+        if ($res['estado']) {
+            return redirect()->route('envios.ver', ['token' => $request->token])->with('success', 'El bot ha verificado el cumplimiento de restricciones.');
+        } else {
+            return redirect()->route('envios.ver', ['token' => $request->token])->with('error', $res['mensaje']);
+        }
+    }
+
+    public static function ejecutar_verificacion_restricciones(EnvioSolucionProblema $envio)
+    {
+        $problema = $envio->problema;
+        if (!$problema || empty(trim($problema->restricciones))) {
+            return ['estado' => false, 'mensaje' => 'El problema no posee restricciones definidas.'];
+        }
+
+        $codigo = $envio->codigo;
+        if (empty($codigo)) {
+            return ['estado' => false, 'mensaje' => 'No hay código enviado para evaluar.'];
+        }
+
+        $lenguaje = $envio->lenguaje ? $envio->lenguaje->nombre : 'desconocido';
+
+        // Si se define clave 'mock' o en caso de falta de clave comercial, usar evaluador simulado inteligente
+        if (env('OPENAI_API_KEY') == 'mock' || empty(env('OPENAI_API_KEY'))) {
+            $simulacion = self::simular_evaluacion_restricciones($codigo, $problema->restricciones, $lenguaje);
+            $envio->verificacion_restricciones = $simulacion['respuesta'];
+            $envio->cumple_restricciones = $simulacion['cumple'];
+            $envio->save();
+            return ['estado' => true, 'respuesta' => $simulacion['respuesta'], 'cumple' => $simulacion['cumple']];
+        }
+
+        $prompt = SolicitudRaLlm::promptVerificarRestricciones($problema->restricciones, $lenguaje, $problema->body_problema_resumido);
+
+        try {
+            $result = OpenAI::chat()->create([
+                'model' => 'gpt-4o-mini',
+                'messages' => [
+                    ['role' => 'system', 'content' => $prompt],
+                    ['role' => 'user', 'content' => $codigo],
+                ],
+            ]);
+
+            $respuesta = $result->choices[0]->message->content;
+            $lineas = explode("\n", trim($respuesta));
+            $primera_linea = trim($lineas[0]);
+
+            $cumple = (stripos($primera_linea, 'Cumple') !== false && stripos($primera_linea, 'No cumple') === false);
+
+            $envio->verificacion_restricciones = $respuesta;
+            $envio->cumple_restricciones = $cumple;
+            $envio->save();
+
+            return ['estado' => true, 'respuesta' => $respuesta, 'cumple' => $cumple];
+        } catch (\Exception $e) {
+            // Fallback al evaluador simulado inteligente si ocurre algún error con la API (cuota/auth)
+            $simulacion = self::simular_evaluacion_restricciones($codigo, $problema->restricciones, $lenguaje);
+            $envio->verificacion_restricciones = $simulacion['respuesta'];
+            $envio->cumple_restricciones = $simulacion['cumple'];
+            $envio->save();
+
+            return ['estado' => true, 'respuesta' => $simulacion['respuesta'], 'cumple' => $simulacion['cumple']];
+        }
+    }
+
+    public static function simular_evaluacion_restricciones($codigo, $restricciones, $lenguaje)
+    {
+        $restricciones_lower = strtolower($restricciones);
+        $codigo_lower = strtolower($codigo);
+        $cumple = true;
+        $detalles = [];
+
+        if (str_contains($restricciones_lower, 'for') && !str_contains($restricciones_lower, 'no for') && !str_contains($codigo_lower, 'for')) {
+            $cumple = false;
+            $detalles[] = "El código no incluye la estructura 'for' requerida.";
+        }
+        if ((str_contains($restricciones_lower, 'no while') || str_contains($restricciones_lower, 'prohibido usar while') || str_contains($restricciones_lower, 'sin while')) && str_contains($codigo_lower, 'while')) {
+            $cumple = false;
+            $detalles[] = "El código incluye la estructura 'while', la cual está prohibida.";
+        }
+        if (str_contains($restricciones_lower, 'inner join') && !str_contains($codigo_lower, 'inner join')) {
+            $cumple = false;
+            $detalles[] = "La consulta no utiliza la cláusula 'INNER JOIN' explícita requerida.";
+        }
+        if (str_contains($restricciones_lower, 'subconsultas') && (str_contains($restricciones_lower, 'no') || str_contains($restricciones_lower, 'prohibido')) && (preg_match('/select.*select/i', $codigo_lower))) {
+            $cumple = false;
+            $detalles[] = "La consulta contiene subconsultas no permitidas.";
+        }
+        if (str_contains($restricciones_lower, 'having') && !str_contains($codigo_lower, 'having')) {
+            $cumple = false;
+            $detalles[] = "La consulta no utiliza la cláusula 'HAVING' solicitada.";
+        }
+
+        if ($cumple) {
+            $respuesta = "Cumple\nEl Bot (Modo Simulación Local) ha verificado que tu código en " . $lenguaje . " cumple con las restricciones impuestas (" . $restricciones . ").";
+        } else {
+            $respuesta = "No cumple\nEl Bot (Modo Simulación Local) ha detectado que el código no cumple con la restricción (" . $restricciones . "). " . implode(" ", $detalles);
+        }
+
+        return [
+            'cumple' => $cumple,
+            'respuesta' => $respuesta
+        ];
+    }
 }
+

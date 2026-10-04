@@ -22,9 +22,13 @@ class CertamenesSeeder extends Seeder
             return;
         }
 
-        $categorias = Categoria_Problema::pluck('id')->toArray();
+        $catBD = Categoria_Problema::where('nombre', 'Consultas SQL')->pluck('id')->toArray();
+        $catProg = Categoria_Problema::where('nombre', '!=', 'Consultas SQL')->pluck('id')->toArray();
 
         foreach ($cursos as $curso) {
+            $isDbCourse = str_contains(strtolower($curso->nombre), 'base de datos');
+            $categoriasCurso = $isDbCourse ? $catBD : $catProg;
+
             $c1 = Certamenes::create([
                 'nombre' => 'Certamen #1 - ' . $curso->codigo,
                 'descripcion' => 'Evaluación oficial sobre fundamentos de la asignatura ' . $curso->nombre . '. Resuelva los ejercicios propuestos en el tiempo asignado.',
@@ -36,11 +40,11 @@ class CertamenesSeeder extends Seeder
                 'ips_autorizadas' => null,
                 'dificultad' => 'Fácil',
                 'id_curso' => $curso->id,
-                'cantidad_problemas' => count($categorias) > 0 ? count($categorias) : 2,
+                'cantidad_problemas' => count($categoriasCurso) > 0 ? count($categoriasCurso) : 2,
             ]);
 
-            if (!empty($categorias)) {
-                $c1->categorias()->sync($categorias);
+            if (!empty($categoriasCurso)) {
+                $c1->categorias()->sync($categoriasCurso);
             }
 
             $c2 = Certamenes::create([
@@ -54,11 +58,11 @@ class CertamenesSeeder extends Seeder
                 'ips_autorizadas' => '127.0.0.1, 10.0.0.0/8, 192.168.1.0/24, ::1',
                 'dificultad' => 'Medio',
                 'id_curso' => $curso->id,
-                'cantidad_problemas' => count($categorias) > 0 ? count($categorias) : 3,
+                'cantidad_problemas' => count($categoriasCurso) > 0 ? count($categoriasCurso) : 3,
             ]);
 
-            if (!empty($categorias)) {
-                $c2->categorias()->sync($categorias);
+            if (!empty($categoriasCurso)) {
+                $c2->categorias()->sync($categoriasCurso);
             }
         }
     }

@@ -115,6 +115,15 @@
                                         @else
                                             <span class="badge bg-warning text-xxs"><i class="fa fa-clock me-1"></i> En Proceso</span>
                                         @endif
+                                        @if(isset($envio->cumple_restricciones))
+                                            <div class="mt-1">
+                                                @if($envio->cumple_restricciones)
+                                                    <span class="badge bg-success text-xxs" title="Verificación de Restricciones del Bot"><i class="fa fa-robot me-1"></i> Cumple</span>
+                                                @else
+                                                    <span class="badge bg-danger text-xxs" title="Verificación de Restricciones del Bot"><i class="fa fa-robot me-1"></i> No cumple</span>
+                                                @endif
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="align-middle text-center text-sm">
                                         <p class="text-xs mb-0">Casos: <span class="badge bg-gradient-info text-xxs">{{ $envio->cant_casos_resuelto ?? 0 }} / {{ $envio->total_casos ?? 0 }}</span></p>

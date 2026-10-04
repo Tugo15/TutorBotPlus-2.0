@@ -9,7 +9,9 @@ use App\Models\Cursos;
 use App\Models\Categoria_Problema;
 use App\Models\Casos_Pruebas;
 use App\Models\LenguajesProgramaciones;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
+use PDO;
+use ZipArchive;
 
 class ProblemasSeeder extends Seeder
 {
@@ -18,8 +20,10 @@ class ProblemasSeeder extends Seeder
      */
     public function run(): void
     {
-        $cursos = Cursos::all();
-        $lenguajes = LenguajesProgramaciones::pluck('id')->toArray();
+        $cursosMap = Cursos::all()->keyBy('codigo');
+
+        $sqlLenguaje = LenguajesProgramaciones::where('nombre', 'LIKE', '%sql%')->orWhere('abreviatura', 'LIKE', '%sql%')->first();
+        $nonSqlLenguajes = LenguajesProgramaciones::where('nombre', 'NOT LIKE', '%sql%')->where('abreviatura', 'NOT LIKE', '%sql%')->pluck('id')->toArray();
 
         $catControl = Categoria_Problema::where('nombre', 'Estructuras de Control')->first();
         $catArreglos = Categoria_Problema::where('nombre', 'Arreglos y Vectores')->first();
@@ -27,16 +31,34 @@ class ProblemasSeeder extends Seeder
         $catBusqueda = Categoria_Problema::where('nombre', 'Búsqueda y Ordenamiento')->first();
         $catAvanzadas = Categoria_Problema::where('nombre', 'Estructuras de Datos Avanzadas')->first();
         $catDinamica = Categoria_Problema::where('nombre', 'Programación Dinámica')->first();
+        $catBD = Categoria_Problema::where('nombre', 'Consultas SQL')->first() ?? $catControl;
+
+        $directory = storage_path('app/public/archivos_adicionales');
+        if (!file_exists($directory)) {
+            mkdir($directory, 0777, true);
+        }
+
+        // Generar bases de datos SQLite para problemas de SQL
+        $this->crearBaseDatosSQLiteClientes($directory);
+        $this->crearBaseDatosSQLiteProductos($directory);
+        $this->crearBaseDatosSQLiteEmpleados($directory);
+        $this->crearBaseDatosSQLitePedidos($directory);
+        $this->crearBaseDatosSQLiteProyectos($directory);
 
         $problemasIniciales = [
-            // 1
+            // =========================================================================
+            // 1. INTRODUCCIÓN A LA INGENIERÍA INFORMÁTICA (IN1039C)
+            // =========================================================================
             [
                 'nombre' => 'Sumar A y B',
                 'codigo' => 'suma-a-b',
                 'dificultad' => 'Fácil',
                 'body_problema' => 'Dados dos números enteros A y B en líneas separadas, calcula e imprime la suma total.',
+                'restricciones' => null,
                 'habilitar_llm' => true,
                 'limite_llm' => 3,
+                'is_sql' => false,
+                'curso_codigos' => ['IN1039C'],
                 'categorias' => $catControl ? [$catControl->id] : [],
                 'casos' => [
                     ['entradas' => "5\n2", "salidas" => "7", "puntos" => 10, "ejemplo" => true],
@@ -44,293 +66,328 @@ class ProblemasSeeder extends Seeder
                     ["entradas" => "3500\n932", "salidas" => "4432", "puntos" => 20, "ejemplo" => false],
                 ]
             ],
-            // 2
             [
                 'nombre' => 'Número Par o Impar',
                 'codigo' => 'par-o-impar',
                 'dificultad' => 'Fácil',
                 'body_problema' => 'Dado un entero N, determina si es Par o Impar.',
+                'restricciones' => null,
                 'habilitar_llm' => true,
                 'limite_llm' => 3,
+                'is_sql' => false,
+                'curso_codigos' => ['IN1039C'],
                 'categorias' => $catControl ? [$catControl->id] : [],
                 'casos' => [
                     ['entradas' => "4", "salidas" => "Par", "puntos" => 25, "ejemplo" => true],
                     ['entradas' => "7", "salidas" => "Impar", "puntos" => 25, "ejemplo" => true],
                 ]
             ],
-            // 3
             [
-                'nombre' => 'Número Mayor de Tres',
-                'codigo' => 'mayor-de-tres',
+                'nombre' => 'Área de un Triángulo',
+                'codigo' => 'area-triangulo',
                 'dificultad' => 'Fácil',
-                'body_problema' => 'Dados tres números enteros A, B y C en líneas independientes, determine cuál es el mayor de ellos.',
+                'body_problema' => 'Dadas la base B y la altura H de un triángulo en líneas separadas (números flotantes o enteros), calcula su área utilizando la fórmula (B * H) / 2. Imprime el resultado.',
+                'restricciones' => 'Prohibido usar funciones de librerías matemáticas avanzadas. Utilizar operaciones aritméticas directas.',
                 'habilitar_llm' => true,
                 'limite_llm' => 3,
+                'is_sql' => false,
+                'curso_codigos' => ['IN1039C'],
                 'categorias' => $catControl ? [$catControl->id] : [],
                 'casos' => [
-                    ['entradas' => "10\n45\n23", "salidas" => "45", "puntos" => 25, "ejemplo" => true],
-                    ['entradas' => "99\n12\n5", "salidas" => "99", "puntos" => 25, "ejemplo" => false],
+                    ['entradas' => "10\n5", "salidas" => "25.0", "puntos" => 50, "ejemplo" => true],
+                    ['entradas' => "7\n3", "salidas" => "10.5", "puntos" => 50, "ejemplo" => false],
                 ]
             ],
-            // 4
+
+            // =========================================================================
+            // 2. TALLER DE PROGRAMACIÓN (IN1045C)
+            // =========================================================================
             [
-                'nombre' => 'Calculadora de Descuento',
-                'codigo' => 'calculadora-descuento',
-                'dificultad' => 'Fácil',
-                'body_problema' => 'Dado el valor entero de un producto N y el porcentaje de descuento D, calcula el precio final redondeado al entero más cercano.',
-                'habilitar_llm' => true,
-                'limite_llm' => 3,
-                'categorias' => $catControl ? [$catControl->id] : [],
-                'casos' => [
-                    ['entradas' => "1000\n10", "salidas" => "900", "puntos" => 25, "ejemplo" => true],
-                    ['entradas' => "5000\n20", "salidas" => "4000", "puntos" => 25, "ejemplo" => false],
-                ]
-            ],
-            // 5
-            [
-                'nombre' => 'Tabla de Multiplicar',
-                'codigo' => 'tabla-multiplicar',
+                'nombre' => 'Tabla de Multiplicar con For',
+                'codigo' => 'tabla-multiplicar-for',
                 'dificultad' => 'Fácil',
                 'body_problema' => 'Dado un entero N, imprima los primeros 5 múltiplos de N (N*1, N*2, N*3, N*4, N*5) separados por un espacio.',
+                'restricciones' => 'Debe utilizar únicamente la estructura iterativa for. Prohibido usar ciclo while.',
                 'habilitar_llm' => true,
                 'limite_llm' => 3,
+                'is_sql' => false,
+                'curso_codigos' => ['IN1045C'],
                 'categorias' => $catControl ? [$catControl->id] : [],
                 'casos' => [
                     ['entradas' => "3", "salidas" => "3 6 9 12 15", "puntos" => 25, "ejemplo" => true],
                     ['entradas' => "7", "salidas" => "7 14 21 28 35", "puntos" => 25, "ejemplo" => false],
                 ]
             ],
-            // 6
             [
-                'nombre' => 'Contar Vocales',
-                'codigo' => 'contar-vocales',
+                'nombre' => 'Contador de Vocales',
+                'codigo' => 'contador-vocales',
                 'dificultad' => 'Fácil',
-                'body_problema' => 'Dada una cadena de caracteres en minúsculas sin espacios, determine la cantidad total de vocales (a, e, i, o, u).',
+                'body_problema' => 'Dada una palabra en minúsculas, cuenta cuántas vocales (a, e, i, o, u) contiene e imprime el total.',
+                'restricciones' => 'Utilizar ciclo while para iterar sobre los caracteres. Prohibido usar funciones de reemplazo o conteo nativas.',
                 'habilitar_llm' => true,
                 'limite_llm' => 3,
+                'is_sql' => false,
+                'curso_codigos' => ['IN1045C'],
                 'categorias' => $catControl ? [$catControl->id] : [],
                 'casos' => [
-                    ['entradas' => "algoritmo", "salidas" => "4", "puntos" => 25, "ejemplo" => true],
-                    ['entradas' => "programacion", "salidas" => "5", "puntos" => 25, "ejemplo" => false],
+                    ['entradas' => "programacion", "salidas" => "5", "puntos" => 50, "ejemplo" => true],
+                    ['entradas' => "xyz", "salidas" => "0", "puntos" => 50, "ejemplo" => false],
                 ]
             ],
-            // 7
             [
-                'nombre' => 'Suma de Elementos en Arreglo',
-                'codigo' => 'suma-elementos-arreglo',
-                'dificultad' => 'Medio',
-                'body_problema' => 'Dado el tamaño N y en la siguiente línea los N números enteros de un arreglo separados por espacio, calcula la suma total.',
+                'nombre' => 'Mayor de Tres Números',
+                'codigo' => 'mayor-tres-numeros',
+                'dificultad' => 'Fácil',
+                'body_problema' => 'Dados tres enteros A, B y C en líneas separadas, determina e imprime el número mayor.',
+                'restricciones' => 'Prohibido usar la función max(). Utilizar únicamente condicionales if/else encadenados o anidados.',
                 'habilitar_llm' => true,
-                'limite_llm' => 2,
-                'categorias' => $catArreglos ? [$catArreglos->id] : [],
+                'limite_llm' => 3,
+                'is_sql' => false,
+                'curso_codigos' => ['IN1045C'],
+                'categorias' => $catControl ? [$catControl->id] : [],
                 'casos' => [
-                    ['entradas' => "5\n1 3 5 7 9", "salidas" => "25", "puntos" => 50, "ejemplo" => true],
-                    ['entradas' => "4\n10 -5 20 -10", "salidas" => "15", "puntos" => 50, "ejemplo" => false],
+                    ['entradas' => "15\n42\n8", "salidas" => "42", "puntos" => 50, "ejemplo" => true],
+                    ['entradas' => "100\n50\n75", "salidas" => "100", "puntos" => 50, "ejemplo" => false],
                 ]
             ],
-            // 8
+
+            // =========================================================================
+            // 3. TALLER DE PROGRAMACIÓN II (IN1071C)
+            // =========================================================================
             [
-                'nombre' => 'Invertir un Arreglo',
-                'codigo' => 'invertir-arreglo',
-                'dificultad' => 'Medio',
-                'body_problema' => 'Dado N y un arreglo de N elementos enteros, imprima los elementos en orden inverso separados por un espacio.',
-                'habilitar_llm' => true,
-                'limite_llm' => 2,
-                'categorias' => $catArreglos ? [$catArreglos->id] : [],
-                'casos' => [
-                    ['entradas' => "4\n1 2 3 4", "salidas" => "4 3 2 1", "puntos" => 50, "ejemplo" => true],
-                ]
-            ],
-            // 9
-            [
-                'nombre' => 'Elemento Máximo y Mínimo',
-                'codigo' => 'max-min-arreglo',
-                'dificultad' => 'Medio',
-                'body_problema' => 'Dado N y N enteros, encuentre e imprima el valor mínimo y máximo del arreglo en una sola línea separados por espacio.',
-                'habilitar_llm' => true,
-                'limite_llm' => 2,
-                'categorias' => $catArreglos ? [$catArreglos->id] : [],
-                'casos' => [
-                    ['entradas' => "5\n14 2 89 4 11", "salidas" => "2 89", "puntos" => 50, "ejemplo" => true],
-                ]
-            ],
-            // 10
-            [
-                'nombre' => 'Búsqueda Lineal en Lista',
-                'codigo' => 'busqueda-lineal',
-                'dificultad' => 'Medio',
-                'body_problema' => 'Dado N, los N elementos de la lista y un entero X en la última línea, imprima la primera posición (índice base 0) de X o -1 si no se encuentra.',
-                'habilitar_llm' => true,
-                'limite_llm' => 2,
-                'categorias' => $catBusqueda ? [$catBusqueda->id, $catArreglos->id] : [],
-                'casos' => [
-                    ['entradas' => "5\n4 8 15 16 23\n15", "salidas" => "2", "puntos" => 50, "ejemplo" => true],
-                    ['entradas' => "3\n1 2 3\n9", "salidas" => "-1", "puntos" => 50, "ejemplo" => false],
-                ]
-            ],
-            // 11
-            [
-                'nombre' => 'Búsqueda Binaria',
-                'codigo' => 'busqueda-binaria',
-                'dificultad' => 'Medio',
-                'body_problema' => 'Dado un arreglo ordenado de N enteros y un valor X a buscar, retorne el índice (base 0) donde se ubica X o -1 si no existe.',
-                'habilitar_llm' => true,
-                'limite_llm' => 2,
-                'categorias' => $catBusqueda ? [$catBusqueda->id, $catArreglos->id] : [],
-                'casos' => [
-                    ['entradas' => "5\n10 20 30 40 50\n30", "salidas" => "2", "puntos" => 50, "ejemplo" => true],
-                ]
-            ],
-            // 12
-            [
-                'nombre' => 'Ordenamiento por Selección',
-                'codigo' => 'ordenamiento-seleccion',
-                'dificultad' => 'Medio',
-                'body_problema' => 'Dado N y N enteros desordenados, ordene el arreglo de menor a mayor e imprímalo separado por espacios.',
-                'habilitar_llm' => true,
-                'limite_llm' => 2,
-                'categorias' => $catBusqueda ? [$catBusqueda->id] : [],
-                'casos' => [
-                    ['entradas' => "5\n5 2 9 1 3", "salidas" => "1 2 3 5 9", "puntos" => 50, "ejemplo" => true],
-                ]
-            ],
-            // 13
-            [
-                'nombre' => 'Factorial con Recursión',
+                'nombre' => 'Factorial Recursivo',
                 'codigo' => 'factorial-recursion',
                 'dificultad' => 'Medio',
                 'body_problema' => 'Dado un número entero no negativo N, calcula su factorial N! utilizando una función recursiva.',
+                'restricciones' => 'Debe ser implementado mediante función recursiva. Prohibido usar estructuras de ciclo (for, while).',
                 'habilitar_llm' => true,
-                'limite_llm' => 2,
+                'limite_llm' => 3,
+                'is_sql' => false,
+                'curso_codigos' => ['IN1071C'],
                 'categorias' => $catFunciones ? [$catFunciones->id] : [],
                 'casos' => [
                     ['entradas' => "5", "salidas" => "120", "puntos" => 50, "ejemplo" => true],
                     ['entradas' => "0", "salidas" => "1", "puntos" => 50, "ejemplo" => false],
                 ]
             ],
-            // 14
-            [
-                'nombre' => 'Secuencia de Fibonacci',
-                'codigo' => 'secuencia-fibonacci',
-                'dificultad' => 'Medio',
-                'body_problema' => 'Dado un entero N (N >= 0), determine el N-ésimo término de la secuencia de Fibonacci donde F(0)=0 y F(1)=1.',
-                'habilitar_llm' => true,
-                'limite_llm' => 2,
-                'categorias' => $catFunciones ? [$catFunciones->id] : [],
-                'casos' => [
-                    ['entradas' => "6", "salidas" => "8", "puntos" => 50, "ejemplo" => true],
-                    ['entradas' => "8", "salidas" => "21", "puntos" => 50, "ejemplo" => false],
-                ]
-            ],
-            // 15
             [
                 'nombre' => 'Verificación de Palíndromo',
                 'codigo' => 'palindromo-palabras',
                 'dificultad' => 'Medio',
                 'body_problema' => 'Dada una palabra en minúsculas sin espacios, imprima "SI" si la palabra se lee igual al derecho y al revés, o "NO" en caso contrario.',
+                'restricciones' => 'Prohibido usar funciones de inversión de cadenas como reverse() o slicing con paso negativo [::-1].',
                 'habilitar_llm' => true,
-                'limite_llm' => 2,
+                'limite_llm' => 3,
+                'is_sql' => false,
+                'curso_codigos' => ['IN1071C'],
                 'categorias' => $catFunciones ? [$catFunciones->id] : [],
                 'casos' => [
                     ['entradas' => "reconocer", "salidas" => "SI", "puntos" => 50, "ejemplo" => true],
                     ['entradas' => "tutorbot", "salidas" => "NO", "puntos" => 50, "ejemplo" => false],
                 ]
             ],
-            // 16
             [
-                'nombre' => 'Matriz Transpuesta',
-                'codigo' => 'matriz-transpuesta',
+                'nombre' => 'Fibonacci Recursivo',
+                'codigo' => 'fibonacci-recursion',
                 'dificultad' => 'Medio',
-                'body_problema' => 'Dada una matriz de N filas por M columnas, imprima la matriz transpuesta de M filas por N columnas.',
+                'body_problema' => 'Dado un número N (N >= 0), calcula el N-ésimo término de la sucesión de Fibonacci (F(0)=0, F(1)=1) mediante una función recursiva.',
+                'restricciones' => 'Debe implementar obligatoriamente la función recursiva. Prohibido resolver mediante enfoque iterativo puro.',
                 'habilitar_llm' => true,
-                'limite_llm' => 2,
-                'categorias' => $catArreglos ? [$catArreglos->id] : [],
-                'casos' => [
-                    ['entradas' => "2 3\n1 2 3\n4 5 6", "salidas" => "1 4\n2 5\n3 6", "puntos" => 50, "ejemplo" => true],
-                ]
-            ],
-            // 17
-            [
-                'nombre' => 'Suma de Diagonal Principal',
-                'codigo' => 'suma-diagonal-matriz',
-                'dificultad' => 'Medio',
-                'body_problema' => 'Dada una matriz cuadrada de orden N x N, calcula la suma de los elementos que pertenecen a la diagonal principal.',
-                'habilitar_llm' => true,
-                'limite_llm' => 2,
-                'categorias' => $catArreglos ? [$catArreglos->id] : [],
-                'casos' => [
-                    ['entradas' => "3\n1 2 3\n4 5 6\n7 8 9", "salidas" => "15", "puntos" => 50, "ejemplo" => true],
-                ]
-            ],
-            // 18
-            [
-                'nombre' => 'Torres de Hanói',
-                'codigo' => 'torres-hanoi',
-                'dificultad' => 'Difícil',
-                'body_problema' => 'Dado el número N de discos en el problema clásico de las Torres de Hanói, calcula el número mínimo de movimientos requeridos (2^N - 1).',
-                'habilitar_llm' => false,
-                'limite_llm' => 0,
+                'limite_llm' => 3,
+                'is_sql' => false,
+                'curso_codigos' => ['IN1071C'],
                 'categorias' => $catFunciones ? [$catFunciones->id] : [],
                 'casos' => [
-                    ['entradas' => "3", "salidas" => "7", "puntos" => 100, "ejemplo" => true],
-                    ['entradas' => "5", "salidas" => "31", "puntos" => 100, "ejemplo" => false],
+                    ['entradas' => "6", "salidas" => "8", "puntos" => 50, "ejemplo" => true],
+                    ['entradas' => "10", "salidas" => "55", "puntos" => 50, "ejemplo" => false],
                 ]
             ],
-            // 19
+
+            // =========================================================================
+            // 4. ESTRUCTURA DE DATOS (IN1069C)
+            // =========================================================================
             [
-                'nombre' => 'Camino Mínimo en Matriz',
-                'codigo' => 'camino-minimo-matriz',
-                'dificultad' => 'Difícil',
-                'body_problema' => 'Dada una matriz de N x M números positivos, determine el costo del camino de menor suma desde la esquina superior izquierda a la inferior derecha.',
-                'habilitar_llm' => false,
-                'limite_llm' => 0,
-                'categorias' => $catDinamica ? [$catDinamica->id] : [],
+                'nombre' => 'Búsqueda de Elemento en Arreglo',
+                'codigo' => 'busqueda-arreglo',
+                'dificultad' => 'Medio',
+                'body_problema' => 'Dado un tamaño N, una lista de N enteros y un elemento K a buscar en la siguiente línea, imprima la posición (índice 0-basado) del elemento K o -1 si no existe.',
+                'restricciones' => 'Debe utilizar ciclo while para recorrer el arreglo.',
+                'habilitar_llm' => true,
+                'limite_llm' => 3,
+                'is_sql' => false,
+                'curso_codigos' => ['IN1069C'],
+                'categorias' => $catArreglos ? [$catArreglos->id] : [],
                 'casos' => [
-                    ['entradas' => "3 3\n1 3 1\n1 5 1\n4 2 1", "salidas" => "7", "puntos" => 100, "ejemplo" => true],
+                    ['entradas' => "5\n10 20 30 40 50\n30", "salidas" => "2", "puntos" => 50, "ejemplo" => true],
+                    ['entradas' => "4\n1 2 3 4\n9", "salidas" => "-1", "puntos" => 50, "ejemplo" => false],
                 ]
             ],
-            // 20
             [
-                'nombre' => 'Paréntesis Balanceados',
-                'codigo' => 'parentesis-balanceados',
+                'nombre' => 'Búsqueda Binaria en Vector Ordenado',
+                'codigo' => 'busqueda-binaria',
+                'dificultad' => 'Medio',
+                'body_problema' => 'Dado un tamaño N, una lista ordenada de N enteros en una sola línea y un valor K a buscar en la línea siguiente, implementa la búsqueda binaria para retornar la posición de K o -1 si no se encuentra.',
+                'restricciones' => 'Implementar la búsqueda binaria mediante ciclo while. Prohibido usar búsqueda lineal O(N) o funciones nativas de búsqueda.',
+                'habilitar_llm' => true,
+                'limite_llm' => 3,
+                'is_sql' => false,
+                'curso_codigos' => ['IN1069C'],
+                'categorias' => $catBusqueda ? [$catBusqueda->id] : [],
+                'casos' => [
+                    ['entradas' => "6\n2 5 8 12 16 23\n12", "salidas" => "3", "puntos" => 50, "ejemplo" => true],
+                    ['entradas' => "5\n1 3 5 7 9\n4", "salidas" => "-1", "puntos" => 50, "ejemplo" => false],
+                ]
+            ],
+            [
+                'nombre' => 'Balanceo de Paréntesis con Pila',
+                'codigo' => 'balanceo-parentesis',
                 'dificultad' => 'Difícil',
-                'body_problema' => 'Dada una cadena compuesta exclusivamente de caracteres de paréntesis () [] {}, determine si la estructura de agrupación está correctamente balanceada ("Correcto" o "Incorrecto").',
-                'habilitar_llm' => false,
-                'limite_llm' => 0,
+                'body_problema' => 'Dada una cadena de paréntesis "(" y ")", determina si la secuencia está correctamente balanceada. Imprime "BALANCEADO" o "DESBALANCEADO".',
+                'restricciones' => 'Prohibido usar expresiones regulares. Debe implementar el chequeo utilizando el concepto de estructura Pila (Stack).',
+                'habilitar_llm' => true,
+                'limite_llm' => 3,
+                'is_sql' => false,
+                'curso_codigos' => ['IN1069C'],
                 'categorias' => $catAvanzadas ? [$catAvanzadas->id] : [],
                 'casos' => [
-                    ['entradas' => "{[()]}", "salidas" => "Correcto", "puntos" => 100, "ejemplo" => true],
-                    ['entradas' => "{[(])}", "salidas" => "Incorrecto", "puntos" => 100, "ejemplo" => false],
+                    ['entradas' => "(())()", "salidas" => "BALANCEADO", "puntos" => 50, "ejemplo" => true],
+                    ['entradas' => "(()", "salidas" => "DESBALANCEADO", "puntos" => 50, "ejemplo" => false],
+                ]
+            ],
+
+            // =========================================================================
+            // 5. BASE DE DATOS (IN1075C)
+            // =========================================================================
+            [
+                'nombre' => 'Consulta SQL: Clientes VIP',
+                'codigo' => 'sql-clientes-vip',
+                'dificultad' => 'Medio',
+                'body_problema' => "Dada la estructura de una base de datos relacional con las tablas:\n\n- **clientes**: `id`, `nombre`, `email`\n- **compras**: `id`, `cliente_id`, `monto`, `fecha` \n\nEscribe una consulta SQL que obtenga el `nombre` del cliente y la suma total de sus compras con el alias `total_gastado`, únicamente para aquellos clientes cuyo total gastado sea mayor o igual a 500.\n\nLa lista resultante debe ser ordenada descendentemente por el `total_gastado`.",
+                'restricciones' => 'Utilizar únicamente INNER JOIN explícito y agrupamiento con GROUP BY y HAVING. Prohibido usar subconsultas.',
+                'archivo_adicional' => 'sql-clientes-vip.zip',
+                'habilitar_llm' => true,
+                'limite_llm' => 5,
+                'is_sql' => true,
+                'curso_codigos' => ['IN1075C'],
+                'categorias' => $catBD ? [$catBD->id] : [],
+                'casos' => [
+                    ['entradas' => "", "salidas" => "Juan Perez|1250.5\nMaria Lopez|780.0", "puntos" => 100, "ejemplo" => true],
+                ]
+            ],
+            [
+                'nombre' => 'Consulta SQL: Productos e Inventario',
+                'codigo' => 'sql-productos-stock',
+                'dificultad' => 'Fácil',
+                'body_problema' => "Se dispone de la base de datos de inventario con las siguientes tablas:\n\n- **productos**: `id`, `nombre`, `precio`, `stock`\n- **ventas**: `id`, `producto_id`, `cantidad`, `fecha` \n\nEscribe una consulta SQL que obtenga el `nombre` del producto, su `stock` y la suma de unidades vendidas con el alias `total_vendido`, únicamente para aquellos productos cuyo `stock` sea menor a 15.\n\nEl resultado debe ordenarse descendentemente por `stock`.",
+                'restricciones' => 'Utilizar únicamente INNER JOIN y cláusula WHERE. Prohibido usar subconsultas.',
+                'archivo_adicional' => 'sql-productos-stock.zip',
+                'habilitar_llm' => true,
+                'limite_llm' => 5,
+                'is_sql' => true,
+                'curso_codigos' => ['IN1075C'],
+                'categorias' => $catBD ? [$catBD->id] : [],
+                'casos' => [
+                    ['entradas' => "", "salidas" => "Teclado Mecanico|10|20\nAudifonos|8|0\nMouse Gamer|5|2", "puntos" => 100, "ejemplo" => true],
+                ]
+            ],
+            [
+                'nombre' => 'Consulta SQL: Pedidos Recientes',
+                'codigo' => 'sql-pedidos-recientes',
+                'dificultad' => 'Fácil',
+                'body_problema' => "Dada la tabla **pedidos** (`id`, `cliente`, `monto`, `fecha`), escribe una consulta SQL que obtenga el `cliente` y el `monto` de los pedidos realizados a partir del '2024-03-01' inclusive.\n\nOrdena el resultado por `fecha` de forma descendente.",
+                'restricciones' => 'Utilizar la cláusula WHERE con comparación de fecha y ORDER BY. Prohibido usar JOIN.',
+                'archivo_adicional' => 'sql-pedidos-recientes.zip',
+                'habilitar_llm' => true,
+                'limite_llm' => 5,
+                'is_sql' => true,
+                'curso_codigos' => ['IN1075C'],
+                'categorias' => $catBD ? [$catBD->id] : [],
+                'casos' => [
+                    ['entradas' => "", "salidas" => "Daniel Lopez|310.0\nAna Gomez|230.5\nCarlos Perez|150.0", "puntos" => 100, "ejemplo" => true],
+                ]
+            ],
+
+            // =========================================================================
+            // 6. TALLER DE BASE DE DATOS (IN1078C)
+            // =========================================================================
+            [
+                'nombre' => 'Consulta SQL: Salarios por Departamento',
+                'codigo' => 'sql-empleados-deptos',
+                'dificultad' => 'Difícil',
+                'body_problema' => "Dada la estructura organizacional con las tablas:\n\n- **departamentos**: `id`, `nombre`\n- **empleados**: `id`, `nombre`, `sueldo`, `departamento_id`\n\nEscribe una consulta SQL que obtenga el `nombre` del departamento y el salario promedio de sus empleados con el alias `promedio_sueldo`, únicamente para los departamentos con un promedio mayor a 800000.",
+                'restricciones' => 'Utilizar JOIN explícito, GROUP BY y HAVING. Prohibido utilizar la palabra clave DISTINCT.',
+                'archivo_adicional' => 'sql-empleados-deptos.zip',
+                'habilitar_llm' => true,
+                'limite_llm' => 5,
+                'is_sql' => true,
+                'curso_codigos' => ['IN1078C'],
+                'categorias' => $catBD ? [$catBD->id] : [],
+                'casos' => [
+                    ['entradas' => "", "salidas" => "Tecnología|1075000.0", "puntos" => 100, "ejemplo" => true],
+                ]
+            ],
+            [
+                'nombre' => 'Consulta SQL: Auditoría de Proyectos sin Tareas',
+                'codigo' => 'sql-proyectos-tareas',
+                'dificultad' => 'Difícil',
+                'body_problema' => "Dada la estructura de gestión de proyectos:\n\n- **proyectos**: `id`, `nombre_proyecto`, `presupuesto`\n- **tareas**: `id`, `proyecto_id`, `descripcion`, `estado`\n\nEscribe una consulta SQL que obtenga el `nombre_proyecto` y el `presupuesto` de aquellos proyectos que NO tienen ninguna tarea asignada.\n\nOrdena el resultado descendentemente por `presupuesto`.",
+                'restricciones' => 'Utilizar LEFT JOIN y filtrar mediante WHERE t.id IS NULL. Prohibido usar subconsultas como NOT IN o NOT EXISTS.',
+                'archivo_adicional' => 'sql-proyectos-tareas.zip',
+                'habilitar_llm' => true,
+                'limite_llm' => 5,
+                'is_sql' => true,
+                'curso_codigos' => ['IN1078C'],
+                'categorias' => $catBD ? [$catBD->id] : [],
+                'casos' => [
+                    ['entradas' => "", "salidas" => "Migración Cloud|4500000.0\nRediseño Web|2000000.0", "puntos" => 100, "ejemplo" => true],
                 ]
             ],
         ];
 
-        $cursoMap = $cursos->keyBy('codigo');
-
         foreach ($problemasIniciales as $pData) {
             $catIds = $pData['categorias'];
             unset($pData['categorias']);
-            
-            $cursoCodigo = $pData['curso_codigo'] ?? 'IN1045C';
-            unset($pData['curso_codigo']);
+
+            $isSql = $pData['is_sql'] ?? false;
+            unset($pData['is_sql']);
+
+            $cursoCodigos = $pData['curso_codigos'] ?? [];
+            unset($pData['curso_codigos']);
+
+            $archivoAdicional = $pData['archivo_adicional'] ?? null;
+            unset($pData['archivo_adicional']);
 
             $problema = Problemas::create([
                 'nombre' => $pData['nombre'],
                 'codigo' => $pData['codigo'],
                 'dificultad' => $pData['dificultad'],
                 'body_problema' => $pData['body_problema'],
+                'body_problema_resumido' => $pData['nombre'],
+                'restricciones' => $pData['restricciones'],
+                'archivo_adicional' => $archivoAdicional,
                 'habilitar_llm' => $pData['habilitar_llm'],
                 'limite_llm' => $pData['limite_llm'],
                 'visible' => true,
             ]);
 
-            $targetCurso = $cursoMap->get($cursoCodigo) ?? $cursos->first();
-            if ($targetCurso) {
-                $problema->cursos()->sync([$targetCurso->id]);
+            // Asignación de Cursos específicos
+            $targetCursoIds = [];
+            foreach ($cursoCodigos as $codigo) {
+                if (isset($cursosMap[$codigo])) {
+                    $targetCursoIds[] = $cursosMap[$codigo]->id;
+                }
             }
+            $problema->cursos()->sync($targetCursoIds);
 
-            if (!empty($lenguajes)) {
-                $problema->lenguajes()->sync($lenguajes);
+            // Asignación de Lenguajes
+            if ($isSql) {
+                if ($sqlLenguaje) {
+                    $problema->lenguajes()->sync([$sqlLenguaje->id]);
+                }
+            } else {
+                if (!empty($nonSqlLenguajes)) {
+                    $problema->lenguajes()->sync($nonSqlLenguajes);
+                }
             }
 
             if (!empty($catIds)) {
@@ -340,6 +397,202 @@ class ProblemasSeeder extends Seeder
             $problema->casos_de_prueba()->createMany($pData['casos']);
             $problema->puntaje_total = collect($pData['casos'])->sum('puntos');
             $problema->save();
+        }
+    }
+
+    private function crearBaseDatosSQLiteClientes($directory)
+    {
+        $dbPath = $directory . '/db.sqlite';
+        if (file_exists($dbPath)) unlink($dbPath);
+
+        $pdo = new PDO('sqlite:' . $dbPath);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $pdo->exec("
+        CREATE TABLE clientes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            email TEXT NOT NULL
+        );
+        CREATE TABLE compras (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cliente_id INTEGER NOT NULL,
+            monto REAL NOT NULL,
+            fecha DATE NOT NULL,
+            FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+        );
+        INSERT INTO clientes (id, nombre, email) VALUES (1, 'Juan Perez', 'juan@example.com');
+        INSERT INTO clientes (id, nombre, email) VALUES (2, 'Maria Lopez', 'maria@example.com');
+        INSERT INTO clientes (id, nombre, email) VALUES (3, 'Carlos Soto', 'carlos@example.com');
+
+        INSERT INTO compras (id, cliente_id, monto, fecha) VALUES (1, 1, 500.0, '2024-01-01');
+        INSERT INTO compras (id, cliente_id, monto, fecha) VALUES (2, 1, 750.5, '2024-01-02');
+        INSERT INTO compras (id, cliente_id, monto, fecha) VALUES (3, 2, 780.0, '2024-01-03');
+        INSERT INTO compras (id, cliente_id, monto, fecha) VALUES (4, 3, 200.0, '2024-01-04');
+        ");
+
+        $zipPath = $directory . '/sql-clientes-vip.zip';
+        if (file_exists($zipPath)) unlink($zipPath);
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            $zip->addFile($dbPath, 'db.sqlite');
+            $zip->close();
+        }
+    }
+
+    private function crearBaseDatosSQLiteProductos($directory)
+    {
+        $dbPath = $directory . '/db_prod.sqlite';
+        if (file_exists($dbPath)) unlink($dbPath);
+
+        $pdo = new PDO('sqlite:' . $dbPath);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $pdo->exec("
+        CREATE TABLE productos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            precio REAL NOT NULL,
+            stock INTEGER NOT NULL
+        );
+        CREATE TABLE ventas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            producto_id INTEGER NOT NULL,
+            cantidad INTEGER NOT NULL,
+            fecha DATE NOT NULL,
+            FOREIGN KEY (producto_id) REFERENCES productos(id)
+        );
+        INSERT INTO productos (id, nombre, precio, stock) VALUES (1, 'Teclado Mecanico', 45000, 10);
+        INSERT INTO productos (id, nombre, precio, stock) VALUES (2, 'Mouse Gamer', 25000, 5);
+        INSERT INTO productos (id, nombre, precio, stock) VALUES (3, 'Monitor 24', 120000, 20);
+        INSERT INTO productos (id, nombre, precio, stock) VALUES (4, 'Audifonos', 35000, 8);
+
+        INSERT INTO ventas (id, producto_id, cantidad, fecha) VALUES (1, 1, 15, '2024-02-01');
+        INSERT INTO ventas (id, producto_id, cantidad, fecha) VALUES (2, 1, 5, '2024-02-02');
+        INSERT INTO ventas (id, producto_id, cantidad, fecha) VALUES (3, 2, 2, '2024-02-03');
+        ");
+
+        $zipPath = $directory . '/sql-productos-stock.zip';
+        if (file_exists($zipPath)) unlink($zipPath);
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            $zip->addFile($dbPath, 'db.sqlite');
+            $zip->close();
+        }
+    }
+
+    private function crearBaseDatosSQLiteEmpleados($directory)
+    {
+        $dbPath = $directory . '/db_emp.sqlite';
+        if (file_exists($dbPath)) unlink($dbPath);
+
+        $pdo = new PDO('sqlite:' . $dbPath);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $pdo->exec("
+        CREATE TABLE departamentos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL
+        );
+        CREATE TABLE empleados (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            sueldo REAL NOT NULL,
+            departamento_id INTEGER NOT NULL,
+            FOREIGN KEY (departamento_id) REFERENCES departamentos(id)
+        );
+        INSERT INTO departamentos (id, nombre) VALUES (1, 'Tecnología');
+        INSERT INTO departamentos (id, nombre) VALUES (2, 'Ventas');
+        INSERT INTO departamentos (id, nombre) VALUES (3, 'Recursos Humanos');
+
+        INSERT INTO empleados (id, nombre, sueldo, departamento_id) VALUES (1, 'Ana Rivas', 1200000, 1);
+        INSERT INTO empleados (id, nombre, sueldo, departamento_id) VALUES (2, 'Pedro Soto', 950000, 1);
+        INSERT INTO empleados (id, nombre, sueldo, departamento_id) VALUES (3, 'Laura Gomez', 850000, 2);
+        INSERT INTO empleados (id, nombre, sueldo, departamento_id) VALUES (4, 'Diego Morales', 600000, 2);
+        INSERT INTO empleados (id, nombre, sueldo, departamento_id) VALUES (5, 'Sofia Castro', 700000, 3);
+        ");
+
+        $zipPath = $directory . '/sql-empleados-deptos.zip';
+        if (file_exists($zipPath)) unlink($zipPath);
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            $zip->addFile($dbPath, 'db.sqlite');
+            $zip->close();
+        }
+    }
+
+    private function crearBaseDatosSQLitePedidos($directory)
+    {
+        $dbPath = $directory . '/db_ped.sqlite';
+        if (file_exists($dbPath)) unlink($dbPath);
+
+        $pdo = new PDO('sqlite:' . $dbPath);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $pdo->exec("
+        CREATE TABLE pedidos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cliente TEXT NOT NULL,
+            monto REAL NOT NULL,
+            fecha DATE NOT NULL
+        );
+        INSERT INTO pedidos (id, cliente, monto, fecha) VALUES (1, 'Carlos Perez', 150.0, '2024-03-01');
+        INSERT INTO pedidos (id, cliente, monto, fecha) VALUES (2, 'Ana Gomez', 230.5, '2024-03-05');
+        INSERT INTO pedidos (id, cliente, monto, fecha) VALUES (3, 'Beatriz Silva', 90.0, '2024-02-28');
+        INSERT INTO pedidos (id, cliente, monto, fecha) VALUES (4, 'Daniel Lopez', 310.0, '2024-03-10');
+        ");
+
+        $zipPath = $directory . '/sql-pedidos-recientes.zip';
+        if (file_exists($zipPath)) unlink($zipPath);
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            $zip->addFile($dbPath, 'db.sqlite');
+            $zip->close();
+        }
+    }
+
+    private function crearBaseDatosSQLiteProyectos($directory)
+    {
+        $dbPath = $directory . '/db_proy.sqlite';
+        if (file_exists($dbPath)) unlink($dbPath);
+
+        $pdo = new PDO('sqlite:' . $dbPath);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $pdo->exec("
+        CREATE TABLE proyectos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre_proyecto TEXT NOT NULL,
+            presupuesto REAL NOT NULL
+        );
+        CREATE TABLE tareas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            proyecto_id INTEGER NOT NULL,
+            descripcion TEXT NOT NULL,
+            estado TEXT NOT NULL,
+            FOREIGN KEY (proyecto_id) REFERENCES proyectos(id)
+        );
+        INSERT INTO proyectos (id, nombre_proyecto, presupuesto) VALUES (1, 'Sistema CRM', 5000000);
+        INSERT INTO proyectos (id, nombre_proyecto, presupuesto) VALUES (2, 'App Movil', 3000000);
+        INSERT INTO proyectos (id, nombre_proyecto, presupuesto) VALUES (3, 'Migración Cloud', 4500000);
+        INSERT INTO proyectos (id, nombre_proyecto, presupuesto) VALUES (4, 'Rediseño Web', 2000000);
+
+        INSERT INTO tareas (id, proyecto_id, descripcion, estado) VALUES (1, 1, 'Diseño DB', 'Completado');
+        INSERT INTO tareas (id, proyecto_id, descripcion, estado) VALUES (2, 2, 'Auth API', 'En Progreso');
+        INSERT INTO tareas (id, proyecto_id, descripcion, estado) VALUES (3, 1, 'Frontend Admin', 'Pendiente');
+        ");
+
+        $zipPath = $directory . '/sql-proyectos-tareas.zip';
+        if (file_exists($zipPath)) unlink($zipPath);
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            $zip->addFile($dbPath, 'db.sqlite');
+            $zip->close();
         }
     }
 }

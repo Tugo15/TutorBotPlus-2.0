@@ -36,6 +36,20 @@ class SolicitudRaLlm extends Model
         return $prompt;
     }
 
+    public static function promptVerificarRestricciones($restricciones, $lenguaje, $enunciado_resumido = null)
+    {
+        $prompt = "Eres un asistente y tutor docente de programación en una plataforma académica. Tu función es verificar de forma estricta si el código enviado por un estudiante escrito en " . $lenguaje . " CUMPLE O NO CUMPLE con las siguientes restricciones impuestas por el profesor:\n\n";
+        $prompt .= "RESTRICCIONES DEL PROFESOR:\n\"" . $restricciones . "\"\n\n";
+        if (isset($enunciado_resumido)) {
+            $prompt .= "ENUNCIADO DEL PROBLEMA:\n\"" . $enunciado_resumido . "\"\n\n";
+        }
+        $prompt .= "REGLAS CRÍTICAS E IMPRESCINDIBLES PARA TU RESPUESTA:\n";
+        $prompt .= "1. La PRIMERA LÍNEA de tu respuesta DEBE ser estrictamente 'Cumple' o 'No cumple' (sin comillas, sin tildes ni caracteres adicionales en esa primera palabra).\n";
+        $prompt .= "2. A partir de la segunda línea, explica de forma resumida, clara y constructiva por qué el código cumple o no cumple con las restricciones (por ejemplo, si usó ciclo for o si usó while cuando estaba prohibido). No entregues la solución corregida al problema.";
+        return $prompt;
+    }
+
+
 
     
     public function envio(): BelongsTo

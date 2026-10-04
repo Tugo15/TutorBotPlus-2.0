@@ -23,12 +23,27 @@
                                             - Tiempo: {{ $evaluaciones[$i]->tiempo ? $evaluaciones[$i]->tiempo : '0' }}
                                             segundos - Memoria:
                                             {{ $evaluaciones[$i]->memoria ? $evaluaciones[$i]->memoria : '0' }} KB
+                                            @if(isset($problema->restricciones) && trim($problema->restricciones) !== '' && !is_null($envio->cumple_restricciones))
+                                                <span class="mx-2 badge {{ $envio->cumple_restricciones ? 'text-bg-success' : 'text-bg-danger' }}">{{ $envio->cumple_restricciones ? 'Cumple' : 'No cumple' }}</span>
+                                            @endif
                                             @endif
                                         </button>
                                     </h2>
                                     <div id="resultados_{{ $i }}" class="accordion-collapse collapse"
                                         data-bs-parent="#resultados_accord">
                                         <div class="accordion-body">
+                                            @if(isset($problema->restricciones) && trim($problema->restricciones) !== '')
+                                                <div class="alert alert-sm {{ $envio->cumple_restricciones ? 'alert-success border-success' : 'alert-danger border-danger' }} py-2 px-3 mb-3" style="font-size: 0.85rem;">
+                                                    <strong>Restricción ({{ $problema->restricciones }}):</strong>
+                                                    @if(!is_null($envio->cumple_restricciones))
+                                                        <span class="badge {{ $envio->cumple_restricciones ? 'bg-success' : 'bg-danger' }} ms-1">
+                                                            {{ $envio->cumple_restricciones ? 'Cumple' : 'No cumple' }}
+                                                        </span>
+                                                    @else
+                                                        <span class="badge bg-warning text-dark ms-1">Pendiente de verificación</span>
+                                                    @endif
+                                                </div>
+                                            @endif
                                             <div class="d-flex flex-row mb-3">
                                                 @if (!isset($res_certamen) && isset($evaluaciones[$i]->casos_pruebas->entradas) && $evaluaciones[$i]->casos_pruebas->ejemplo == true)
                                                     <div class="card">
@@ -122,6 +137,49 @@
             </div>
         </div>
     </div>
+    @if(isset($problema->restricciones) && trim($problema->restricciones) !== '')
+        <div class="row mt-3 mx-2">
+            <div class="col-12">
+                <div class="card border-info shadow-xs">
+                    <div class="card-header bg-gradient-info text-white d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 text-white font-weight-bold">
+                            <i class="fa fa-robot me-2"></i>Verificación de Restricciones del Bot
+                        </h6>
+                        @if(!is_null($envio->cumple_restricciones))
+                            @if($envio->cumple_restricciones)
+                                <span class="badge bg-success text-uppercase font-weight-bold px-3 py-2" style="font-size: 0.85rem;"><i class="fa fa-check-circle me-1"></i> Cumple</span>
+                            @else
+                                <span class="badge bg-danger text-uppercase font-weight-bold px-3 py-2" style="font-size: 0.85rem;"><i class="fa fa-times-circle me-1"></i> No cumple</span>
+                            @endif
+                        @else
+                            <span class="badge bg-warning text-dark font-weight-bold px-3 py-2" style="font-size: 0.85rem;"><i class="fa fa-clock me-1"></i> Pendiente de verificación</span>
+                        @endif
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-light border mb-3">
+                            <strong class="text-dark"><i class="fa fa-exclamation-triangle text-warning me-1"></i> Restricción:</strong>
+                            <p class="mb-0 text-dark font-weight-bold mt-1">{{ $problema->restricciones }}</p>
+                        </div>
+
+                        @if(isset($envio->verificacion_restricciones))
+                            <div class="p-3 rounded bg-gray-100 border">
+                                <h6 class="font-weight-bold text-dark mb-2" style="font-size: 0.9rem;"><i class="fa fa-comment-dots text-primary me-2"></i>Evaluación del Bot:</h6>
+                                <div class="text-dark" style="white-space: pre-wrap; font-size: 0.9rem; line-height: 1.5;">{!! e($envio->verificacion_restricciones) !!}</div>
+                            </div>
+                        @else
+                            <p class="text-muted text-xs mb-2">Aún no se ha verificado si tu código cumple con las restricciones del problema.</p>
+                        @endif
+
+                        <div class="mt-3">
+                            <a href="{{ route('envios.verificar_restricciones', ['token' => $envio->token]) }}" class="btn btn-sm btn-outline-info">
+                                <i class="fa fa-robot me-1"></i> {{ isset($envio->verificacion_restricciones) ? 'Volver a verificar con el Bot' : 'Verificar Restricciones con el Bot' }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
     <div class="row mt-3 mx-2">
         <div class="col">
             <div class="card border-danger" style="height:100%">

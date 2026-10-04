@@ -36,6 +36,14 @@ class EvaluacionSolucionController extends Controller
         }
 
         $problema = $envio->problema;
+        if ($problema && !empty(trim($problema->restricciones)) && is_null($envio->verificacion_restricciones)) {
+            try {
+                LlmController::ejecutar_verificacion_restricciones($envio);
+                $envio->refresh();
+            } catch (\Exception $e) {
+                // Si falla la IA, no bloquea el flujo visualización de la entrega
+            }
+        }
         $highlightjs_choice = EnvioSolucionProblema::$higlightjs_language[strtolower($envio->lenguaje->abreviatura)];
         $juez = $envio->juez_virtual;
         $evaluaciones = $envio->evaluaciones()->with('casos_pruebas')->get();

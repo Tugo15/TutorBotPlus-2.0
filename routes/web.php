@@ -79,6 +79,7 @@ Route::group(['middleware'=>['auth', 'certamen_en_resolucion']], function(){
 	Route::get('/envio/{token}/retroalimentacion', [LlmController::class, 'ver_retroalimentacion'])->name('envios.retroalimentacion');
 	Route::get('/envio/{token}/get_update', [EvaluacionSolucionController::class, 'obtener_status_evaluaciones'])->name('envio.get_update')->withoutMiddleware('certamen_en_resolucion');
 	Route::get('/retroalimentacion/generar', [LlmController::class, 'generar_retroalimentacion'])->name('envios.generar_retroalimentacion');
+	Route::get('/envio/{token}/verificar-restricciones', [LlmController::class, 'verificar_restricciones'])->name('envios.verificar_restricciones')->withoutMiddleware('certamen_en_resolucion');
 
 	Route::get('/perfil', [UserController::class, "ver_mi_perfil"])->name('ver.perfil');
 	Route::post('/perfil/update', [UserController::class, "actualizar_informacion"])->name('perfil.update');

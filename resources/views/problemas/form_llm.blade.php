@@ -29,9 +29,22 @@
             <p class="opacity-25"><small>Esté es un resumen del problema que se utilizara en la Large Languge Model
                     para la retroalimentación.</small></p>
             <textarea class="form-control @error('body_problema_resumido') is-invalid @enderror" id="body_problema_resumido"
-                name="body_problema_resumido" rows="8" placeholder="Ej. El código debe entregar una suma de dos numeros">{{ isset($problema) ? old('body_problema_resumido', $problema->body_problema_resumido) : old('body_problema_resumido') }}</textarea>
+                name="body_problema_resumido" rows="4" placeholder="Ej. El código debe entregar una suma de dos numeros">{{ isset($problema) ? old('body_problema_resumido', $problema->body_problema_resumido) : old('body_problema_resumido') }}</textarea>
         </div>
         @error('body_problema_resumido')
+            <p class="text-danger text-xs pt-1"> {{ $message }} </p>
+        @enderror
+    </div>
+</div>
+<div class="row mt-3">
+    <div class="col">
+        <div class="form-group">
+            <label for="restricciones" class="form-control-label font-weight-bold text-dark"><i class="fa fa-exclamation-triangle text-warning me-1"></i>Restricciones (Opcional)</label>
+            <p class="opacity-75 text-xs text-secondary mb-1">Especifique las reglas o restricciones de código impuestas por el profesor (Ej. "Utilizar únicamente ciclo 'for'", "Prohibido usar librería math", "Usar while", etc.). El bot integrado verificará si el alumno cumple o no cumple.</p>
+            <textarea class="form-control @error('restricciones') is-invalid @enderror" id="restricciones"
+                name="restricciones" rows="3" placeholder="Ej. El código debe utilizar únicamente ciclo for y no debe usar la estructura while.">{{ isset($problema) ? old('restricciones', $problema->restricciones) : old('restricciones') }}</textarea>
+        </div>
+        @error('restricciones')
             <p class="text-danger text-xs pt-1"> {{ $message }} </p>
         @enderror
     </div>

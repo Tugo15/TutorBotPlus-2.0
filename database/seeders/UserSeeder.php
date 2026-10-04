@@ -52,9 +52,8 @@ class UserSeeder extends Seeder
             ]);
             $profesor->assignRole('profesor');
             $estudiante->assignRole('estudiante');
-            $curso_1 = Cursos::first();
-            $profesor->cursos()->save($curso_1);
-            $estudiante->cursos()->save($curso_1);
+            $profesor->cursos()->sync($cursos->pluck('id')->toArray());
+            $estudiante->cursos()->sync($cursos->pluck('id')->toArray());
         }
     }
 }

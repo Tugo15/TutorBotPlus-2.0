@@ -28,6 +28,7 @@ class Problemas extends Model
         "visible",
         "body_problema",
         "body_problema_resumido",
+        "restricciones",
         "habilitar_llm",
         "limite_llm",
         "archivo_adicional"
@@ -44,6 +45,7 @@ class Problemas extends Model
         "visible" => ["nullable", "boolean"],
         "body_problema" => ["required", "string", "min:50"],
         "body_problema_resumido" => ["string", 'nullable'],
+        "restricciones" => ["string", 'nullable'],
         "habilitar_llm" => ["boolean"],
         "limite_llm" => ["nullable","numeric"],
         "archivo_adicional" => ["mimes:zip"]
@@ -58,6 +60,7 @@ class Problemas extends Model
             "visible" => ["nullable", "boolean"],
             "body_problema" => ["required", "string", "min:50"],
             "body_problema_resumido" => ["string", 'nullable'],
+            "restricciones" => ["string", 'nullable'],
             "habilitar_llm" => ["boolean"],
             "limite_llm" => ["nullable","numeric", "min:0"],
         ];
@@ -96,6 +99,7 @@ class Problemas extends Model
         "habilitar_llm" => ["boolean"],
         "limite_llm" => ["nullable","numeric"],
         "body_problema_resumido" => ["string", 'nullable'],
+        "restricciones" => ["string", 'nullable'],
     ];
     public function categorias(): BelongsToMany
     {

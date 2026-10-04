@@ -116,6 +116,7 @@ class ProblemasController extends Controller
             }
             $problema->limite_llm = $request->input('limite_llm');
             $problema->body_problema_resumido = $request->input('body_problema_resumido');
+            $problema->restricciones = $request->input('restricciones');
             $problema->save();
         } catch (\PDOException $e) {
             DB::rollBack();
@@ -159,6 +160,7 @@ class ProblemasController extends Controller
             $problema->tiempo_limite = $request->input('tiempo_limite');
             $problema->body_problema = $request->input('body_problema');
             $problema->body_problema_resumido = $request->input('body_problema_resumido');
+            $problema->restricciones = $request->input('restricciones');
             if (isset($request->visible)) {
                 $problema->visible = true;
             } else {

@@ -36,5 +36,11 @@
             </select>
             <input type="hidden" id="codigo" name="codigo" value="">
         </form>
+        @if(isset($problema->restricciones) && trim($problema->restricciones) !== '')
+            <div class="alert alert-warning border-warning p-2 mb-2 mt-3" style="font-size: 0.8rem;">
+                <i class="fa fa-exclamation-triangle text-warning me-1"></i> <strong>Restricción:</strong><br>
+                <span>{{ $problema->restricciones }}</span>
+            </div>
+        @endif
     </div>
 </div>
