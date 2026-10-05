@@ -109,8 +109,8 @@ class UserController extends Controller
                 $usuario_data["roles"] = array_filter(explode(",",str_replace(["[","]"], "", strtolower($usuario_data["roles"]))));
                 $validator = Validator::make($usuario_data, [
                     'username' => ['required', 'string', 'max:255'],
-                    'rut' => ['required', 'string', 'unique:App\Models\User,rut','regex:/^[1-9]\d*\-(\d|k|K)$/'],
-                    'email' => ['required', 'email', 'unique:App\Models\User,email'],
+                    'rut' => ['required', 'string', 'unique:users,rut','regex:/^[1-9]\d*\-(\d|k|K)$/'],
+                    'email' => ['required', 'email', 'unique:users,email'],
                     'firstname' => ['required', 'string', 'max:100'],
                     'lastname' => ['required', 'string', 'max:100'],
                     'cursos'=> ['array', 'min:1'],
@@ -174,8 +174,8 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'username' => 'required|string|max:255',
-            'rut' => ['required', 'string', 'max:12', 'regex:/^[1-9]\d*\-(\d|k|K)$/', 'unique:App\Models\User,rut'],
-            'email' => 'required|email|max:255|unique:App\Models\User,email',
+            'rut' => ['required', 'string', 'max:12', 'regex:/^[1-9]\d*\-(\d|k|K)$/', 'unique:users,rut'],
+            'email' => 'required|email|max:255|unique:users,email',
             'firstname' => 'required|string|max:100',
             'lastname' => 'required|string|max:100',
             'fecha_nacimiento' => 'nullable|date',
@@ -200,7 +200,12 @@ class UserController extends Controller
             DB::rollback();
             return redirect()->route('usuarios.index')->with('error', $e->getMessage())->withInput();
         }
-        $usuario->notify(new UsuarioCreado());
+        try {
+            $usuario->notify(new UsuarioCreado());
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Error al enviar correo de notificación para el usuario ' . $usuario->id . ': ' . $e->getMessage());
+            return redirect()->route('usuarios.index')->with('success', 'El usuario "'.$usuario->username.'" ha sido creado, pero ocurrió un problema al enviar el correo de notificación.');
+        }
         return redirect()->route('usuarios.index')->with('success', 'El usuario "'.$usuario->username.'" ha sido creado');
     }
 
