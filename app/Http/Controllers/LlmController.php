@@ -134,7 +134,6 @@ class LlmController extends Controller
 
         $lenguaje = $envio->lenguaje ? $envio->lenguaje->nombre : 'desconocido';
 
-        // Si se define clave 'mock' o en caso de falta de clave comercial, usar evaluador simulado inteligente
         if (env('OPENAI_API_KEY') == 'mock' || empty(env('OPENAI_API_KEY'))) {
             $simulacion = self::simular_evaluacion_restricciones($codigo, $problema->restricciones, $lenguaje);
             $envio->verificacion_restricciones = $simulacion['respuesta'];
@@ -166,7 +165,6 @@ class LlmController extends Controller
 
             return ['estado' => true, 'respuesta' => $respuesta, 'cumple' => $cumple];
         } catch (\Exception $e) {
-            // Fallback al evaluador simulado inteligente si ocurre algún error con la API (cuota/auth)
             $simulacion = self::simular_evaluacion_restricciones($codigo, $problema->restricciones, $lenguaje);
             $envio->verificacion_restricciones = $simulacion['respuesta'];
             $envio->cumple_restricciones = $simulacion['cumple'];
@@ -178,36 +176,81 @@ class LlmController extends Controller
 
     public static function simular_evaluacion_restricciones($codigo, $restricciones, $lenguaje)
     {
+        $codigo_limpio = preg_replace('!/\*.*?\*/!s', '', $codigo);
+        $codigo_limpio = preg_replace('!//.*!', '', $codigo_limpio);
+        $codigo_lower = strtolower($codigo_limpio);
+
         $restricciones_lower = strtolower($restricciones);
-        $codigo_lower = strtolower($codigo);
         $cumple = true;
         $detalles = [];
 
-        if (str_contains($restricciones_lower, 'for') && !str_contains($restricciones_lower, 'no for') && !str_contains($codigo_lower, 'for')) {
-            $cumple = false;
-            $detalles[] = "El código no incluye la estructura 'for' requerida.";
+        if (preg_match_all('/(?:prohibido\s*(?:usar|utilizar)?|no\s*(?:usar|utilizar|incluir)?|sin|no\s*se\s*permite)\s+([^.,;\n]+)/i', $restricciones, $matches)) {
+            foreach ($matches[1] as $targetRaw) {
+                $target = strtolower(trim($targetRaw));
+
+                if (preg_match('/\b([a-z_][a-z0-9_]*)\s*\(/i', $targetRaw, $fnMatch)) {
+                    $fnName = strtolower($fnMatch[1]);
+                    if (preg_match('/\b' . preg_quote($fnName, '/') . '\s*\(/i', $codigo_lower) || str_contains($codigo_lower, '::' . $fnName)) {
+                        $cumple = false;
+                        $detalles[] = "El código utiliza la función '{$fnName}()', la cual fue prohibida por el profesor.";
+                    }
+                } elseif (str_contains($target, 'max') && (preg_match('/\bmax\s*\(/i', $codigo_lower) || str_contains($codigo_lower, 'std::max'))) {
+                    $cumple = false;
+                    $detalles[] = "El código utiliza la función 'max()', lo cual fue prohibido por el profesor.";
+                } elseif (str_contains($target, 'min') && (preg_match('/\bmin\s*\(/i', $codigo_lower) || str_contains($codigo_lower, 'std::min'))) {
+                    $cumple = false;
+                    $detalles[] = "El código utiliza la función 'min()', lo cual fue prohibido por el profesor.";
+                } elseif (str_contains($target, 'while') && str_contains($codigo_lower, 'while')) {
+                    $cumple = false;
+                    $detalles[] = "El código incluye el ciclo 'while', lo cual fue prohibido por el profesor.";
+                } elseif (str_contains($target, 'for') && !str_contains($target, 'formato') && str_contains($codigo_lower, 'for')) {
+                    $cumple = false;
+                    $detalles[] = "El código incluye el ciclo 'for', lo cual fue prohibido por el profesor.";
+                } elseif (str_contains($target, 'subconsulta') && (preg_match('/\bselect\b.*\bselect\b/is', $codigo_lower) || str_contains($codigo_lower, 'not in') || str_contains($codigo_lower, 'not exists'))) {
+                    $cumple = false;
+                    $detalles[] = "La consulta contiene subconsultas prohibidas por el profesor.";
+                } elseif (str_contains($target, 'distinct') && str_contains($codigo_lower, 'distinct')) {
+                    $cumple = false;
+                    $detalles[] = "La consulta incluye 'DISTINCT', lo cual fue prohibido por el profesor.";
+                } elseif (str_contains($target, 'reverse') && (str_contains($codigo_lower, 'reverse') || str_contains($codigo_lower, '[::-1]'))) {
+                    $cumple = false;
+                    $detalles[] = "El código utiliza funciones de inversión de texto prohibidas.";
+                }
+            }
         }
-        if ((str_contains($restricciones_lower, 'no while') || str_contains($restricciones_lower, 'prohibido usar while') || str_contains($restricciones_lower, 'sin while')) && str_contains($codigo_lower, 'while')) {
-            $cumple = false;
-            $detalles[] = "El código incluye la estructura 'while', la cual está prohibida.";
+
+        if (preg_match_all('/(?:debe\s*(?:usar|utilizar)?|únicamente|unicamente|requerid[oa]|obligatorio)\s+([^.,;\n]+)/i', $restricciones, $reqMatches)) {
+            foreach ($reqMatches[1] as $reqRaw) {
+                $req = strtolower(trim($reqRaw));
+
+                if (str_contains($req, 'for') && !str_contains($req, 'no for') && !str_contains($codigo_lower, 'for')) {
+                    $cumple = false;
+                    $detalles[] = "El código no incluye la estructura 'for' solicitada por el profesor.";
+                } elseif (str_contains($req, 'while') && !str_contains($req, 'no while') && !str_contains($codigo_lower, 'while')) {
+                    $cumple = false;
+                    $detalles[] = "El código no incluye la estructura 'while' solicitada por el profesor.";
+                } elseif (str_contains($req, 'inner join') && !str_contains($codigo_lower, 'inner join')) {
+                    $cumple = false;
+                    $detalles[] = "La consulta no utiliza 'INNER JOIN' explícito como lo solicitó el profesor.";
+                } elseif (str_contains($req, 'having') && !str_contains($codigo_lower, 'having')) {
+                    $cumple = false;
+                    $detalles[] = "La consulta no utiliza la cláusula 'HAVING' solicitada por el profesor.";
+                } elseif (str_contains($req, 'recursiv') && (str_contains($codigo_lower, 'for') || str_contains($codigo_lower, 'while'))) {
+                    $cumple = false;
+                    $detalles[] = "El código utiliza ciclos iterativos en lugar de la implementación recursiva solicitada.";
+                }
+            }
         }
-        if (str_contains($restricciones_lower, 'inner join') && !str_contains($codigo_lower, 'inner join')) {
+
+        if ($cumple && (str_contains($restricciones_lower, 'prohibido') || str_contains($restricciones_lower, 'no usar') || str_contains($restricciones_lower, 'sin')) && str_contains($restricciones_lower, 'max') && (preg_match('/\bmax\s*\(/i', $codigo_lower) || str_contains($codigo_lower, 'std::max'))) {
             $cumple = false;
-            $detalles[] = "La consulta no utiliza la cláusula 'INNER JOIN' explícita requerida.";
-        }
-        if (str_contains($restricciones_lower, 'subconsultas') && (str_contains($restricciones_lower, 'no') || str_contains($restricciones_lower, 'prohibido')) && (preg_match('/select.*select/i', $codigo_lower))) {
-            $cumple = false;
-            $detalles[] = "La consulta contiene subconsultas no permitidas.";
-        }
-        if (str_contains($restricciones_lower, 'having') && !str_contains($codigo_lower, 'having')) {
-            $cumple = false;
-            $detalles[] = "La consulta no utiliza la cláusula 'HAVING' solicitada.";
+            $detalles[] = "El código utiliza la función 'max()', lo cual fue prohibido por el profesor.";
         }
 
         if ($cumple) {
-            $respuesta = "Cumple\nEl Bot (Modo Simulación Local) ha verificado que tu código en " . $lenguaje . " cumple con las restricciones impuestas (" . $restricciones . ").";
+            $respuesta = "Cumple\nEl Bot (Modo Simulación Local) ha verificado que tu código en " . $lenguaje . " cumple con la restricción impuesta por el profesor: \"" . $restricciones . "\".";
         } else {
-            $respuesta = "No cumple\nEl Bot (Modo Simulación Local) ha detectado que el código no cumple con la restricción (" . $restricciones . "). " . implode(" ", $detalles);
+            $respuesta = "No cumple\nEl Bot (Modo Simulación Local) ha verificado que tu código en " . $lenguaje . " no cumple con la restricción del profesor: \"" . $restricciones . "\". " . implode(" ", $detalles);
         }
 
         return [

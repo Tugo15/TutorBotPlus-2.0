@@ -141,9 +141,9 @@
         <div class="row mt-3 mx-2">
             <div class="col-12">
                 <div class="card border-info shadow-xs">
-                    <div class="card-header bg-gradient-info text-white d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0 text-white font-weight-bold">
-                            <i class="fa fa-robot me-2"></i>Verificación de Restricciones del Bot
+                    <div class="card-header bg-light border-bottom d-flex justify-content-between align-items-center py-3">
+                        <h6 class="mb-0 text-dark font-weight-bold">
+                            <i class="fa fa-robot text-info me-2"></i>Verificación de Restricciones del Bot
                         </h6>
                         @if(!is_null($envio->cumple_restricciones))
                             @if($envio->cumple_restricciones)
