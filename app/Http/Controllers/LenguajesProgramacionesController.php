@@ -22,14 +22,18 @@ class LenguajesProgramacionesController extends Controller
     }
 
     public function editar(Request $request){
-        $lenguaje = LenguajesProgramaciones::find($request->id);
+        $id = $request->input('id') ?? $request->id;
+        $lenguaje = LenguajesProgramaciones::find($id);
+        if (!$lenguaje) {
+            return redirect()->route('lenguaje_programacion.index')->with('error', 'El lenguaje de programación no fue encontrado.');
+        }
         return view('lenguaje_programacion.editar', compact('lenguaje'));
     }
 
     public function store(Request $request){
         $validated = $request->validate(LenguajesProgramaciones::$createRules);
         
-        db::beginTransaction();
+        DB::beginTransaction();
         try{
             $lenguaje = new LenguajesProgramaciones;
             $lenguaje->nombre = $request->input('nombre');
@@ -37,39 +41,51 @@ class LenguajesProgramacionesController extends Controller
             $lenguaje->abreviatura = $request->input('abreviatura');
             $lenguaje->extension = $request->input('extension');
             $lenguaje->save();
-            db::commit();
+            DB::commit();
         }catch(\Exception $e){
             DB::rollback();
-            return redirect()->route('lenguaje_programacion.index')->with('error', $e->getMessage());
+            return redirect()->route('lenguaje_programacion.index')->with('error', $e->getMessage())->withInput();
         }
-        return redirect()->route('lenguaje_programacion.index')->with('success','El lenguaje de programacion "'.$lenguaje->nombre.'" ha sido creado');
+        return redirect()->route('lenguaje_programacion.index')->with('success','El lenguaje de programación "'.$lenguaje->nombre.'" ha sido creado');
     }
 
     public function update(Request $request){
-        $validated = $request->validate(LenguajesProgramaciones::updateRules($request->id));
+        $id = $request->input('id') ?? $request->id;
+        if (!$id || !LenguajesProgramaciones::where('id', $id)->exists()) {
+            return redirect()->route('lenguaje_programacion.index')->with('error', 'El lenguaje de programación no fue encontrado.');
+        }
+
+        $validated = $request->validate(LenguajesProgramaciones::updateRules($id));
         try{
-            db::beginTransaction();
-            $lenguaje = LenguajesProgramaciones::find($request->id);
+            DB::beginTransaction();
+            $lenguaje = LenguajesProgramaciones::find($id);
             $lenguaje->nombre = $request->input('nombre');
             $lenguaje->codigo = $request->input('codigo');
             $lenguaje->abreviatura = $request->input('abreviatura');
             $lenguaje->extension = $request->input('extension');
             $lenguaje->save();
-            db::commit();
+            DB::commit();
         }catch(\Exception $e){
-            return redirect()->route('lenguaje_programacion.index')->with('error', $e->getMessage());
+            DB::rollback();
+            return redirect()->route('lenguaje_programacion.index')->with('error', $e->getMessage())->withInput();
         }
         return redirect()->route('lenguaje_programacion.index')->with('success','El lenguaje de programación ha sido modificado');
     }
+
     public function eliminar(Request $request)
     {
+        $id = $request->input('id') ?? $request->id;
+        $lenguaje = LenguajesProgramaciones::find($id);
+        if (!$lenguaje) {
+            return redirect()->route('lenguaje_programacion.index')->with('error', 'El lenguaje de programación no fue encontrado.');
+        }
+
         try{
             DB::beginTransaction();
-            $lenguaje = LenguajesProgramaciones::find($request->id);
             $lenguaje->delete();
             DB::commit();
         }catch(\PDOException $e){
-            db::rollBack();
+            DB::rollBack();
             return redirect()->route('lenguaje_programacion.index')->with('error', $e->getMessage());
         } 
         return redirect()->route('lenguaje_programacion.index')->with('success', 'El lenguaje de programación "'.$lenguaje->nombre.'" ha sido eliminado.');
