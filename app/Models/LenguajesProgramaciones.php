@@ -24,7 +24,7 @@ class LenguajesProgramaciones extends Model
     ];
     public static $createRules = [
         'nombre' => ['required', 'string', 'max:255'],
-        'codigo' => ['required', 'integer', 'unique:App\Models\LenguajesProgramaciones,codigo'],
+        'codigo' => ['required', 'integer', 'unique:lenguajes_programaciones,codigo'],
         'abreviatura' => ['required', 'string', 'max:255'],
         'extension' => ['required', 'string', 'max:15'], 
     ];

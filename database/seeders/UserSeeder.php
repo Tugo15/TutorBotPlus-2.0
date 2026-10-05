@@ -16,44 +16,59 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        $administrador = User::create([
-            'username' => 'admin',
-            'rut' => '11111111-1',
-            'fecha_nacimiento' => Carbon::parse('07-09-2000')->toDate(),
-            'firstname' => 'Admin',
-            'lastname' => 'Admin',
-            'email' => 'admin@tutorbot.com',
-            'password' => 'admin'
-        ]);
-        $administrador->assignRole('administrador');
+        $administrador = User::firstOrCreate(
+            ['email' => 'admin@tutorbot.com'],
+            [
+                'username' => 'admin',
+                'rut' => '11111111-1',
+                'fecha_nacimiento' => Carbon::parse('07-09-2000')->toDate(),
+                'firstname' => 'Admin',
+                'lastname' => 'Admin',
+                'password' => 'admin'
+            ]
+        );
+        if (!$administrador->hasRole('administrador')) {
+            $administrador->assignRole('administrador');
+        }
 
         $cursos = Cursos::all();
-        foreach($cursos as $curso){
-            $administrador->cursos()->save($curso);
+        if ($cursos->count() > 0) {
+            $administrador->cursos()->syncWithoutDetaching($cursos->pluck('id')->toArray());
         }
-        if(App::environment()=="local"){
-            $estudiante = User::create([
+
+        $estudiante = User::firstOrCreate(
+            ['email' => 'estudiante@tutorbot.com'],
+            [
                 'username' => 'estudiante',
                 'rut' => '22222222-2',
                 'fecha_nacimiento' => Carbon::parse('07-09-2001')->toDate(),
                 'firstname' => 'Estudiante',
                 'lastname' => 'Estudiante',
-                'email' => 'estudiante@tutorbot.com',
                 'password' => 'estudiante'
-            ]);
-            $profesor = User::create([
+            ]
+        );
+        if (!$estudiante->hasRole('estudiante')) {
+            $estudiante->assignRole('estudiante');
+        }
+
+        $profesor = User::firstOrCreate(
+            ['email' => 'profesor@tutorbot.com'],
+            [
                 'username' => 'profesor',
                 'rut' => '33333333-3',
                 'fecha_nacimiento' => Carbon::parse('07-09-2002')->toDate(),
                 'firstname' => 'Profesor',
                 'lastname' => 'Profesor',
-                'email' => 'profesor@tutorbot.com',
                 'password' => 'profesor'
-            ]);
+            ]
+        );
+        if (!$profesor->hasRole('profesor')) {
             $profesor->assignRole('profesor');
-            $estudiante->assignRole('estudiante');
-            $profesor->cursos()->sync($cursos->pluck('id')->toArray());
-            $estudiante->cursos()->sync($cursos->pluck('id')->toArray());
+        }
+
+        if ($cursos->count() > 0) {
+            $profesor->cursos()->syncWithoutDetaching($cursos->pluck('id')->toArray());
+            $estudiante->cursos()->syncWithoutDetaching($cursos->pluck('id')->toArray());
         }
     }
 }

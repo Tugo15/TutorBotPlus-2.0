@@ -6,8 +6,9 @@
         @include('components.alert')
     </div>
     <div class="container-fluid py-4">
-        <form role="form" method="POST" action="{{ route('lenguaje_programacion.update', ['id'=>$lenguaje->id]) }}" onsubmit="event.preventDefault();submitFormEditar('{{'el lenguaje'.$lenguaje->nombre}}')" id="editarForm">
+        <form role="form" method="POST" action="{{ route('lenguaje_programacion.update', ['id'=>$lenguaje->id]) }}" onsubmit="event.preventDefault();submitFormEditar('{{'el lenguaje '.$lenguaje->nombre}}')" id="editarForm">
             @csrf
+            <input type="hidden" name="id" value="{{ $lenguaje->id }}">
             <div class="card shadow-xs border mb-4">
                 <div class="card-header pb-0 border-bottom mb-0">
                     <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">

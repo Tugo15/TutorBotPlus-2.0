@@ -8,6 +8,7 @@
     <div class="container-fluid py-4">
         <form role="form" method="POST" action="{{ route('roles.update', ['id'=>$rol->id]) }}" enctype="multipart/form-data" onsubmit="event.preventDefault();submitFormEditar('el rol {{ $rol->name }}')" id="editarForm">
             @csrf
+            <input type="hidden" name="id" value="{{ $rol->id }}">
             <div class="card shadow-xs border mb-4">
                 <div class="card-header pb-0 border-bottom mb-0">
                     <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">

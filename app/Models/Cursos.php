@@ -26,7 +26,7 @@ class Cursos extends Model
     public static $createRules = [
         "nombre" => ["required","string","max:255"],
         "descripcion" => ["string","max:500"],
-        "codigo" => ["required","string","unique:App\Models\Cursos,codigo"],
+        "codigo" => ["required","string","unique:cursos,codigo"],
     ];
 
     public static function updateRules($id){
