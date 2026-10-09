@@ -6,16 +6,17 @@
         <div class="col-12">
             <div class="card shadow-xs border mb-4">
                 <div class="card-header pb-0 border-bottom mb-0">
-                    <div class="d-flex justify-content-center align-items-center pb-2 position-relative w-100">
-                        <div class="text-center">
+                    <div class="row align-items-center pb-2 gy-2">
+                        <div class="col-12 col-lg"></div>
+                        <div class="col-12 col-lg-auto text-center">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-shield-alt me-2 text-info"></i>Gestión de Roles y Permisos</h6>
                             <p class="text-xs text-secondary mb-0">Administre los roles del sistema y controle el nivel de acceso y permisos asignados.</p>
                         </div>
-                        @can('crear rol')
-                        <div class="position-absolute end-0">
-                            <a class="btn btn-sm btn-dark mb-0" href="{{ route('roles.crear') }}"><i class="fa fa-plus me-1"></i> Crear Rol</a>
+                        <div class="col-12 col-lg d-flex justify-content-center justify-content-lg-end gap-2 flex-wrap">
+                            @can('crear rol')
+                                <a class="btn btn-sm btn-dark mb-0" href="{{ route('roles.crear') }}"><i class="fa fa-plus me-1"></i> Crear Rol</a>
+                            @endcan
                         </div>
-                        @endcan
                     </div>
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">

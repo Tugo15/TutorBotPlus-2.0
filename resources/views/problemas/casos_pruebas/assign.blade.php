@@ -8,15 +8,15 @@
         <div class="col-12">
             <div class="card mb-4">
                 <div class="card-header pb-0 border-bottom mb-3">
-                    <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
-                        <div class="d-none d-lg-block" style="flex: 1;">
+                    <div class="row align-items-center pb-2 gy-2">
+                        <div class="col-12 col-lg d-flex justify-content-center justify-content-lg-start">
                             <a href="{{ route('problemas.index') }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                         </div>
-                        <div class="text-center" style="flex: 2;">
+                        <div class="col-12 col-lg-auto text-center">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-vials me-2 text-warning"></i>Casos de Prueba: {{ $problema->nombre }}</h6>
                             <p class="text-xs text-secondary mb-0">Gestión e inyección individual o masiva de casos de prueba.</p>
                         </div>
-                        <div class="d-none d-lg-flex justify-content-end" style="flex: 1;">
+                        <div class="col-12 col-lg d-flex justify-content-center justify-content-lg-end gap-2 flex-wrap">
                             @can('editar problemas')
                                 <button type="button" class="btn btn-xs btn-dark mb-0" data-bs-toggle="modal" data-bs-target="#modalInyeccionMasiva">
                                     <i class="fa fa-upload me-1"></i> Inyección Masiva
@@ -195,10 +195,10 @@
                                         <input type="number" step="any" class="form-control" id="puntos_{{ $item->id }}" name="puntos" value="{{ $item->puntos }}" placeholder="Puntaje">
                                     </div>
                                     <div class="col-md-12">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" role="switch" id="ejemplo_{{ $item->id }}" name="ejemplo" value="1" {{ $item->ejemplo ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="ejemplo_{{ $item->id }}">
-                                                Es un caso de ejemplo (mostrar entradas y salidas en los resultados)
+                                        <div class="form-check form-switch d-flex align-items-start gap-2 ps-0 mb-3 border p-2 rounded bg-light">
+                                            <input class="form-check-input ms-0 flex-shrink-0" type="checkbox" role="switch" id="ejemplo_{{ $item->id }}" name="ejemplo" value="1" {{ $item->ejemplo ? 'checked' : '' }} style="cursor: pointer; width: 2.5em; height: 1.25em;">
+                                            <label class="form-check-label text-xs font-weight-bold text-dark text-wrap mb-0 cursor-pointer" for="ejemplo_{{ $item->id }}">
+                                                Es un caso de ejemplo <span class="text-secondary font-weight-normal d-block text-xxs">(mostrar entradas y salidas en los resultados)</span>
                                             </label>
                                         </div>
                                     </div>

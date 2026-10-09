@@ -6,13 +6,13 @@
         <div class="col-12">
             <div class="card shadow-xs border mb-4">
                 <div class="card-header pb-0 border-bottom mb-0">
-                    <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
-                        <div class="d-none d-lg-block" style="flex: 1;"></div>
-                        <div class="text-center" style="flex: 2;">
+                    <div class="row align-items-center pb-2 gy-2">
+                        <div class="col-12 col-lg"></div>
+                        <div class="col-12 col-lg-auto text-center">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-code me-2 text-primary"></i>Gestión de Problemas</h6>
                             <p class="text-xs text-secondary mb-0">Administración de problemas de programación organizados por asignaturas o listado general.</p>
                         </div>
-                        <div class="d-flex align-items-center justify-content-center justify-content-lg-end gap-2" style="flex: 1;">
+                        <div class="col-12 col-lg d-flex justify-content-center justify-content-lg-end align-items-center gap-2 flex-wrap">
                             @if(!isset($id_curso_activo) || !$id_curso_activo)
                                 <div class="btn-group me-1" role="group" id="btnGroupVista" aria-label="Modo de Vista">
                                     <button type="button" class="btn btn-xs btn-primary active mb-0" id="btnVistaCarpetas" onclick="switchVista('carpetas')">

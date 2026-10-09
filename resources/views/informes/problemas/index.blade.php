@@ -8,17 +8,17 @@
         <div class="col-12">
             <div class="card shadow-xs border mb-4">
                 <div class="card-header pb-0 border-bottom mb-3">
-                    <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
-                        <div class="d-none d-lg-block" style="flex: 1;">
+                    <div class="row align-items-center pb-2 gy-2">
+                        <div class="col-12 col-lg d-flex justify-content-center justify-content-lg-start">
                             <a href="{{ route('problemas.index') }}" class="btn btn-xs btn-outline-secondary mb-0">
                                 <i class="fa fa-arrow-left me-1"></i> Volver
                             </a>
                         </div>
-                        <div class="text-center" style="flex: 2;">
+                        <div class="col-12 col-lg-auto text-center">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-chart-bar me-2 text-warning"></i>Cursos Asociados: {{ $problema->nombre }}</h6>
                             <p class="text-xs text-secondary mb-0">Consulte el rendimiento del problema en un curso específico o de forma consolidada.</p>
                         </div>
-                        <div class="d-none d-lg-flex justify-content-end" style="flex: 1;">
+                        <div class="col-12 col-lg d-flex justify-content-center justify-content-lg-end gap-2 flex-wrap">
                             <a href="{{ route('informe.problema', ['id_curso' => 'todos', 'id_problema' => $problema->id]) }}" class="btn btn-xs btn-dark mb-0">
                                 <i class="fa fa-chart-pie me-1"></i> Informe Consolidado
                             </a>
