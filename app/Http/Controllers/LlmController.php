@@ -40,7 +40,8 @@ class LlmController extends Controller
         } else {
             if($evaluacion->estado == "Error"){
                 if(isset($evaluacion->error_compilacion)){
-                    $prompt = SolicitudRaLlm::promptError(base64_decode($evaluacion->error_compilacion), $evaluacion->nombre_lenguaje);
+                    $errDecodificado = \App\Models\EvaluacionSolucion::decodificarTextoSeguro($evaluacion->error_compilacion);
+                    $prompt = SolicitudRaLlm::promptError($errDecodificado, $evaluacion->nombre_lenguaje);
                 }else{
                     $prompt = SolicitudRaLlm::promptError(null, $evaluacion->nombre_lenguaje,$evaluacion->resultado);
                 }

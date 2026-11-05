@@ -175,8 +175,8 @@ class EnvioSolucionProblemaController extends Controller
             $casos = $problema->casos_de_prueba()->get();
             $initial_json_string = '{"language_id":' . $lenguaje . ',"source_code":"' . $codigo . '"';
             if(in_array($lenguaje, $c_codes)){
-                //añade la opción de compilador -lm para incluir la libreria <math.h>, esto es solo para soluciones desarrolladas en C.
-                $initial_json_string = $initial_json_string.',"compiler_options":"-lm"';
+                // Añade -lm para <math.h> y -Werror=implicit-function-declaration para exigir incluir obligatoriamente las librerías (#include)
+                $initial_json_string = $initial_json_string.',"compiler_options":"-lm -Werror=implicit-function-declaration"';
             }
             if(isset($problema->memoria_limite) && $problema->memoria_limite>0){
                 $initial_json_string = $initial_json_string.',"memory_limit":"'.$problema->memoria_limite.'"';
@@ -306,7 +306,8 @@ class EnvioSolucionProblemaController extends Controller
 
         file_put_contents($sourceFile, $envio->codigo);
 
-        $cmdCompile = escapeshellarg($compiler) . ' -O2 -o ' . escapeshellarg($exeFile) . ' ' . escapeshellarg($sourceFile) . ' -lm 2>&1';
+        $extraFlags = $isCpp ? '' : '-Werror=implicit-function-declaration ';
+        $cmdCompile = escapeshellarg($compiler) . ' -O2 -o ' . escapeshellarg($exeFile) . ' ' . escapeshellarg($sourceFile) . ' ' . $extraFlags . '-lm 2>&1';
         exec($cmdCompile, $compileOutputLines, $compileReturnCode);
         $compileOutput = implode("\n", $compileOutputLines);
 

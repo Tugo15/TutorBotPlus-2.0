@@ -76,12 +76,8 @@ class EvaluacionSolucionController extends Controller
             }
 
             $evaluaciones = $envio->evaluaciones()->with('casos_pruebas')->get()->map(function($item){
-                if(isset($item->stout)){
-                    $item->stout = base64_decode($item->stout);
-                }
-                if(isset($item->error_compilacion)){
-                    $item->error_compilacion = base64_decode($item->error_compilacion);
-                }
+                $item->stout = $item->salida_texto;
+                $item->error_compilacion = $item->error_compilacion_texto;
                 return $item;
             });
         }catch(\PDOException $e){

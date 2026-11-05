@@ -89,21 +89,14 @@
                                                 <div class="card flex-grow-1 {{ $evVisible->estado == 'Rechazado' || $evVisible->estado == 'Error' ? 'border-danger' : 'border-success' }}" style="min-width: 140px;" id="card_evaluacion_{{$i}}">
                                                     <div class="card-body p-3">
                                                         <h6 class="card-title text-xs font-weight-bold">Salidas Obtenidas</h6>
-                                                        <p class="card-text font-monospace text-xs mb-0" id="evaluacion_{{$i}}_s">
-                                                            {!! $evVisible->stout ? nl2br(e(base64_decode($evVisible->stout))) : '-' !!}</p>
+                                                        <p class="card-text font-monospace text-xs mb-0" id="evaluacion_{{$i}}_s" style="white-space: pre-wrap;">{{ $evVisible->salida_texto ?: '-' }}</p>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="card border-danger @if (!isset($evVisible->error_compilacion)) d-none @endif" id="card_error_compilacion_{{$i}}">
+                                            <div class="card border-danger @if (empty($evVisible->error_compilacion_texto)) d-none @endif" id="card_error_compilacion_{{$i}}">
                                                 <div class="card-body p-3">
                                                     <h6 class="card-title text-danger text-xs font-weight-bold">Mensaje del Compilador</h6>
-                                                    <p class="card-text text-danger font-monospace text-xs mb-0" id="evaluacion_{{$i}}_ec">
-                                                        @php
-                                                            $ecRaw = $evVisible->error_compilacion ?? '';
-                                                            $ecDecoded = base64_decode($ecRaw, true);
-                                                            $ecTexto = ($ecDecoded !== false && base64_encode($ecDecoded) === $ecRaw && mb_check_encoding($ecDecoded, 'UTF-8')) ? $ecDecoded : $ecRaw;
-                                                        @endphp
-                                                        {!! $ecTexto ? nl2br(e($ecTexto)) : '-' !!}</p>
+                                                    <p class="card-text text-danger font-monospace text-xs mb-0" id="evaluacion_{{$i}}_ec" style="white-space: pre-wrap;">{{ $evVisible->error_compilacion_texto ?: '-' }}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -144,9 +137,7 @@
                                             @php
                                                 $idxReal = $evaluaciones->search(fn($x) => $x->id == $evOculta->id);
                                                 $numCaso = ($idxReal !== false) ? $idxReal + 1 : $loop->iteration;
-                                                $ecRaw = $evOculta->error_compilacion ?? '';
-                                                $ecDecoded = base64_decode($ecRaw, true);
-                                                $ecTexto = ($ecDecoded !== false && base64_encode($ecDecoded) === $ecRaw && mb_check_encoding($ecDecoded, 'UTF-8')) ? $ecDecoded : $ecRaw;
+                                                $ecTexto = $evOculta->error_compilacion_texto;
                                             @endphp
                                             <div class="py-1 px-2 border-bottom d-flex flex-column">
                                                 <div class="d-flex align-items-center justify-content-between">
@@ -158,7 +149,7 @@
                                                     </span>
                                                 </div>
                                                 @if(!empty(trim($ecTexto)))
-                                                    <small class="text-xxs text-danger font-monospace mt-1 bg-light p-1 rounded">
+                                                    <small class="text-xxs text-danger font-monospace mt-1 bg-light p-1 rounded" style="white-space: pre-wrap;">
                                                         {{ Str::limit(trim($ecTexto), 200) }}
                                                     </small>
                                                 @endif
@@ -300,6 +291,20 @@
         var evaluaciones_pendientes = {{$pendientes}};
         tiempo.innerHTML = string_tiempo_desarrollo
 
+        function decodeBase64Safe(str) {
+            if (!str) return '';
+            try {
+                let clean = String(str).trim().replace(/\s+/g, '');
+                if (/^[a-zA-Z0-9+/]+={0,2}$/.test(clean) && clean.length % 4 === 0) {
+                    let decoded = atob(clean);
+                    if (/[\x20-\x7E\n\r\t]/.test(decoded)) {
+                        return decoded;
+                    }
+                }
+            } catch (e) {}
+            return str;
+        }
+
         let actualizacion_estado = setInterval(() => {
             if(evaluaciones_pendientes==0){
                 clearInterval(actualizacion_estado)
@@ -346,11 +351,18 @@
                         }
 
                         if(texto_salidas && result[i]["stout"]!=null){
-                            texto_salidas.innerHTML = result[i]["stout"];
+                            texto_salidas.textContent = decodeBase64Safe(result[i]["stout"]);
                         }
                         if(texto_error_compilacion && result[i]["error_compilacion"]!=null){
-                            texto_error_compilacion.innerHTML = result[i]["error_compilacion"];
-                            if(card_ec) card_ec.classList.remove('d-none');
+                            let decodedEc = decodeBase64Safe(result[i]["error_compilacion"]);
+                            texto_error_compilacion.textContent = decodedEc;
+                            if(card_ec) {
+                                if(decodedEc && decodedEc.trim().length > 0) {
+                                    card_ec.classList.remove('d-none');
+                                } else {
+                                    card_ec.classList.add('d-none');
+                                }
+                            }
                         }
                     }
 
