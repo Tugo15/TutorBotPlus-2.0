@@ -105,7 +105,7 @@
                             @endforeach
                         </div>
 
-                        {{-- RESUMEN COMPACTO DE CASOS DE PRUEBA DE EVALUACIÓN (OCULTOS) --}}
+                        {{-- CASOS DE PRUEBA DE EVALUACIÓN (OCULTOS) --}}
                         @if($totalOcultos > 0)
                             @if($enProcesoOcultos > 0)
                                 <div class="alert alert-warning py-2 px-3 mt-3 d-flex align-items-center" id="alert_ocultos_proceso">
@@ -130,7 +130,6 @@
                                             <span class="badge bg-success ms-2">{{ $aceptadosOcultos }} aceptados</span>
                                             <span class="badge bg-danger ms-1">{{ $falladosOcultos->count() }} con error</span>
                                         </div>
-                                        <span class="text-xxs text-muted">Resumen compacto</span>
                                     </div>
                                     <div class="card-body p-2" style="max-height: 250px; overflow-y: auto;">
                                         @foreach($falladosOcultos as $evOculta)
@@ -368,7 +367,7 @@
 
                     if(finalizado){
                         clearInterval(actualizacion_estado);
-                        // Si se procesaban casos en segundo plano, recargamos la página para actualizar el resumen compacto
+                        // Si se procesaban casos en segundo plano, recargamos la página para actualizar el estado
                         setTimeout(function(){ location.reload(); }, 1200);
                     }
                 })

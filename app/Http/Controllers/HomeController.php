@@ -30,10 +30,11 @@ class HomeController extends Controller
         $esAdmin = $user->hasRole('administrador');
 
         // Obtener los cursos a los que pertenece el usuario (si es admin y no está inscrito en cursa, ve todos los cursos)
-        $misCursos = $user->cursos()->get();
+        $misCursos = $user->cursos()->orderBy('nombre')->get();
         if ($esAdmin && $misCursos->isEmpty()) {
-            $misCursos = Cursos::all();
+            $misCursos = Cursos::orderBy('nombre')->get();
         }
+        $misCursos = $misCursos->sortBy('nombre', SORT_NATURAL | SORT_FLAG_CASE)->values();
 
         $id_curso_seleccionado = $request->input('id_curso');
         $curso_activo = null;

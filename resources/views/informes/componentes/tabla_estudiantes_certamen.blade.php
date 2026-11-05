@@ -96,9 +96,9 @@
             order: [
                 [0, 'ASC']
             ],
-            dom: "<'row pb-2 px-4 pt-2 align-items-center'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6 d-flex justify-content-end'f>>" +
-                 "<'row'<'col-sm-12'tr>>" +
-                 "<'row pt-3 px-4 pb-4 align-items-center'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>"
+            dom: typeof responsiveDomLayout !== 'undefined' ? responsiveDomLayout : "<'row mx-0 px-2 px-md-4 pb-2 pt-1 align-items-center gy-2'<'col-12 col-md-6 d-flex align-items-center flex-wrap'l><'col-12 col-md-6 d-flex align-items-center justify-content-md-end justify-content-start'f>>" +
+                 "<'row mx-0'<'col-12 px-0 table-responsive'tr>>" +
+                 "<'row mx-0 px-2 px-md-4 pt-3 pb-4 align-items-center gy-2'<'col-12 col-md-5 text-center text-md-start'i><'col-12 col-md-7 d-flex justify-content-center justify-content-md-end'p>>"
         });
     </script>
 @endpush

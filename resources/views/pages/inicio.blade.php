@@ -6,27 +6,99 @@
     <div class="container-fluid py-4">
         <!-- Encabezado simple y filtro por curso -->
         <div class="card shadow-xs border mb-4">
-            <div class="card-body py-3 px-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="card-body py-3 px-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
                 <div class="d-flex align-items-center">
-                    <i class="ni ni-tv-2 text-primary text-sm opacity-10 me-2"></i>
-                    <h6 class="mb-0 font-weight-bold text-dark">
-                        Bienvenido, {{ auth()->user()->firstname }} {{ auth()->user()->lastname }}
-                    </h6>
+                    <div class="avatar avatar-sm bg-gradient-dark me-3 rounded-circle d-flex align-items-center justify-content-center shadow-xs">
+                        <i class="ni ni-tv-2 text-white text-xs"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 font-weight-bold text-dark">
+                            Bienvenido, {{ auth()->user()->firstname }} {{ auth()->user()->lastname }}
+                        </h6>
+                        <p class="text-xs text-secondary mb-0">
+                            @if(isset($curso_activo) && $curso_activo)
+                                Filtrando por: <strong class="text-dark">{{ $curso_activo->nombre }}</strong>
+                                <span class="badge border border-secondary text-secondary font-monospace text-xxs ms-1">{{ $curso_activo->codigo }}</span>
+                            @else
+                                Mostrando métricas consolidadas de <strong>todos tus cursos</strong> ({{ isset($misCursos) ? count($misCursos) : 0 }})
+                            @endif
+                        </p>
+                    </div>
                 </div>
                 @if(isset($misCursos) && count($misCursos) > 1)
-                    <div class="d-flex flex-wrap align-items-center gap-1">
-                        <a href="{{ route('home') }}"
-                           class="btn btn-xs {{ !$id_curso_seleccionado ? 'btn-dark' : 'btn-outline-secondary' }} mb-0">
-                            <i class="fa fa-graduation-cap text-warning me-1"></i> Todos mis cursos
-                        </a>
-                        @foreach($misCursos as $cItem)
-                            <a href="{{ route('home', ['id_curso' => $cItem->id]) }}"
-                               class="btn btn-xs {{ $id_curso_seleccionado == $cItem->id ? 'btn-dark' : 'btn-outline-secondary' }} mb-0"
-                               title="{{ $cItem->nombre }} ({{ $cItem->codigo }})">
-                                <i class="fa fa-graduation-cap text-warning me-1"></i> {{ $cItem->nombre }} <span class="opacity-7 ms-1">({{ $cItem->codigo }})</span>
+                    @if(count($misCursos) <= 3)
+                        <div class="d-flex flex-wrap align-items-center gap-1">
+                            <a href="{{ route('home') }}"
+                               class="btn btn-xs {{ !$id_curso_seleccionado ? 'btn-dark' : 'btn-outline-secondary' }} mb-0">
+                                <i class="fa fa-layer-group text-primary me-1"></i> Todos mis cursos
                             </a>
-                        @endforeach
-                    </div>
+                            @foreach($misCursos as $cItem)
+                                <a href="{{ route('home', ['id_curso' => $cItem->id]) }}"
+                                   class="btn btn-xs {{ $id_curso_seleccionado == $cItem->id ? 'btn-dark' : 'btn-outline-secondary' }} mb-0"
+                                   title="{{ $cItem->nombre }} ({{ $cItem->codigo }})">
+                                    <i class="fa fa-graduation-cap text-warning me-1"></i> {{ $cItem->nombre }} <span class="opacity-7 ms-1">({{ $cItem->codigo }})</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="d-flex align-items-center flex-wrap gap-2">
+                            <div class="dropdown">
+                                <button class="btn btn-sm {{ $id_curso_seleccionado ? 'btn-dark' : 'btn-outline-dark' }} dropdown-toggle mb-0 d-flex align-items-center shadow-xs" 
+                                        type="button" id="dropdownFiltroCurso" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
+                                    <i class="fa fa-graduation-cap text-warning me-2"></i>
+                                    <span class="d-inline-block text-truncate" style="max-width: 250px;">
+                                        {{ $curso_activo ? $curso_activo->nombre : 'Todos mis cursos (' . count($misCursos) . ')' }}
+                                    </span>
+                                    @if($curso_activo)
+                                        <span class="badge bg-white text-dark text-xxs ms-2 font-monospace">{{ $curso_activo->codigo }}</span>
+                                    @endif
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border py-2" aria-labelledby="dropdownFiltroCurso" style="max-height: 380px; overflow-y: auto; min-width: 330px;" id="menuFiltroCursos">
+                                    <li class="px-3 py-1 text-xxs font-weight-bolder text-uppercase text-secondary">
+                                        Filtrar por curso
+                                    </li>
+                                    @if(count($misCursos) > 5)
+                                        <li class="px-3 py-1 mb-1">
+                                            <input type="text" class="form-control form-control-sm text-xs" id="buscarCursoInput" placeholder="Buscar curso o código..." autocomplete="off">
+                                        </li>
+                                    @endif
+                                    <li>
+                                        <a class="dropdown-item py-2 d-flex align-items-center justify-content-between {{ !$id_curso_seleccionado ? 'active fw-bold' : '' }}" 
+                                           href="{{ route('home') }}">
+                                            <span class="d-flex align-items-center">
+                                                <i class="fa fa-layer-group {{ !$id_curso_seleccionado ? 'text-white' : 'text-primary' }} me-2"></i>
+                                                <span>Todos mis cursos</span>
+                                            </span>
+                                            <span class="badge {{ !$id_curso_seleccionado ? 'bg-white text-dark' : 'bg-light text-secondary' }}">
+                                                {{ count($misCursos) }}
+                                            </span>
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider my-1"></li>
+                                    @foreach($misCursos as $cItem)
+                                        <li class="item-curso-li">
+                                            <a class="dropdown-item py-2 d-flex align-items-center justify-content-between {{ $id_curso_seleccionado == $cItem->id ? 'active fw-bold' : '' }}" 
+                                               href="{{ route('home', ['id_curso' => $cItem->id]) }}"
+                                               title="{{ $cItem->nombre }} ({{ $cItem->codigo }})">
+                                                <span class="d-flex align-items-center text-truncate me-2" style="max-width: 230px;">
+                                                    <i class="fa fa-graduation-cap {{ $id_curso_seleccionado == $cItem->id ? 'text-warning' : 'text-secondary opacity-7' }} me-2"></i>
+                                                    <span class="text-truncate">{{ $cItem->nombre }}</span>
+                                                </span>
+                                                <span class="badge {{ $id_curso_seleccionado == $cItem->id ? 'bg-white text-dark' : 'border text-secondary' }} font-monospace text-xxs">
+                                                    {{ $cItem->codigo }}
+                                                </span>
+                                            </a>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                            @if($id_curso_seleccionado)
+                                <a href="{{ route('home') }}" class="btn btn-xs btn-outline-secondary mb-0 d-flex align-items-center" title="Quitar filtro de curso">
+                                    <i class="fa fa-times me-1"></i> Quitar filtro
+                                </a>
+                            @endif
+                        </div>
+                    @endif
                 @endif
             </div>
         </div>
@@ -315,4 +387,26 @@
 
     </div>
 @endsection
+
+@push('js')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputBuscar = document.getElementById('buscarCursoInput');
+        if (inputBuscar) {
+            inputBuscar.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            inputBuscar.addEventListener('keyup', function(e) {
+                e.stopPropagation();
+                const term = this.value.toLowerCase().trim();
+                const items = document.querySelectorAll('#menuFiltroCursos .item-curso-li');
+                items.forEach(function(item) {
+                    const text = item.textContent.toLowerCase();
+                    item.style.display = text.includes(term) ? '' : 'none';
+                });
+            });
+        }
+    });
+</script>
+@endpush
 
