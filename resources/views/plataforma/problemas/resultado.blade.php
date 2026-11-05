@@ -76,7 +76,12 @@
                                                     <div class="card-body">
                                                         <h5 class="card-title">Mensaje del Compilador</h5>
                                                         <p class="card-text text-danger"  id="evaluacion_{{$i}}_ec">
-                                                            {!! $evaluaciones[$i]->error_compilacion ? nl2br(e(base64_decode($evaluaciones[$i]->error_compilacion))) : '-' !!}</p>
+                                                            @php
+                                                                $ecRaw = $evaluaciones[$i]->error_compilacion ?? '';
+                                                                $ecDecoded = base64_decode($ecRaw, true);
+                                                                $ecTexto = ($ecDecoded !== false && base64_encode($ecDecoded) === $ecRaw && mb_check_encoding($ecDecoded, 'UTF-8')) ? $ecDecoded : $ecRaw;
+                                                            @endphp
+                                                            {!! $ecTexto ? nl2br(e($ecTexto)) : '-' !!}</p>
                                                     </div>
                                                 </div>
                                             
@@ -93,17 +98,22 @@
                     <div class="card-body px-5">
                         <h6 class="text-center">Tiempo en Total:</h6>
                         <h5 id="tiempo" class="text-center"></h5>
-                            <div class="d-flex flex-column align-items-center @if (isset($res_certamen) || $envio->usuario->id != auth()->user()->id || $evaluaciones->contains('estado', '=', 'En Proceso') || $envio->solucionado == true ||$tieneRetroalimentacion == true) d-none @endif" id="div_btn_retroalimentacion">
-                                <a class="btn btn-primary btn-block {{ $problema->habilitar_llm == true && $cant_retroalimentacion > 0 ? '' : 'disabled' }}"
+                        @if ($problema->habilitar_llm)
+                            <div class="d-flex flex-column align-items-center @if (isset($res_certamen) || $envio->usuario->id != auth()->user()->id || $evaluaciones->contains('estado', '=', 'En Proceso') || $envio->solucionado == true ||$tieneRetroalimentacion == true || $cant_retroalimentacion <= 0) d-none @endif" id="div_btn_retroalimentacion">
+                                <a class="btn btn-primary btn-block {{ $cant_retroalimentacion > 0 ? '' : 'disabled' }}"
                                     href="{{ route('envios.generar_retroalimentacion', ['token' => $envio->token]) }}"
-                                    role="button" onclick="solicitarRetroalimentacion(event)" id="boton_ra"> <img src="{{asset('img/AlienitoPensativo.png')}}" style="width:65px" class="me-3"><span class="align-middle"> {{ $problema->habilitar_llm == true && $cant_retroalimentacion > 0 ? 'Solicitar Ayuda' : 'Ayuda no disponible' }}</span></a>
-                                    <strong class="text-center mt-2">Cantidad de Ayuda Disponible: {{$cant_retroalimentacion}}</strong>
+                                    role="button" onclick="solicitarRetroalimentacion(event)" id="boton_ra"> 
+                                    <img src="{{asset('img/AlienitoPensativo.png')}}" style="width:65px" class="me-3">
+                                    <span class="align-middle">Solicitar Ayuda</span>
+                                </a>
+                                <strong class="text-center mt-2">Cantidad de Ayuda Disponible: {{$cant_retroalimentacion}}</strong>
                             </div>
                             <div class="d-flex flex-column align-items-center @if(isset($res_certamen) || $envio->usuario->id != auth()->user()->id || $tieneRetroalimentacion == false) d-none @endif" id="div_btn_ver_ayuda">
                                 <a class="btn btn-primary text-nowrap btn-block"
                                     href="{{$tieneRetroalimentacion == true? route('envios.retroalimentacion', ['token' => $envio->token]) : "#" }}"
                                     role="button"><img src="{{asset('img/AlienitoPensativo.png')}}" style="width:65px" class="me-3">Ver Ayuda</a>
                             </div>
+                        @endif
                         <hr>
                         @if ($envio->usuario->id == auth()->user()->id && !$evaluaciones->contains('estado', '=', 'En Proceso') && $envio->solucionado == false)
                             <div class="row px-5 mt-2">
@@ -204,6 +214,7 @@
         const esUsuario = @json($envio->usuario->id == auth()->user()->id);
         const esCertamen = @json(isset($res_certamen));
         const tieneRetroalimentacion = @json($tieneRetroalimentacion);
+        const habilitarLlm = @json((bool)$problema->habilitar_llm);
         const tiempo = document.getElementById("tiempo")
         const ruta_actualizacion = "{{route('envio.get_update', ["token"=>$envio->token])}}";
         const boton_ayuda = document.getElementById('div_btn_ver_ayuda');
@@ -236,11 +247,11 @@
                             badge_estado.classList.add('text-bg-danger')
                             card_evaluacion.classList.add('border-danger')
                             evaluaciones_pendientes = evaluaciones_pendientes - 1;
-                            if(tieneRetroalimentacion==true && esUsuario == true && esCertamen==false){
+                            if(habilitarLlm == true && tieneRetroalimentacion==true && esUsuario == true && esCertamen==false && boton_ayuda){
                                 if(boton_ayuda.classList.contains('d-none')){
                                     boton_ayuda.classList.toggle('d-none');
                                 }
-                            }else if (tieneRetroalimentacion==false && esUsuario == true && esCertamen==false){
+                            }else if (habilitarLlm == true && tieneRetroalimentacion==false && esUsuario == true && esCertamen==false && boton_retroalimentacion){
                                 if(boton_retroalimentacion.classList.contains('d-none')){
                                     boton_retroalimentacion.classList.toggle('d-none');
                                 }

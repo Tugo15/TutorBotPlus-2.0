@@ -267,7 +267,7 @@ class EnvioSolucionProblemaController extends Controller
                     $evaluacion->casos_pruebas()->associate($caso);
                     $evaluacion->estado = 'Error';
                     $evaluacion->resultado = 'Error de Compilación';
-                    $evaluacion->error_compilacion = $compileOutput;
+                    $evaluacion->error_compilacion = base64_encode($compileOutput);
                     $evaluacion->stout = base64_encode('');
                     $evaluacion->tiempo = '0.000';
                     $evaluacion->memoria = '0';
@@ -414,7 +414,7 @@ class EnvioSolucionProblemaController extends Controller
                 if (!empty($stderr) && empty($salidaObtenida)) {
                     $evaluacion->estado = 'Error';
                     $evaluacion->resultado = 'Runtime Error';
-                    $evaluacion->error_compilacion = $stderr;
+                    $evaluacion->error_compilacion = base64_encode($stderr);
                     $evaluacion->stout = base64_encode('');
                 } else {
                     $salidaObtenidaTrim = trim($salidaObtenida);

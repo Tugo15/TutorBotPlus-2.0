@@ -229,6 +229,9 @@ class LlmController extends Controller
                 } elseif (str_contains($req, 'while') && !str_contains($req, 'no while') && !str_contains($codigo_lower, 'while')) {
                     $cumple = false;
                     $detalles[] = "El código no incluye la estructura 'while' solicitada por el profesor.";
+                } elseif ((str_contains($req, 'if') || str_contains($req, 'condicional')) && !preg_match('/\bif\b/', $codigo_lower)) {
+                    $cumple = false;
+                    $detalles[] = "El código no utiliza las estructuras condicionales 'if/else' solicitadas por el profesor.";
                 } elseif (str_contains($req, 'inner join') && !str_contains($codigo_lower, 'inner join')) {
                     $cumple = false;
                     $detalles[] = "La consulta no utiliza 'INNER JOIN' explícito como lo solicitó el profesor.";

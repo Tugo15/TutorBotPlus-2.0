@@ -60,6 +60,15 @@ class OutputComparatorService
             return true;
         }
 
+        // 5. Comparación numérica con texto explicativo (ej. "El mayor es: 42" o "Resultado: 42" frente a "42")
+        preg_match_all('/[-+]?\b\d+(?:\.\d+)?\b/', $normExpected, $expNumbers);
+        preg_match_all('/[-+]?\b\d+(?:\.\d+)?\b/', $normActual, $actNumbers);
+
+        $expectedOnlyNumbers = !empty($expNumbers[0]) && empty(trim(preg_replace('/[-+]?\b\d+(?:\.\d+)?\b|\s+/', '', $normExpected)));
+        if ($expectedOnlyNumbers && !empty($actNumbers[0]) && $expNumbers[0] === $actNumbers[0]) {
+            return true;
+        }
+
         return false;
     }
 

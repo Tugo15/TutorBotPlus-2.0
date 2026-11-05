@@ -77,7 +77,7 @@ class SqlEvaluationService
                 if ($errorMensaje) {
                     $evaluacion->estado = 'Error';
                     $evaluacion->resultado = 'Error de Compilación';
-                    $evaluacion->error_compilacion = $errorMensaje;
+                    $evaluacion->error_compilacion = base64_encode($errorMensaje);
                     $evaluacion->stout = base64_encode('');
                 } else {
                     $exactMatch = ($salidaObtenida === $salidaEsperada);
