@@ -167,12 +167,18 @@ class EnvioSolucionProblemaController extends Controller
         $headerRequest = JuecesVirtuales::generateHeaderRequest($juez);
         $headerRequest['Content-Type'] = 'application/json';
         try {
-            $response = $client->request('POST', $juez->direccion . '/submissions/batch?base64_encoded=true', [
-                'body' => '{"submissions":[' . implode(',', $batch_submissions) . ']}',
-                'headers' => $headerRequest,
-            ]);
-
-            $data = json_decode($response->getBody(), true);
+            $chunks = array_chunk($batch_submissions, 20);
+            $data = [];
+            foreach ($chunks as $chunk) {
+                $response = $client->request('POST', $juez->direccion . '/submissions/batch?base64_encoded=true', [
+                    'body' => '{"submissions":[' . implode(',', $chunk) . ']}',
+                    'headers' => $headerRequest,
+                ]);
+                $chunkData = json_decode($response->getBody(), true);
+                if (is_array($chunkData)) {
+                    $data = array_merge($data, $chunkData);
+                }
+            }
         } catch (\Exception $e) {
             \Log::error("Fallo de conexion con Judge0 en " . $juez->direccion . ": " . $e->getMessage());
 

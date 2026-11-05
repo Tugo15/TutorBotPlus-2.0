@@ -45,12 +45,20 @@ class EvaluarEnvios extends Command
             $client = new Client();
             //Crea el header para el request dependiendo del tipo de autenticación que se utiliza, revisar el modelo JuecesVirtuales.
             $header = JuecesVirtuales::generateHeaderRequest($juez);
+            $tokenChunks = array_chunk(array_keys($evaluacion_arr), 20);
+            $submissions = [];
             try {
-                $response = $client->request('GET', $juez->direccion . '/submissions/batch?tokens=' . implode('%2C', array_keys($evaluacion_arr)) . '&base64_encoded=true&fields=*', [
-                    'headers' => $header,
-                ]);
-                $data = json_decode($response->getBody(), true);
-            }catch(\Exception $e){
+                foreach ($tokenChunks as $tokens) {
+                    $response = $client->request('GET', $juez->direccion . '/submissions/batch?tokens=' . implode('%2C', $tokens) . '&base64_encoded=true&fields=*', [
+                        'headers' => $header,
+                    ]);
+                    $resData = json_decode($response->getBody(), true);
+                    if (isset($resData["submissions"]) && is_array($resData["submissions"])) {
+                        $submissions = array_merge($submissions, $resData["submissions"]);
+                    }
+                }
+                $data = ["submissions" => $submissions];
+            } catch(\Exception $e){
                 continue;
             }
             try{
