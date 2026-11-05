@@ -269,7 +269,10 @@
                                                 <span class="text-success font-weight-bold">{{ $c->cantidad_resueltos }}</span> / {{ $c->cantidad_intentos }}
                                             </td>
                                             <td class="text-center py-2">
-                                                <a href="{{ route('problemas.index', ['id_curso' => $c->id]) }}" class="btn btn-xs btn-outline-primary mb-0 me-1">
+                                                <a href="{{ route('cursos.estudiantes', ['id' => $c->id]) }}" class="btn btn-xs btn-outline-info mb-0 me-1" title="Gestionar Estudiantes">
+                                                    <i class="fa fa-users me-1"></i> Estudiantes
+                                                </a>
+                                                <a href="{{ route('problemas.index', ['id_curso' => $c->id]) }}" class="btn btn-xs btn-outline-primary mb-0 me-1" title="Gestionar Ejercicios">
                                                     <i class="fa fa-list-alt text-success me-1"></i> Problemas
                                                 </a>
                                                 <a href="{{ route('certamen.index', ['id_curso' => $c->id]) }}" class="btn btn-xs btn-outline-warning mb-0 me-1">

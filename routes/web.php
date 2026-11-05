@@ -136,6 +136,13 @@ Route::group(['middleware' => 'auth'], function () {
 		Route::post('/eliminar', [CursosController::class, 'eliminar'])->name('cursos.eliminar')->middleware('can:eliminar curso'); 
 		Route::post('/store', [CursosController::class, 'store'])->name('cursos.store')->middleware('can:crear curso'); 
 		Route::post('/update', [CursosController::class, 'update'])->name('cursos.update')->middleware('can:editar curso'); 
+
+		// Gestión de estudiantes del curso
+		Route::get('/{id}/estudiantes', [CursosController::class, 'estudiantes'])->name('cursos.estudiantes')->middleware('permission:ver curso|ver informe del curso');
+		Route::post('/{id}/estudiantes/agregar', [CursosController::class, 'agregar_estudiantes'])->name('cursos.estudiantes.agregar')->middleware('permission:editar curso|crear curso|ver informe del curso');
+		Route::post('/{id}/estudiantes/agregar_masivo', [CursosController::class, 'agregar_estudiantes_masivo'])->name('cursos.estudiantes.agregar_masivo')->middleware('permission:editar curso|crear curso|ver informe del curso');
+		Route::post('/{id}/estudiantes/copiar_curso', [CursosController::class, 'copiar_estudiantes_curso'])->name('cursos.estudiantes.copiar_curso')->middleware('permission:editar curso|crear curso|ver informe del curso');
+		Route::post('/{id}/estudiantes/eliminar', [CursosController::class, 'eliminar_estudiante'])->name('cursos.estudiantes.eliminar')->middleware('permission:editar curso|crear curso|ver informe del curso');
 	});
 	Route::prefix('categorias_problemas')->group(function () {
 		Route::get('/index', [CategoriaProblemaController::class, 'index'])->name('categorias.index')->middleware('can:ver categoría de problema'); 
@@ -181,6 +188,10 @@ Route::group(['middleware' => 'auth'], function () {
 		Route::post('/casos/bulk_add', [CasosPruebasController::class, 'bulk_add_casos'])->name('casos_pruebas.bulk_add')->middleware('can:editar problemas'); 
 		Route::post('/casos/update', [CasosPruebasController::class, 'update_caso'])->name('casos_pruebas.update')->middleware('can:editar problemas'); 
 		Route::post('/casos/sql', [CasosPruebasController::class, 'caso_sql'])->name('casos_pruebas.set_sql')->middleware('can:editar problemas'); 
+
+		// Gestión rápida de problemas en cursos
+		Route::post('/cursos/{id_curso}/agregar', [ProblemasController::class, 'agregar_problemas_curso'])->name('problemas.curso.agregar')->middleware('can:editar problemas'); 
+		Route::post('/cursos/{id_curso}/quitar', [ProblemasController::class, 'quitar_problema_curso'])->name('problemas.curso.quitar')->middleware('can:editar problemas'); 
 	});
 
 	Route::prefix('informes')->group(function () {

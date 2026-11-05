@@ -119,7 +119,12 @@
                                     </h6>
                                     <p class="text-xs text-secondary mb-0">Código: <strong>{{ $curso_activo->codigo ?? '' }}</strong></p>
                                 </div>
-                                <div class="text-end" style="flex: 1;">
+                                <div class="text-end d-flex justify-content-end align-items-center gap-2 flex-wrap" style="flex: 1;">
+                                    @can('editar problemas')
+                                        <button type="button" class="btn btn-sm btn-outline-primary mb-0" data-bs-toggle="modal" data-bs-target="#modalAsignarProblemas">
+                                            <i class="fa fa-folder-plus me-1"></i> Asignar Ejercicios Existentes
+                                        </button>
+                                    @endcan
                                     @can('crear problemas')
                                         <a class="btn btn-sm btn-dark mb-0" href="{{ route('problemas.crear', ['id_curso' => $curso_activo->id]) }}">
                                             <i class="fa fa-plus me-1"></i> Crear Problema
@@ -135,6 +140,75 @@
             </div>
         </div>
     </div>
+
+    @if(isset($curso_activo) && $curso_activo)
+        <!-- MODAL PARA ASIGNAR EJERCICIOS EXISTENTES AL CURSO -->
+        <div class="modal fade" id="modalAsignarProblemas" tabindex="-1" aria-labelledby="modalAsignarLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header border-bottom">
+                        <h6 class="modal-title font-weight-bold" id="modalAsignarLabel">
+                            <i class="fa fa-folder-plus text-primary me-2"></i>Asignar Ejercicios al Curso: {{ $curso_activo->nombre }} ({{ $curso_activo->codigo }})
+                        </h6>
+                        <button type="button" class="btn-close text-dark" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action="{{ route('problemas.curso.agregar', ['id_curso' => $curso_activo->id]) }}" method="POST">
+                        @csrf
+                        <div class="modal-body p-3">
+                            <p class="text-xs text-secondary mb-2">
+                                Seleccione los problemas del banco general que desea incorporar a este curso:
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">
+                                <div class="input-group input-group-sm" style="max-width: 320px;">
+                                    <span class="input-group-text"><i class="fa fa-search"></i></span>
+                                    <input type="text" class="form-control" id="buscadorProblemasDisponibles" placeholder="Buscar por nombre, código o categoría...">
+                                </div>
+                                <button type="button" class="btn btn-xs btn-outline-secondary mb-0" id="btnMarcarTodosProbDisponibles">
+                                    <i class="fa fa-check-double me-1"></i> Seleccionar todos los visibles
+                                </button>
+                            </div>
+
+                            <div class="border rounded p-2" style="max-height: 350px; overflow-y: auto;">
+                                @if(!isset($problemas_disponibles_para_asignar) || $problemas_disponibles_para_asignar->isEmpty())
+                                    <p class="text-xs text-secondary text-center py-4 mb-0">
+                                        <i class="fa fa-check-circle text-success fa-2x mb-2 d-block"></i>
+                                        Todos los problemas registrados en la plataforma ya están asignados a este curso.
+                                    </p>
+                                @else
+                                    <div class="list-group list-group-flush" id="listaProblemasDisponibles">
+                                        @foreach($problemas_disponibles_para_asignar as $probDisp)
+                                            <label class="list-group-item list-group-item-action d-flex align-items-center justify-content-between p-2 cursor-pointer item-problema-disp">
+                                                <div class="d-flex align-items-center text-truncate me-2">
+                                                    <input class="form-check-input me-3 check-prob-disp" type="checkbox" name="problemas[]" value="{{ $probDisp->id }}">
+                                                    <div class="text-truncate">
+                                                        <strong class="text-xs text-dark d-block text-truncate">{{ $probDisp->nombre }}</strong>
+                                                        <span class="badge border border-primary text-primary bg-white text-xxs font-monospace">{{ $probDisp->codigo }}</span>
+                                                        @foreach($probDisp->categorias as $c)
+                                                            <span class="badge bg-light text-secondary text-xxs">{{ $c->nombre }}</span>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                                <span class="badge {{ $probDisp->dificultad == 'Fácil' ? 'bg-success' : ($probDisp->dificultad == 'Medio' ? 'bg-warning' : 'bg-danger') }} text-xxs">
+                                                    {{ $probDisp->dificultad ?: 'Sin dificultad' }}
+                                                </span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="modal-footer border-top py-2">
+                            <span class="text-xs text-secondary me-auto">Seleccionados: <strong id="countProbSeleccionados">0</strong></span>
+                            <button type="button" class="btn btn-xs btn-light mb-0" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-xs btn-dark mb-0" id="btnSubmitAgregarProblemas" disabled>
+                                <i class="fa fa-plus me-1"></i> Asignar Ejercicios Seleccionados
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
 @endsection
 @push('js')
     <link href="{{ asset('assets/js/DataTables/datatables.min.css') }}" rel="stylesheet">
@@ -248,6 +322,61 @@
                     $(document).on('change', '.filter-categoria-chk', updateCol1Filters);
                 }
             }, 500);
+        });
+
+        function confirmarQuitarProblemaDeCurso(nombre, id) {
+            Swal.fire({
+                title: '¿Quitar ejercicio del curso?',
+                text: 'Se desvinculará "' + nombre + '" de este curso. El ejercicio seguirá existiendo en el banco general de la plataforma.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, quitar del curso',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('quitarCursoForm_' + id).submit();
+                }
+            });
+        }
+
+        // Filtro y contador para modal de asignación de problemas
+        document.addEventListener('DOMContentLoaded', function() {
+            const buscadorProb = document.getElementById('buscadorProblemasDisponibles');
+            if (buscadorProb) {
+                buscadorProb.addEventListener('keyup', function() {
+                    const term = this.value.toLowerCase().trim();
+                    const items = document.querySelectorAll('#listaProblemasDisponibles .item-problema-disp');
+                    items.forEach(function(item) {
+                        const text = item.textContent.toLowerCase();
+                        item.style.display = text.includes(term) ? '' : 'none';
+                    });
+                });
+            }
+
+            document.querySelectorAll('.check-prob-disp').forEach(function(ch) {
+                ch.addEventListener('change', actualizarContadorProbDisp);
+            });
+
+            function actualizarContadorProbDisp() {
+                const checks = document.querySelectorAll('.check-prob-disp:checked');
+                const countSpan = document.getElementById('countProbSeleccionados');
+                const btnSubmit = document.getElementById('btnSubmitAgregarProblemas');
+                if (countSpan) countSpan.textContent = checks.length;
+                if (btnSubmit) btnSubmit.disabled = checks.length === 0;
+            }
+
+            document.getElementById('btnMarcarTodosProbDisponibles')?.addEventListener('click', function() {
+                const visibleItems = document.querySelectorAll('#listaProblemasDisponibles .item-problema-disp');
+                visibleItems.forEach(function(item) {
+                    if (item.style.display !== 'none') {
+                        const ch = item.querySelector('.check-prob-disp');
+                        if (ch) ch.checked = true;
+                    }
+                });
+                actualizarContadorProbDisp();
+            });
         });
     </script>
 @endpush

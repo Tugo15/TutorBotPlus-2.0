@@ -72,15 +72,17 @@
                                         @canany(['editar curso', 'eliminar curso', 'ver informe del curso'])
                                             <td class="align-middle text-center">
                                                 <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1 flex-wrap">
+                                                    <a class="btn btn-xs btn-outline-primary mb-0" title="Gestionar Estudiantes"
+                                                        href="{{ route('cursos.estudiantes', ['id' => $curso->id]) }}">
+                                                        <i class="fa fa-users me-1"></i> Estudiantes ({{ $curso->users_count ?? 0 }})
+                                                    </a>
+                                                    <a class="btn btn-xs btn-outline-success mb-0" title="Gestionar Ejercicios"
+                                                        href="{{ route('problemas.index', ['id_curso' => $curso->id]) }}">
+                                                        <i class="fa fa-code me-1"></i> Ejercicios ({{ $curso->problemas_count ?? 0 }})
+                                                    </a>
                                                     @can('ver informe del curso')
-                                                        <a class="btn btn-xs btn-outline-primary mb-0" title="Ver Informe del Curso"
+                                                        <a class="btn btn-xs btn-outline-secondary mb-0" title="Ver Informe del Curso"
                                                             href="{{ route('informe.curso', ['id_curso' => $curso->id]) }}"><i class="fa fa-chart-bar me-1"></i> Informe</a>
-                                                        <a class="btn btn-xs btn-outline-info mb-0" title="Ver Envíos del Curso"
-                                                            href="{{ route('informe.envios.curso', ['id_curso' => $curso->id]) }}"><i class="fa fa-code me-1"></i> Envíos</a>
-                                                    @endcan
-                                                    @can('crear problemas')
-                                                        <a class="btn btn-xs btn-outline-success mb-0" title="Crear Problema en este Curso"
-                                                            href="{{ route('problemas.crear', ['id_curso' => $curso->id]) }}"><i class="fa fa-plus me-1"></i> Problema</a>
                                                     @endcan
                                                     @can('crear certamen')
                                                         <a class="btn btn-xs btn-outline-warning mb-0" title="Crear Evaluación en este Curso"

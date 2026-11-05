@@ -295,13 +295,25 @@
                                     <a class="btn btn-xs btn-outline-warning mb-0" title="Editar Problema"
                                         href="{{ route('problemas.editar', ['id' => $problema->id]) }}"><i class="fa fa-pencil me-1"></i> Editar</a>
                                 @endcan
-                                @can('eliminar problemas')
-                                    <form action="{{ route('problemas.eliminar', ['id' => $problema->id]) }}"
-                                        method="POST" onsubmit="event.preventDefault();submitFormEliminar('{{'el problema '.$problema->nombre}}', {{$problema->id}})" id="eliminarForm_{{$problema->id}}">
+                                @if(isset($id_curso_activo) && $id_curso_activo)
+                                    <form action="{{ route('problemas.curso.quitar', ['id_curso' => $id_curso_activo]) }}" method="POST" class="d-inline m-0" id="quitarCursoForm_{{ $problema->id }}">
                                         @csrf
-                                        <button type="submit" class="btn btn-xs btn-outline-danger mb-0" title="Eliminar Problema"><i class="fa fa-fw fa-trash me-1"></i> Eliminar</button>
+                                        <input type="hidden" name="id_problema" value="{{ $problema->id }}">
+                                        <button type="button" class="btn btn-xs btn-outline-danger mb-0" 
+                                                title="Quitar este problema de este curso"
+                                                onclick="confirmarQuitarProblemaDeCurso('{{ addslashes($problema->nombre) }}', {{ $problema->id }})">
+                                            <i class="fa fa-unlink me-1"></i> Quitar del curso
+                                        </button>
                                     </form>
-                                @endcan
+                                @else
+                                    @can('eliminar problemas')
+                                        <form action="{{ route('problemas.eliminar', ['id' => $problema->id]) }}"
+                                            method="POST" onsubmit="event.preventDefault();submitFormEliminar('{{'el problema '.$problema->nombre}}', {{$problema->id}})" id="eliminarForm_{{$problema->id}}">
+                                            @csrf
+                                            <button type="submit" class="btn btn-xs btn-outline-danger mb-0" title="Eliminar Problema"><i class="fa fa-fw fa-trash me-1"></i> Eliminar</button>
+                                        </form>
+                                    @endcan
+                                @endif
                             </div>
                         </td>
                     @endcanany

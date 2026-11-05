@@ -36,11 +36,20 @@ class ProblemasController extends Controller
 
         $curso_activo = null;
 
+        $problemas_disponibles_para_asignar = collect();
         if ($id_curso_activo) {
             $curso_activo = Cursos::find($id_curso_activo);
             $query = Problemas::with(['cursos', 'categorias', 'lenguajes'])->whereHas('cursos', function (Builder $q) use ($id_curso_activo) {
                 $q->where('cursos.id', $id_curso_activo);
             });
+
+            // Problemas que NO están en este curso y que pueden asignarse
+            $problemas_disponibles_para_asignar = Problemas::with(['categorias', 'lenguajes'])
+                ->whereDoesntHave('cursos', function (Builder $q) use ($id_curso_activo) {
+                    $q->where('cursos.id', $id_curso_activo);
+                })
+                ->orderBy('nombre')
+                ->get();
         } else {
             $cursos_ids = $cursos->pluck('id')->toArray();
             $query = Problemas::with(['cursos', 'categorias', 'lenguajes'])->whereHas('cursos', function (Builder $q) use ($cursos_ids) {
@@ -55,7 +64,7 @@ class ProblemasController extends Controller
             return $item;
         });
 
-        return view('problemas.index', compact('problemas', 'cursos', 'id_curso_activo', 'curso_activo'));
+        return view('problemas.index', compact('problemas', 'cursos', 'id_curso_activo', 'curso_activo', 'problemas_disponibles_para_asignar'));
     }
 
     public function crear(Request $request)
@@ -562,4 +571,55 @@ class ProblemasController extends Controller
         return redirect()->route('problemas.ver', ['codigo'=>$request->codigo_problema, 'id_curso'=>$request->id_curso])->with('succes', 'El código desarrollado ha sido almacenado');
     }
 
+    public function agregar_problemas_curso(Request $request, $id_curso)
+    {
+        $curso = Cursos::findOrFail($id_curso);
+        if (!auth()->user()->hasRole('administrador') && !auth()->user()->cursos()->where('cursos.id', $id_curso)->exists()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'problemas' => 'required|array|min:1',
+            'problemas.*' => 'exists:problemas,id',
+        ]);
+
+        $syncData = [];
+        foreach ($request->problemas as $pId) {
+            $syncData[$pId] = [
+                'visible' => true,
+                'cantidad_resueltos' => 0,
+                'cantidad_intentos' => 0,
+                'tiempo_total' => 0,
+                'cant_retroalimentacion_solicitada' => 0,
+            ];
+        }
+
+        $curso->problemas()->syncWithoutDetaching($syncData);
+
+        return redirect()->route('problemas.index', ['id_curso' => $id_curso])
+            ->with('success', 'Se han asignado ' . count($request->problemas) . ' ejercicio(s) al curso "' . $curso->nombre . '" correctamente.');
+    }
+
+    public function quitar_problema_curso(Request $request, $id_curso)
+    {
+        $curso = Cursos::findOrFail($id_curso);
+        if (!auth()->user()->hasRole('administrador') && !auth()->user()->cursos()->where('cursos.id', $id_curso)->exists()) {
+            abort(403);
+        }
+
+        $ids = $request->input('problemas_ids');
+        if (empty($ids) && $request->filled('id_problema')) {
+            $ids = [$request->input('id_problema')];
+        }
+
+        if (empty($ids)) {
+            return redirect()->route('problemas.index', ['id_curso' => $id_curso])
+                ->with('error', 'No se especificó ningún ejercicio para desvincular.');
+        }
+
+        $curso->problemas()->detach($ids);
+
+        return redirect()->route('problemas.index', ['id_curso' => $id_curso])
+            ->with('success', 'Se ha(n) desvinculado ' . count($ids) . ' ejercicio(s) del curso correctamente.');
+    }
 }
