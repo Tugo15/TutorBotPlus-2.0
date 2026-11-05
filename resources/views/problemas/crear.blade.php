@@ -5,6 +5,7 @@
         @include('components.alert')
     </div>
     <div class="container-fluid py-4">
+        @include('problemas.componentes.wizard_creacion', ['paso' => 1])
         <form method="POST" action='{{ route('problemas.store') }}' enctype="multipart/form-data" onsubmit="event.preventDefault();submitFormCrear()" id="crearForm">
             @csrf
             <div class="card shadow-xs border">
@@ -23,7 +24,7 @@
                 <div class="card-body pt-3">
                     @include('problemas.form')
                     <div class="mt-4 pt-3 border-top d-flex justify-content-center">
-                        <button type="submit" class="btn btn-sm btn-dark mb-0"><i class="fa fa-save me-1"></i> Crear Problema</button>
+                        <button type="submit" class="btn btn-sm btn-dark mb-0"><i class="fa fa-save me-1"></i> Crear Problema y Agregar Casos de Prueba <i class="fa fa-arrow-right ms-1"></i></button>
                     </div>
                 </div>
             </div>
@@ -52,6 +53,7 @@
             height: '600px',
             initialEditType: 'wysiwyg',
             previewStyle: 'vertical',
+            autofocus: false,
             placeholder: 'Ingrese el enunciado del problema',
             initialValue: @json(old('body_problema', $problema->body_problema ?? '')),
             extendedAutolinks: true,

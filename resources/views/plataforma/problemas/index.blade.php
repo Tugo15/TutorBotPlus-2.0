@@ -38,7 +38,17 @@
                                         <td><a href="{{ route('problemas.ver', ['codigo' => $problema->codigo, 'id_curso' => $curso->id]) }}">{{ $problema->nombre }}</a></td>
                                         <td>{{ $problema->puntaje_total }}</td>
                                         <td>{{ $problema->categorias }}</td>
-                                        <td>{{ $problema->resuelto ? 'Si' : 'No' }}</td>
+                                        <td>
+                                            @if($problema->resuelto)
+                                                @if(!empty($problema->variacion_formato))
+                                                    <span class="badge text-bg-success">Aceptado (Variación de Formato)</span>
+                                                @else
+                                                    Si
+                                                @endif
+                                            @else
+                                                No
+                                            @endif
+                                        </td>
                                         <td>{{ $problema->creado }}</td>
                                     </tr>
                                 @endforeach

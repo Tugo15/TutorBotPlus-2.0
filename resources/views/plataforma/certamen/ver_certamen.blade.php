@@ -88,7 +88,7 @@
                                                 <td>{{ $item->nombre }}</td>
                                                 <td>{{ $item->max_casos_resueltos . ' / ' . $item->total_casos }}</td>
                                                 <td>{{ $item->maximo_puntaje . ' / ' . $item->puntos_total }}</td>
-                                                <td>{{ $item->resuelto ? 'Si' : 'No' }}</td>
+                                                <td>{{ $item->resuelto ? (!empty($item->variacion_formato) ? 'Si - Aceptado (Variación de Formato)' : 'Si') : 'No' }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>

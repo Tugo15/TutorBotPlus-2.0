@@ -222,7 +222,7 @@ class UserController extends Controller
         ]);
         $roles = isset($request->roles)? $request->roles : [];
         try {
-            db::beginTransaction();
+            DB::beginTransaction();
             $usuario = User::with('roles')->find($request->id);
             $usuario->username = $request->input('username');
             $usuario->rut = $request->input('rut');
@@ -237,7 +237,7 @@ class UserController extends Controller
                 array_push($roles, "administrador");
             }
             $usuario->syncRoles($roles);
-            db::commit();
+            DB::commit();
         } catch (\Exception $e) {
             return redirect()->route('usuarios.index')->with('error', $e->getMessage());
         }
@@ -254,7 +254,7 @@ class UserController extends Controller
             $user->delete();
             DB::commit();
         } catch (\PDOException $e) {
-            db::rollBack();
+            DB::rollBack();
             return redirect()->route('usuarios.index')->with('error', $e->getMessage());
         }
         return redirect()->route('usuarios.index')->with('success', 'El usuario ' . $user->username . ' ha sido eliminado');

@@ -35,14 +35,14 @@ class CursosController extends Controller
 
     public function store(Request $request){
         $validated = $request->validate(Cursos::$createRules);
-        db::beginTransaction();
+        DB::beginTransaction();
         try{
             $curso = new Cursos;
             $curso->nombre = $request->input('nombre');
             $curso->descripcion = $request->input('descripcion');
             $curso->codigo = $request->input('codigo');
             $curso->save();
-            db::commit();
+            DB::commit();
         }catch(\Exception $e){
             DB::rollback();
             return redirect()->route('cursos.index')->with('error', $e->getMessage());
@@ -53,13 +53,13 @@ class CursosController extends Controller
     public function update(Request $request){
         $validated = $request->validate(Cursos::updateRules($request->id));
         try{
-            db::beginTransaction();
+            DB::beginTransaction();
             $curso = Cursos::find($request->id);
             $curso->nombre = $request->input('nombre');
             $curso->descripcion = $request->input('descripcion');
             $curso->codigo = $request->input('codigo');
             $curso->save();
-            db::commit();
+            DB::commit();
         }catch(\Exception $e){
             return redirect()->route('cursos.index')->with('error', $e->getMessage());
         }
@@ -73,7 +73,7 @@ class CursosController extends Controller
             $curso->delete();
             DB::commit();
         }catch(\PDOException $e){
-            db::rollBack();
+            DB::rollBack();
             return redirect()->route('cursos.index')->with('error', $e->getMessage());
         } 
         return redirect()->route('cursos.index')->with('success', 'El curso '.$curso->nombre.' ha sido eliminado');

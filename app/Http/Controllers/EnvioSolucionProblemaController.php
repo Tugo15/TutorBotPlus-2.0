@@ -18,15 +18,14 @@ class EnvioSolucionProblemaController extends Controller
 {
     public function ver_envios(Request $request){
         $ultima_evaluacion = DB::table('evaluacion_solucions')
-        ->select('resultado', 'id_envio', 'estado')
-        ->where('estado', '=', 'Rechazado')
-        ->orWhere('estado', '=', 'En Proceso')
-        ->orWhere('estado', '=', 'Error')
-        ->orderBy('id_caso','DESC')
-        ->groupBy('id_envio', 'resultado', 'estado');
+        ->select(
+            'id_envio',
+            DB::raw("MAX(CASE WHEN resultado = 'Aceptado (Variación de Formato)' THEN 1 ELSE 0 END) as variacion_formato"),
+            DB::raw("MAX(CASE WHEN estado IN ('Rechazado', 'En Proceso', 'Error') THEN resultado ELSE NULL END) as resultado"),
+            DB::raw("MAX(CASE WHEN estado IN ('Rechazado', 'En Proceso', 'Error') THEN estado ELSE NULL END) as estado")
+        )
+        ->groupBy('id_envio');
 
-
-        //dd($ultima_evaluacion->get());
         $envios_query = DB::table('envio_solucion_problemas')
         ->leftJoinSub($ultima_evaluacion, 'ultima_evaluacion', function (JoinClause $join){
             $join->on('envio_solucion_problemas.id', '=', 'ultima_evaluacion.id_envio');
@@ -40,8 +39,8 @@ class EnvioSolucionProblemaController extends Controller
         ->whereNull('id_certamen')
         ->where('cursa.id_usuario', '=', auth()->user()->id)
         ->whereNotNull('termino')
-        ->select('problemas.nombre as nombre_problema', 'problemas.codigo as codigo_problema', 'problemas.restricciones', 'envio_solucion_problemas.id as id_envio', 'envio_solucion_problemas.created_at','envio_solucion_problemas.token', 'envio_solucion_problemas.cant_casos_resuelto','envio_solucion_problemas.puntaje', 'envio_solucion_problemas.cumple_restricciones', 'lenguajes_programaciones.nombre as nombre_lenguaje', 'envio_solucion_problemas.solucionado', 'envio_solucion_problemas.inicio', 'envio_solucion_problemas.termino', 'cursos.nombre as nombre_curso', 'cursos.id as id_curso', 'ultima_evaluacion.resultado', 'ultima_evaluacion.estado', DB::raw('count(casos__pruebas.id) as total_casos'))
-        ->groupBy('problemas.nombre', 'problemas.codigo', 'problemas.restricciones', 'envio_solucion_problemas.id', 'envio_solucion_problemas.created_at','envio_solucion_problemas.token', 'envio_solucion_problemas.cant_casos_resuelto','envio_solucion_problemas.puntaje', 'envio_solucion_problemas.cumple_restricciones', 'lenguajes_programaciones.nombre', 'envio_solucion_problemas.solucionado', 'envio_solucion_problemas.inicio', 'envio_solucion_problemas.termino', 'cursos.nombre', 'cursos.id', 'ultima_evaluacion.resultado', 'ultima_evaluacion.estado')
+        ->select('problemas.nombre as nombre_problema', 'problemas.codigo as codigo_problema', 'problemas.restricciones', 'envio_solucion_problemas.id as id_envio', 'envio_solucion_problemas.created_at','envio_solucion_problemas.token', 'envio_solucion_problemas.cant_casos_resuelto','envio_solucion_problemas.puntaje', 'envio_solucion_problemas.cumple_restricciones', 'lenguajes_programaciones.nombre as nombre_lenguaje', 'envio_solucion_problemas.solucionado', 'envio_solucion_problemas.inicio', 'envio_solucion_problemas.termino', 'cursos.nombre as nombre_curso', 'cursos.id as id_curso', 'ultima_evaluacion.resultado', 'ultima_evaluacion.estado', 'ultima_evaluacion.variacion_formato', DB::raw('count(casos__pruebas.id) as total_casos'))
+        ->groupBy('problemas.nombre', 'problemas.codigo', 'problemas.restricciones', 'envio_solucion_problemas.id', 'envio_solucion_problemas.created_at','envio_solucion_problemas.token', 'envio_solucion_problemas.cant_casos_resuelto','envio_solucion_problemas.puntaje', 'envio_solucion_problemas.cumple_restricciones', 'lenguajes_programaciones.nombre', 'envio_solucion_problemas.solucionado', 'envio_solucion_problemas.inicio', 'envio_solucion_problemas.termino', 'cursos.nombre', 'cursos.id', 'ultima_evaluacion.resultado', 'ultima_evaluacion.estado', 'ultima_evaluacion.variacion_formato')
         ->orderBy('envio_solucion_problemas.created_at', 'DESC');
         if(isset($request->id_problema)){
             $envios_query = $envios_query->where('problemas.id', '=', $request->id_problema);
@@ -232,9 +231,13 @@ class EnvioSolucionProblemaController extends Controller
                     }
                 }
 
-                $match = (trim($salidaObtenida) === trim($salidaEsperada));
+                $exactMatch = ($salidaObtenida === $salidaEsperada);
+                $comparator = app(\App\Services\OutputComparatorService::class);
+                $flexMatch = !$exactMatch && $comparator->isMatch($salidaObtenida, $salidaEsperada);
+                $match = $exactMatch || $flexMatch;
+
                 $evaluacion->estado = $match ? 'Aceptado' : 'Rechazado';
-                $evaluacion->resultado = $match ? 'Accepted' : 'Wrong Answer';
+                $evaluacion->resultado = $exactMatch ? 'Accepted' : ($flexMatch ? 'Aceptado (Variación de Formato)' : 'Wrong Answer');
                 $evaluacion->stout = base64_encode($salidaObtenida);
                 $evaluacion->tiempo = '0.004';
                 $evaluacion->memoria = '1200';

@@ -79,7 +79,7 @@
 <div id="custom-filters-src" class="d-none">
     @if(isset($mostrar_curso) && $mostrar_curso && count($cursos_disponibles) > 0)
         <div class="d-flex align-items-center">
-            <label class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Curso:</label>
+            <label class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Curso: &nbsp</label>
             <div class="dropdown">
                 <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" data-bs-auto-close="outside" style="height: 32px; min-width: 130px;">
                     <span class="lbl-curso-selected">Seleccionar...</span>
@@ -99,7 +99,7 @@
     @endif
 
     <div class="d-flex align-items-center">
-        <label for="filterEstado" class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Estado:</label>
+        <label for="filterEstado" class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Estado: &nbsp</label>
         <select id="filterEstado" class="form-select form-select-sm w-auto border-secondary" style="min-width: 110px; height: 32px;">
             <option value="">Todos</option>
             <option value="Visible">Visible</option>
@@ -108,7 +108,7 @@
     </div>
 
     <div class="d-flex align-items-center">
-        <label class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Categoría:</label>
+        <label class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Categoría: &nbsp</label>
         <div class="dropdown">
             <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" data-bs-auto-close="outside" style="height: 32px; min-width: 130px;">
                 <span class="lbl-cat-selected">Seleccionar...</span>
@@ -157,7 +157,12 @@
                         <div class="d-flex flex-wrap gap-1 py-1 justify-content-center">
                             @if(isset($problema->cursos) && count($problema->cursos) > 0)
                                 @foreach ($problema->cursos as $c)
-                                    <span class="badge border border-primary text-primary text-xxs bg-white" title="{{ $c->nombre }}">{{ $c->codigo }}</span>
+                                    @php
+                                        $visCurso = (bool)$problema->visible && (bool)($c->pivot->visible ?? true);
+                                    @endphp
+                                    <span class="badge border {{ $visCurso ? 'border-primary text-primary' : 'border-secondary text-secondary opacity-7' }} text-xxs bg-white" title="{{ $c->nombre }} ({{ $visCurso ? 'Visible' : 'Oculto' }})">
+                                        {{ $c->codigo }}
+                                    </span>
                                 @endforeach
                             @else
                                 <span class="badge border border-secondary text-secondary text-xxs bg-white">Sin Curso</span>
@@ -189,9 +194,17 @@
                         </div>
                     </td>
                     <td class="align-middle text-center">
+                        @php
+                            if (isset($id_curso_activo) && $id_curso_activo) {
+                                $cursoActualObj = isset($problema->cursos) ? $problema->cursos->firstWhere('id', $id_curso_activo) : null;
+                                $esVisibleAqui = (bool)$problema->visible && (bool)($cursoActualObj->pivot->visible ?? true);
+                            } else {
+                                $esVisibleAqui = (bool)$problema->visible && (!isset($problema->cursos) || $problema->cursos->isEmpty() || $problema->cursos->contains(fn($c) => (bool)($c->pivot->visible ?? true)));
+                            }
+                        @endphp
                         <div class="d-flex flex-column align-items-center justify-content-center gap-1">
-                            <span class="badge border {{ $problema->visible == true ? 'border-success text-success' : 'border-secondary text-secondary' }} text-xxs bg-white">
-                                <i class="fa {{ $problema->visible == true ? 'fa-eye' : 'fa-eye-slash' }} me-1"></i> {{ $problema->visible == true ? 'Visible' : 'Oculto' }}
+                            <span class="badge border {{ $esVisibleAqui ? 'border-success text-success' : 'border-secondary text-secondary' }} text-xxs bg-white">
+                                <i class="fa {{ $esVisibleAqui ? 'fa-eye' : 'fa-eye-slash' }} me-1"></i> {{ $esVisibleAqui ? 'Visible' : 'Oculto' }}
                             </span>
                         </div>
                     </td>
@@ -214,10 +227,71 @@
                                     @endif
                                 @endcan
                                 @can('editar problemas')
+                                    @if(isset($id_curso_activo) && $id_curso_activo)
+                                        <form action="{{ route('problemas.toggle_visibilidad') }}" method="POST" class="d-inline m-0">
+                                            @csrf
+                                            <input type="hidden" name="id" value="{{ $problema->id }}">
+                                            <input type="hidden" name="id_curso" value="{{ $id_curso_activo }}">
+                                            <button type="submit" class="btn btn-xs {{ $esVisibleAqui ? 'btn-outline-dark' : 'btn-outline-success' }} mb-0"
+                                                title="{{ $esVisibleAqui ? 'Ocultar problema en este curso' : 'Mostrar problema en este curso' }}">
+                                                <i class="fa {{ $esVisibleAqui ? 'fa-eye-slash' : 'fa-eye' }} me-1"></i> {{ $esVisibleAqui ? 'Ocultar' : 'Mostrar' }}
+                                            </button>
+                                        </form>
+                                    @elseif(isset($problema->cursos) && count($problema->cursos) > 1)
+                                        <div class="dropdown d-inline">
+                                            <button class="btn btn-xs {{ $esVisibleAqui ? 'btn-outline-dark' : 'btn-outline-success' }} dropdown-toggle mb-0"
+                                                type="button" data-bs-toggle="dropdown" data-bs-config='{"strategy":"fixed"}' aria-expanded="false"
+                                                title="Cambiar visibilidad por curso o global">
+                                                <i class="fa {{ $esVisibleAqui ? 'fa-eye-slash' : 'fa-eye' }} me-1"></i> {{ $esVisibleAqui ? 'Ocultar' : 'Mostrar' }}
+                                            </button>
+                                            <ul class="dropdown-menu shadow border p-1" style="min-width: 210px; z-index: 1060;">
+                                                <li class="px-2 py-1 text-xxs font-weight-bold text-uppercase text-secondary">Por Curso:</li>
+                                                @foreach($problema->cursos as $c)
+                                                    @php
+                                                        $visC = (bool)$problema->visible && (bool)($c->pivot->visible ?? true);
+                                                    @endphp
+                                                    <li>
+                                                        <form action="{{ route('problemas.toggle_visibilidad') }}" method="POST" class="m-0">
+                                                            @csrf
+                                                            <input type="hidden" name="id" value="{{ $problema->id }}">
+                                                            <input type="hidden" name="id_curso" value="{{ $c->id }}">
+                                                            <button type="submit" class="dropdown-item text-xs py-1 px-2 d-flex align-items-center justify-content-between rounded">
+                                                                <span><i class="fa {{ $visC ? 'fa-eye-slash text-secondary' : 'fa-eye text-success' }} me-2"></i>{{ $visC ? 'Ocultar en' : 'Mostrar en' }} <strong>{{ $c->codigo }}</strong></span>
+                                                                <span class="badge {{ $visC ? 'bg-success' : 'bg-secondary' }} text-xxs ms-2">{{ $visC ? 'Visible' : 'Oculto' }}</span>
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                @endforeach
+                                                <li><hr class="dropdown-divider my-1"></li>
+                                                <li>
+                                                    <form action="{{ route('problemas.toggle_visibilidad') }}" method="POST" class="m-0">
+                                                        @csrf
+                                                        <input type="hidden" name="id" value="{{ $problema->id }}">
+                                                        <button type="submit" class="dropdown-item text-xs py-1 px-2 font-weight-bold rounded">
+                                                            <i class="fa {{ $esVisibleAqui ? 'fa-eye-slash text-danger' : 'fa-eye text-success' }} me-2"></i>
+                                                            {{ $esVisibleAqui ? 'Ocultar en todos los cursos' : 'Mostrar en todos los cursos' }}
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    @else
+                                        <form action="{{ route('problemas.toggle_visibilidad') }}" method="POST" class="d-inline m-0">
+                                            @csrf
+                                            <input type="hidden" name="id" value="{{ $problema->id }}">
+                                            @if(isset($problema->cursos) && count($problema->cursos) === 1)
+                                                <input type="hidden" name="id_curso" value="{{ $problema->cursos->first()->id }}">
+                                            @endif
+                                            <button type="submit" class="btn btn-xs {{ $esVisibleAqui ? 'btn-outline-dark' : 'btn-outline-success' }} mb-0"
+                                                title="{{ $esVisibleAqui ? 'Ocultar problema' : 'Mostrar problema' }}">
+                                                <i class="fa {{ $esVisibleAqui ? 'fa-eye-slash' : 'fa-eye' }} me-1"></i> {{ $esVisibleAqui ? 'Ocultar' : 'Mostrar' }}
+                                            </button>
+                                        </form>
+                                    @endif
                                     <a class="btn btn-xs btn-outline-info mb-0" title="Casos de Prueba"
                                         href="{{ route('casos_pruebas.assign', ['id' => $problema->id]) }}"><i class="fa fa-vials me-1"></i> Casos</a>
-                                    <a class="btn btn-xs btn-outline-secondary mb-0" title="Editorial"
-                                        href="{{ route('problemas.editorial', ['id' => $problema->id]) }}"><i class="fa fa-book me-1"></i> Editorial</a>
+                                    <a class="btn btn-xs btn-outline-secondary mb-0" title="Editar Pistas"
+                                        href="{{ route('problemas.editorial', ['id' => $problema->id]) }}"><i class="fa fa-book me-1"></i> Editar Pistas</a>
                                     <a class="btn btn-xs btn-outline-warning mb-0" title="Editar Problema"
                                         href="{{ route('problemas.editar', ['id' => $problema->id]) }}"><i class="fa fa-pencil me-1"></i> Editar</a>
                                 @endcan
@@ -230,7 +304,7 @@
                                 @endcan
                             </div>
                         </td>
-                    @endcan
+                    @endcanany
                 </tr>
             @endforeach
         </tbody>

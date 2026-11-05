@@ -25,6 +25,7 @@ class SingleSessionService
 
         // 1. Update Cache store (Redis or File cache)
         Cache::put(self::CACHE_PREFIX . $user->id, $sessionId, now()->addMinutes($lifetimeMinutes));
+        Cache::put('user_last_seen_' . $user->id, now()->timestamp, now()->addMinutes($lifetimeMinutes));
 
         // 2. Persist in database as fallback
         $user->current_session_id = $sessionId;
@@ -71,6 +72,7 @@ class SingleSessionService
     public function invalidateSession(User $user): void
     {
         Cache::forget(self::CACHE_PREFIX . $user->id);
+        Cache::forget('user_last_seen_' . $user->id);
 
         $user->current_session_id = null;
         $user->save();
@@ -86,6 +88,7 @@ class SingleSessionService
     {
         // 1. Remove from Cache
         Cache::forget(self::CACHE_PREFIX . $user->id);
+        Cache::forget('user_last_seen_' . $user->id);
 
         // 2. Clear Database Session ID
         $user->current_session_id = null;

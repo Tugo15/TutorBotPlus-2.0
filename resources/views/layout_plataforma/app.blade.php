@@ -83,6 +83,14 @@
             font-size: 0.75rem !important;
             vertical-align: middle !important;
         }
+
+        .card-body > .alert.alert-success.alert-dismissible,
+        .card-body > .alert.alert-danger.alert-dismissible,
+        .container-fluid > .alert.alert-success,
+        .container-fluid > .alert.alert-danger,
+        #alert {
+            display: none !important;
+        }
     </style>
     @stack('css')
 </head>
@@ -107,6 +115,7 @@
     <main class="main-content">
         @yield('content')
     </main>
+    @include('components.toast_notifications')
     @stack('js')
 </body>
 

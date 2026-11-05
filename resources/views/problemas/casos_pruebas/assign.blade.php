@@ -6,6 +6,9 @@
     ])
     <div class="row mt-4 mx-4">
         <div class="col-12">
+            @if(!empty($es_wizard))
+                @include('problemas.componentes.wizard_creacion', ['paso' => 2, 'problema' => $problema, 'casos' => $casos])
+            @endif
             <div class="card mb-4">
                 <div class="card-header pb-0 border-bottom mb-3">
                     <div class="row align-items-center pb-2 gy-2">

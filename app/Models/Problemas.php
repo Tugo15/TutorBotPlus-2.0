@@ -113,7 +113,7 @@ class Problemas extends Model
 
     public function cursos(): BelongsToMany
     {
-        return $this->belongsToMany(Cursos::class,'disponible','id_problema', 'id_curso');  
+        return $this->belongsToMany(Cursos::class,'disponible','id_problema', 'id_curso')->withPivot('visible');  
     }
 
     public function casos_de_prueba(): HasMany

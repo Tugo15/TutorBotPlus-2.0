@@ -43,7 +43,7 @@ class Cursos extends Model
 
     public function problemas(): BelongsToMany
     {
-        return $this->belongsToMany(Problemas::class,'disponible','id_curso','id_problema');
+        return $this->belongsToMany(Problemas::class,'disponible','id_curso','id_problema')->withPivot('visible');
     }
 
     public function certamenes(): HasMany

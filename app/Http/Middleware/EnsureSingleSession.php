@@ -49,6 +49,12 @@ class EnsureSingleSession
                     'session' => $mensaje
                 ]);
             }
+
+            \Illuminate\Support\Facades\Cache::put(
+                'user_last_seen_' . $user->id,
+                now()->timestamp,
+                now()->addMinutes(config('session.lifetime', 120))
+            );
         }
 
         return $next($request);

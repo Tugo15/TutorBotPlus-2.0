@@ -37,13 +37,13 @@ class RoleController extends Controller
             'permisos'=> 'required|array|min:1',
         ]);
         
-        db::beginTransaction();
+        DB::beginTransaction();
         try{
             $rol = new Role;
             $rol->name = $request->input('name');
             $rol->save();
             $rol->syncPermissions($request->input('permisos'));
-            db::commit();
+            DB::commit();
         }catch(\Exception $e){
             DB::rollback();
             return redirect()->route('roles.index')->with('error', $e->getMessage());
@@ -56,12 +56,12 @@ class RoleController extends Controller
             'name' => ['required', 'string', 'max:255'],
         ]);
         try{
-            db::beginTransaction();
+            DB::beginTransaction();
             $rol = Role::find($request->id);
             $rol->name = $request->input('name');
             $rol->save();
             $rol->syncPermissions($request->input('permisos'));
-            db::commit();
+            DB::commit();
         }catch(\Exception $e){
             return redirect()->route('roles.index')->with('error', $e->getMessage());
         }
@@ -75,7 +75,7 @@ class RoleController extends Controller
             $rol->delete();
             DB::commit();
         }catch(\PDOException $e){
-            db::rollBack();
+            DB::rollBack();
             return redirect()->route('roles.index')->with('error', $e->getMessage());
         } 
         return redirect()->route('roles.index')->with('success', 'El rol '.$rol->name.' ha sido eliminado');

@@ -14,11 +14,7 @@
             <div class="card-body p-3 d-flex flex-column justify-content-between">
                 <p class="text-xs mb-2 text-uppercase font-weight-bold text-secondary">Evaluaciones Aceptadas</p>
                 <h5 class="font-weight-bolder text-dark mb-0">
-                    @if(isset($estadistica_estados["Accepted"]))
-                        {{ $estadistica_estados["Accepted"]}}
-                    @else
-                        0
-                    @endif
+                    {{ ($estadistica_estados["Accepted"] ?? 0) + ($estadistica_estados["Aceptado (Variación de Formato)"] ?? 0) }}
                 </h5>
             </div>
         </div>

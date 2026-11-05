@@ -30,12 +30,12 @@ class CategoriaProblemaController extends Controller
     public function store(Request $request){
         $validated = $request->validate(Categoria_Problema::$rules);
         
-        db::beginTransaction();
+        DB::beginTransaction();
         try{
             $categoria = new Categoria_Problema;
             $categoria->nombre = $request->input('nombre');
             $categoria->save();
-            db::commit();
+            DB::commit();
         }catch(\Exception $e){
             DB::rollback();
             return redirect()->route('categorias.index')->with('error', $e->getMessage());
@@ -46,11 +46,11 @@ class CategoriaProblemaController extends Controller
     public function update(Request $request){
         $validated = $request->validate(Categoria_Problema::$rules);
         try{
-            db::beginTransaction();
+            DB::beginTransaction();
             $categoria = Categoria_Problema::find($request->id);
             $categoria->nombre = $request->input('nombre');
             $categoria->save();
-            db::commit();
+            DB::commit();
         }catch(\Exception $e){
             return redirect()->route('categorias.index')->with('error', $e->getMessage());
         }
@@ -64,7 +64,7 @@ class CategoriaProblemaController extends Controller
             $categoria->delete();
             DB::commit();
         }catch(\PDOException $e){
-            db::rollBack();
+            DB::rollBack();
             return redirect()->route('categorias.index')->with('error', $e->getMessage());
         } 
         return redirect()->route('categorias.index')->with('success', 'La categoria "'.$categoria->nombre.'" ha sido eliminado');

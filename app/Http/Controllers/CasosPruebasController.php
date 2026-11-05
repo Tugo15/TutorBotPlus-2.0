@@ -11,6 +11,16 @@ class CasosPruebasController extends Controller
 {
     public function asignacion_casos(Request $request){
         $problema = Problemas::findOrFail($request->id);
+
+        if ($request->boolean('finalizar_wizard')) {
+            session()->forget('wizard_creacion_problema_' . $problema->id);
+            return redirect()->route('problemas.index')->with('success', 'El problema "' . $problema->nombre . '" y sus casos de prueba han sido configurados correctamente.');
+        }
+
+        if ($request->boolean('wizard')) {
+            session(['wizard_creacion_problema_' . $problema->id => true]);
+        }
+        $es_wizard = session('wizard_creacion_problema_' . $problema->id, false);
         
         $has_non_sql_language = $problema->lenguajes()
             ->where('abreviatura', 'NOT LIKE', '%sql%')
@@ -19,10 +29,10 @@ class CasosPruebasController extends Controller
 
         if ($has_non_sql_language || !$problema->lenguajes()->exists()) {
             $casos = $problema->casos_de_prueba()->orderBy('created_at','desc')->get();
-            return view("problemas.casos_pruebas.assign", compact('problema', 'casos'));
+            return view("problemas.casos_pruebas.assign", compact('problema', 'casos', 'es_wizard'));
         } else {
             $caso = $problema->casos_de_prueba()->orderBy('created_at','desc')->first();
-            return view("problemas.casos_pruebas.assign_sql", compact('problema', 'caso'));
+            return view("problemas.casos_pruebas.assign_sql", compact('problema', 'caso', 'es_wizard'));
         }
     }
 

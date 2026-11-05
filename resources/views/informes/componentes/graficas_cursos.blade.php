@@ -41,6 +41,9 @@
                 case "Accepted":
                     rgb_estados_envios.push('rgb(42,255,0)');
                     break;
+                case "Aceptado (Variación de Formato)":
+                    rgb_estados_envios.push('rgb(45,206,137)');
+                    break;
                 case "Wrong Answer":
                     rgb_estados_envios.push('rgb(255,45,0)');
                     break;
@@ -57,7 +60,7 @@
                     rgb_estados_envios.push('rgb(39,246,243)')
                     break;
                 default:
-                    rgb_estados_envios.push('rgb(255,)' + Math.random() * 255 + ', ' + Math.random() * 255 +')');
+                    rgb_estados_envios.push('rgb(255, ' + Math.random() * 255 + ', ' + Math.random() * 255 +')');
             }
         });
         const data_1 = {

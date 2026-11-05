@@ -23,6 +23,7 @@
                         <select id="filtroEstadoEnvio" class="form-select form-select-sm">
                             <option value="">Todos los Estados</option>
                             <option value="Aceptado">Aceptado / Accepted</option>
+                            <option value="Aceptado (Variación de Formato)">Aceptado (Variación de Formato)</option>
                             <option value="Rechazado">Rechazado / Wrong Answer</option>
                             <option value="Error">Error</option>
                             <option value="En Proceso">En Proceso</option>
@@ -109,7 +110,7 @@
                                     </td>
                                     <td class="align-middle text-center text-sm">
                                         @if($esAceptado)
-                                            <span class="badge bg-success text-xxs"><i class="fa fa-check-circle me-1"></i> Aceptado</span>
+                                            <span class="badge bg-success text-xxs"><i class="fa fa-check-circle me-1"></i> {{ !empty($envio->variacion_formato) ? 'Aceptado (Variación de Formato)' : 'Aceptado' }}</span>
                                         @elseif($esError)
                                             <span class="badge bg-danger text-xxs"><i class="fa fa-times-circle me-1"></i> {{ $envio->resultado ?? $envio->estado ?? 'Rechazado' }}</span>
                                         @else

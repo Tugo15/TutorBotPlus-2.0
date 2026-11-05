@@ -129,15 +129,16 @@ class ProblemasController extends Controller
     {
         $validated = $request->validate(Problemas::createRules(isset($request->fecha_inicio), isset($request->fecha_termino), null,$request->sql));
         try {
-            db::beginTransaction();
+            DB::beginTransaction();
             $problema = new Problemas;
             $this->set_datos_problemas($problema, $request);
-            db::commit();
+            DB::commit();
         } catch (\Exception $e) {
-            DB::rollback();
+            DB::rollBack();
             return redirect()->route('problemas.index')->with('error', $e->getMessage());
         }
-        return redirect()->route('casos_pruebas.assign', ["id" => $problema->id])->with('success', 'El Problema ' . $problema->nombre . ' ha sido creado, ingrese los casos de prueba.');
+        session(['wizard_creacion_problema_' . $problema->id => true]);
+        return redirect()->route('casos_pruebas.assign', ["id" => $problema->id, "wizard" => 1])->with('success', 'Paso 1 completado: El problema "' . $problema->nombre . '" ha sido creado. Ahora agregue los casos de prueba.');
     }
     private static function set_datos_problemas(Problemas $problema, Request $request){
             $problema->nombre = $request->input('nombre');
@@ -181,15 +182,31 @@ class ProblemasController extends Controller
             if (isset($request->cursos)) {
                 $problema->cursos()->sync($request->input('cursos'));
             }
+
+            if (!$problema->visible) {
+                DB::table('disponible')
+                    ->where('id_problema', $problema->id)
+                    ->update(['visible' => false]);
+            } else {
+                $tieneAlgunoVisible = DB::table('disponible')
+                    ->where('id_problema', $problema->id)
+                    ->where('visible', true)
+                    ->exists();
+                if (!$tieneAlgunoVisible) {
+                    DB::table('disponible')
+                        ->where('id_problema', $problema->id)
+                        ->update(['visible' => true]);
+                }
+            }
     }
     public function update(Request $request)
     {
         $validated = $request->validate(Problemas::updateRules(isset($request->set_fecha_inicio) || isset($request->fecha_inicio), isset($request->set_fecha_termino) || isset($request->fecha_termino), $request->id, $request->sql));
         try {
-            db::beginTransaction();
+            DB::beginTransaction();
             $problema = Problemas::find($request->id);
             $this->set_datos_problemas($problema, $request);
-            db::commit();
+            DB::commit();
         } catch (\PDOException $e) {
             DB::rollBack();
             return redirect()->route('problemas.index')->with('error', $e->getMessage());
@@ -205,10 +222,62 @@ class ProblemasController extends Controller
             $problema->delete();
             DB::commit();
         } catch (\PDOException $e) {
-            db::rollBack();
+            DB::rollBack();
             return redirect()->route('problemas.index')->with('error', $e->getMessage());
         }
         return redirect()->route('problemas.index')->with('success', 'El Problema ' . $problema->nombre . ' ha sido eliminado');
+    }
+
+    public function toggle_visibilidad(Request $request)
+    {
+        $problema = Problemas::findOrFail($request->id);
+        $id_curso = $request->input('id_curso');
+
+        if ($id_curso) {
+            $curso = Cursos::findOrFail($id_curso);
+            $pivotRow = DB::table('disponible')
+                ->where('id_problema', $problema->id)
+                ->where('id_curso', $curso->id)
+                ->first();
+
+            if (!$pivotRow) {
+                return redirect()->back()->with('error', 'El problema no está asignado a este curso.');
+            }
+
+            $estadoActualCurso = (bool)$problema->visible && (bool)($pivotRow->visible ?? true);
+            $nuevoEstado = !$estadoActualCurso;
+
+            // Si el problema estaba oculto globalmente y se activa en un curso específico,
+            // habilitamos el problema globalmente y mantenemos ocultos los demás cursos.
+            if ($nuevoEstado && !$problema->visible) {
+                $problema->visible = true;
+                $problema->save();
+                DB::table('disponible')
+                    ->where('id_problema', $problema->id)
+                    ->where('id_curso', '!=', $curso->id)
+                    ->update(['visible' => false]);
+            }
+
+            DB::table('disponible')
+                ->where('id_problema', $problema->id)
+                ->where('id_curso', $curso->id)
+                ->update(['visible' => $nuevoEstado]);
+
+            $accionTxt = $nuevoEstado ? 'visible' : 'oculto';
+            return redirect()->back()->with('success', "El problema \"{$problema->nombre}\" ahora está {$accionTxt} en el curso {$curso->codigo}.");
+        }
+
+        // Cambio global en todos los cursos asignados
+        $nuevoEstadoGlobal = !$problema->visible;
+        $problema->visible = $nuevoEstadoGlobal;
+        $problema->save();
+
+        DB::table('disponible')
+            ->where('id_problema', $problema->id)
+            ->update(['visible' => $nuevoEstadoGlobal]);
+
+        $accionTxt = $nuevoEstadoGlobal ? 'visible en todos sus cursos' : 'oculto en todos sus cursos';
+        return redirect()->back()->with('success', "El problema \"{$problema->nombre}\" ahora está {$accionTxt}.");
     }
 
     public function update_editorial(Request $request)
@@ -221,7 +290,7 @@ class ProblemasController extends Controller
             DB::rollBack();
             return redirect()->back()->withInput($request->input())->with('error', $e->getMessage());
         }
-        return redirect()->route('problemas.index')->with('success', 'El editorial para el problema "' . $problema->nombre . '" ha sido modificado');
+        return redirect()->route('problemas.index')->with('success', 'Las pistas para el problema "' . $problema->nombre . '" han sido modificadas');
     }
 
     public function editar_editorial(Request $request)
@@ -229,7 +298,7 @@ class ProblemasController extends Controller
         try {
             $problema = Problemas::find($request->id);
         } catch (\PDOException $e) {
-            db::rollBack();
+            DB::rollBack();
             return redirect()->route('problemas.index')->with('error', $e->getMessage());
         }
         return view('problemas.editorial', compact('problema'));
@@ -246,11 +315,15 @@ class ProblemasController extends Controller
             //tabla intermedia entre usuario y curso
             $curso_usuario_pivot = $curso->pivot;
             $fecha_ahora = Carbon::now();
-            $problemas = $curso->problemas()->where('visible', '=', true)->get()->map(function ($problema) use($curso_usuario_pivot){
+            $problemas = $curso->problemas()->where('problemas.visible', '=', true)->wherePivot('visible', true)->get()->map(function ($problema) use($curso_usuario_pivot){
                 $problema->puntaje_total = $problema->casos_de_prueba()->get()->pluck('puntos')->sum();
                 $problema->categorias = implode(', ', $problema->categorias()->get()->pluck('nombre')->toArray());
                 $problema->creado = Carbon::parse($problema->created_at)->locale('es_ES')->isoFormat('lll');
-                $problema->resuelto = $problema->envios()->where('id_cursa', '=', $curso_usuario_pivot->id)->where('solucionado', '=', true)->exists();
+                $ultimo_solucionado = $problema->envios()->where('id_cursa', '=', $curso_usuario_pivot->id)->whereNull('id_certamen')->where('solucionado', '=', true)->orderBy('created_at', 'DESC')->first();
+                $problema->resuelto = isset($ultimo_solucionado);
+                $problema->variacion_formato = $ultimo_solucionado
+                    ? $ultimo_solucionado->evaluaciones()->where('resultado', '=', 'Aceptado (Variación de Formato)')->exists()
+                    : false;
                 return $problema;
             })->unique();
 
@@ -305,13 +378,18 @@ class ProblemasController extends Controller
                 $curso_usuario = auth()->user()->cursos()->find($request->id_curso);
             }
 
-            if ((!$problema->cursos()->where('cursos.id', '=', $request->id_curso)->exists() || $problema->visible == false) && !auth()->user()->hasRole('administrador')) {
+            $disponibleEnCurso = $problema->cursos()->where('cursos.id', '=', $request->id_curso)->wherePivot('visible', true)->exists();
+            if ((!$disponibleEnCurso || $problema->visible == false) && !auth()->user()->hasRole('administrador')) {
                 return redirect()->route('cursos.listado')->with('error', 'No tienes acceso al problema ' . $problema->nombre);
             }
 
             $problema->disponible = true;
             $id_cursa = $curso_usuario && isset($curso_usuario->pivot) ? $curso_usuario->pivot->id : 0;
-            $problema->estado = $problema->envios()->where('id_cursa', '=', $id_cursa)->whereNull('id_certamen')->where('solucionado', '=', true)->exists();
+            $ultimo_solucionado = $problema->envios()->where('id_cursa', '=', $id_cursa)->whereNull('id_certamen')->where('solucionado', '=', true)->orderBy('created_at', 'DESC')->first();
+            $problema->estado = isset($ultimo_solucionado);
+            $problema->variacion_formato = $ultimo_solucionado
+                ? $ultimo_solucionado->evaluaciones()->where('resultado', '=', 'Aceptado (Variación de Formato)')->exists()
+                : false;
             
             $now = Carbon::now();
             if (isset($problema->fecha_inicio)) {
@@ -349,7 +427,8 @@ class ProblemasController extends Controller
                 return redirect()->route('cursos.listado')->with('error', 'El problema no existe.');
             }
             $cursos_usuario = auth()->user()->cursos()->get()->pluck('id')->toArray();
-            if ((!$problema->cursos()->whereIn('cursos.id', $cursos_usuario)->exists() || $problema->visible == false) && !auth()->user()->hasRole('administrador')) {
+            $disponibleEnCurso = $problema->cursos()->whereIn('cursos.id', $cursos_usuario)->wherePivot('visible', true)->exists();
+            if ((!$disponibleEnCurso || $problema->visible == false) && !auth()->user()->hasRole('administrador')) {
                 return redirect()->route('cursos.listado')->with('error', 'No tienes acceso al problema ' . $problema->nombre);
             }
             if (isset($problema->fecha_termino)) {

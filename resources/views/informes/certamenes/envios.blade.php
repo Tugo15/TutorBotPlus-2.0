@@ -43,6 +43,9 @@
                                         <th
                                             class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
                                             Puntaje Obtenido</th>
+                                        <th
+                                            class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            Estado</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -60,6 +63,13 @@
                                             </td>
                                             <td class="align-middle text-center text-sm">
                                                 <span class="badge badge-sm bg-gradient-success">{{ $item->maximo_puntaje . ' / ' . $item->puntos_total }}</span>
+                                            </td>
+                                            <td class="align-middle text-center text-sm">
+                                                @if($item->resuelto)
+                                                    <span class="badge badge-sm bg-gradient-success">{{ !empty($item->variacion_formato) ? 'Aceptado (Variación de Formato)' : 'Aceptado' }}</span>
+                                                @else
+                                                    <span class="badge badge-sm bg-gradient-secondary">No Resuelto</span>
+                                                @endif
                                             </td>
                                         </tr>
                                     @endforeach

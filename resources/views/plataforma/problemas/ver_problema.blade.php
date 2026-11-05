@@ -107,7 +107,7 @@
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
                                     <strong>Estado:</strong>
-                                    <span class="badge {{ $problema->estado ? 'bg-success' : 'bg-secondary' }}" style="font-size: 0.8rem;">{{ $problema->estado ? 'Resuelto' : 'No Resuelto' }}</span>
+                                    <span class="badge {{ $problema->estado ? 'bg-success' : 'bg-secondary' }}" style="font-size: 0.8rem;">{{ $problema->estado ? (!empty($problema->variacion_formato) ? 'Aceptado (Variación de Formato)' : 'Resuelto') : 'No Resuelto' }}</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
                                     <strong>Categorías:</strong>

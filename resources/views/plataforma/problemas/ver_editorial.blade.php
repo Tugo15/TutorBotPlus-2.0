@@ -1,4 +1,4 @@
-@extends('layout_plataforma.app', ['title_html' => 'Pistas', 'title' => 'Pistas - '.$problema->nombre, 'breadcrumbs'=>[["nombre"=>"Cursos", "route"=>route("cursos.listado")],["nombre"=>"Problemas", "route"=>route('problemas.listado', ['id'=>$id_curso])],["nombre"=>$problema->nombre, "route"=>route('problemas.ver', ['id_curso'=>$id_curso, 'codigo'=>$problema->codigo])], ["nombre"=>"Editorial"]]])
+@extends('layout_plataforma.app', ['title_html' => 'Pistas', 'title' => 'Pistas - '.$problema->nombre, 'breadcrumbs'=>[["nombre"=>"Cursos", "route"=>route("cursos.listado")],["nombre"=>"Problemas", "route"=>route('problemas.listado', ['id'=>$id_curso])],["nombre"=>$problema->nombre, "route"=>route('problemas.ver', ['id_curso'=>$id_curso, 'codigo'=>$problema->codigo])], ["nombre"=>"Pistas"]]])
 @section('content')
     <div class="container-fluid py-3 px-4">
         <div class="card border-danger">

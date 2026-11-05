@@ -61,6 +61,7 @@
             height: '600px',
             initialEditType: 'wysiwyg',
             previewStyle: 'vertical',
+            autofocus: false,
             placeholder: 'Ingrese el enunciado del problema',
             initialValue: @json(old('body_problema', $problema->body_problema ?? '')),
             extendedAutolinks: true,

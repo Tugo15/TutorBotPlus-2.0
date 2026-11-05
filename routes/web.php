@@ -52,9 +52,7 @@ Route::get('/forgot-password', [ResetPassword::class, 'show'])->middleware('gues
 Route::post('/forgot-password', [ResetPassword::class, 'send'])->middleware('guest')->name('password.email');
 Route::get('/reset-password/{token}', [ChangePassword::class, 'show'])->middleware('guest')->name('password.reset');
 Route::post('/reset-password', [ChangePassword::class, 'update'])->middleware('guest')->name('password.update');
-Route::get('/inicio', function(){
-	return view('pages.inicio');
-})->name('home')->middleware(['auth', 'can:acceso al panel de administración']);
+Route::get('/inicio', [HomeController::class, 'index'])->name('home')->middleware(['auth', 'can:acceso al panel de administración']);
 
 //Plataforma de Juez Online
 Route::group(['middleware'=>['auth', 'certamen_en_resolucion']], function(){
@@ -168,6 +166,7 @@ Route::group(['middleware' => 'auth'], function () {
 		Route::get('/crear', [ProblemasController::class, 'crear'])->name('problemas.crear')->middleware('can:crear problemas'); 
 		Route::get('/editar', [ProblemasController::class, 'editar'])->name('problemas.editar')->middleware('can:editar problemas'); 
 		Route::post('/eliminar', [ProblemasController::class, 'eliminar'])->name('problemas.eliminar')->middleware('can:eliminar problemas'); 
+		Route::post('/toggle_visibilidad', [ProblemasController::class, 'toggle_visibilidad'])->name('problemas.toggle_visibilidad')->middleware('can:editar problemas'); 
 		Route::post('/store', [ProblemasController::class, 'store'])->name('problemas.store')->middleware('can:crear problemas'); 
 		Route::post('/update', [ProblemasController::class, 'update'])->name('problemas.update')->middleware('can:editar problemas'); 
 		Route::get('/editar_config_llm', [ProblemasController::class, 'editar_config_llm'])->name('problemas.editar_config_llm')->middleware('can:editar problemas'); 

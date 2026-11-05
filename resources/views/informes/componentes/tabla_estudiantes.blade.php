@@ -73,7 +73,7 @@
                                         <span class="text-xs font-weight-bold">{{isset($envio->diferencia)? $envio->diferencia : 0}}</span>
                                     </td>
                                     <td class="align-middle text-center text-sm">
-                                        <span class="badge badge-sm @if ($envio->solucionado == true) bg-gradient-success @else bg-gradient-secondary @endif">{{ $envio->solucionado == true ? 'Solucionado' : 'Pendiente' }}</span>
+                                        <span class="badge badge-sm @if ($envio->solucionado == true) bg-gradient-success @else bg-gradient-secondary @endif">{{ $envio->solucionado == true ? (!empty($envio->variacion_formato) ? 'Aceptado (Variación de Formato)' : 'Solucionado') : 'Pendiente' }}</span>
                                     </td>
                                     @canany(['ver informe del problema'])
                                         <td class="align-middle text-center">

@@ -44,5 +44,19 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+
+        $this->renderable(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'La sesión ha expirado. Por favor, recargue la página.'], 419);
+            }
+
+            if ($request->is('logout')) {
+                return redirect()->route('login');
+            }
+
+            return redirect()->back()
+                ->withInput($request->except('password', 'password_confirmation', '_token'))
+                ->withErrors(['email' => 'La sesión del formulario expiró. Por favor, intenta nuevamente.']);
+        });
     }
 }

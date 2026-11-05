@@ -27,6 +27,13 @@
     <link rel="stylesheet" href="{{ asset('assets/css/argon-dashboard.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/datatables_argon_fix.css') }}?v={{ @filemtime(public_path('assets/css/datatables_argon_fix.css')) ?: '1.0' }}">
     <link rel="stylesheet" href="{{ asset('assets/css/selection_cards.css') }}?v={{ @filemtime(public_path('assets/css/selection_cards.css')) ?: '1.0' }}">
+    <style>
+        .card-body > .alert.alert-success.alert-dismissible,
+        .card-body > .alert.alert-danger.alert-dismissible,
+        #alert {
+            display: none !important;
+        }
+    </style>
 
     @stack('css')
 </head>
@@ -269,6 +276,7 @@
             });
         }
     </script>
+    @include('components.toast_notifications')
 </body>
 
 </html>

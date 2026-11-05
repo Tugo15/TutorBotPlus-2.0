@@ -275,10 +275,21 @@ class CertamenesController extends Controller
                 ->select('problemas.id', 'problemas.nombre', DB::raw('sum(casos__pruebas.puntos) as puntos_total'), DB::raw('count(casos__pruebas.id) as total_casos'), DB::raw('COALESCE(cantidad_intentos, 0) as cantidad_intentos'), DB::raw('COALESCE(maximo_puntaje, 0) as maximo_puntaje'), DB::raw('COALESCE(resuelto, 0) as resuelto'),DB::raw('COALESCE(max_casos_resueltos, 0) as max_casos_resueltos'))
                 ->groupBy('problemas.id', 'problemas.nombre', 'cantidad_intentos', 'maximo_puntaje', 'resuelto', 'max_casos_resueltos')
                 ->whereIn('problemas.id',$res_certamen->ProblemasSeleccionadas()->pluck('id_problema'))
-                ->get()->map(function($item) use($certamen){
+                ->get()->map(function($item) use($certamen, $res_certamen){
                     if($item->cantidad_intentos>0){
                         $errores = $item->cantidad_intentos - 1 <= $certamen->cantidad_penalizacion? $item->cantidad_intentos - 1 : $certamen->cantidad_penalizacion;
                         $item->maximo_puntaje = $item->maximo_puntaje - ($errores*$certamen->penalizacion_error);
+                    }
+                    $item->variacion_formato = false;
+                    if ($item->resuelto) {
+                        $item->variacion_formato = DB::table('evaluacion_solucions')
+                            ->join('envio_solucion_problemas', 'envio_solucion_problemas.id', '=', 'evaluacion_solucions.id_envio')
+                            ->join('resolver', 'resolver.id', '=', 'envio_solucion_problemas.id_resolver')
+                            ->where('envio_solucion_problemas.id_certamen', '=', $res_certamen->id)
+                            ->where('resolver.id_problema', '=', $item->id)
+                            ->where('envio_solucion_problemas.solucionado', '=', true)
+                            ->where('evaluacion_solucions.resultado', '=', 'Aceptado (Variación de Formato)')
+                            ->exists();
                     }
                     return $item;
                 });
