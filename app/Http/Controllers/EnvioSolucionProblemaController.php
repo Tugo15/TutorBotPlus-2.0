@@ -174,13 +174,18 @@ class EnvioSolucionProblemaController extends Controller
 
             $data = json_decode($response->getBody(), true);
         } catch (\Exception $e) {
-            if (app()->environment('local') || str_contains($juez->direccion, '127.0.0.1') || str_contains($juez->direccion, 'localhost')) {
+            \Log::error("Fallo de conexion con Judge0 en " . $juez->direccion . ": " . $e->getMessage());
+
+            // En entorno Windows o si se habilita fallback explícito, usar compilador local
+            if (PHP_OS_FAMILY === 'Windows' || env('JUDGE0_FALLBACK_LOCAL', false)) {
                 return $this->simular_evaluacion_local($envio, $casos, $problema);
             }
+
+            // En el servidor Linux, alertar de forma clara que Judge0 en Docker no está respondiendo
             $nombreLenguaje = $envio->lenguaje->nombre ?? 'este lenguaje';
             return [
                 "estado" => false,
-                "mensaje" => "No se pudo conectar al juez virtual Judge0 (" . $juez->direccion . ") para compilar y evaluar soluciones en " . $nombreLenguaje . ". Verifique que el contenedor de Judge0 (Docker) esté en ejecución."
+                "mensaje" => "No se pudo conectar con el servicio Judge0 ({$juez->direccion}) para {$nombreLenguaje}. Causa: " . $e->getMessage() . ". Asegúrese de iniciar los contenedores en el servidor con: 'cd /var/www/TutorBotPlus-2.0/judge0-v1.13.0 && sudo docker compose up -d'."
             ];
         }
         try {
