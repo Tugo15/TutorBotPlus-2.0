@@ -156,16 +156,23 @@
                     <td class="align-middle text-center">
                         <div class="d-flex flex-wrap gap-1 py-1 justify-content-center">
                             @if(isset($problema->cursos) && count($problema->cursos) > 0)
-                                @foreach ($problema->cursos as $c)
+                                @if(count($problema->cursos) == 1)
                                     @php
+                                        $c = $problema->cursos->first();
                                         $visCurso = (bool)$problema->visible && (bool)($c->pivot->visible ?? true);
                                     @endphp
                                     <span class="badge border {{ $visCurso ? 'border-primary text-primary' : 'border-secondary text-secondary opacity-7' }} text-xxs bg-white" title="{{ $c->nombre }} ({{ $visCurso ? 'Visible' : 'Oculto' }})">
                                         {{ $c->codigo }}
                                     </span>
-                                @endforeach
+                                @else
+                                    <button type="button" class="btn btn-xs btn-outline-primary mb-0 d-inline-flex align-items-center"
+                                            onclick="verCursosModal('Cursos asignados al ejercicio: {{ addslashes($problema->nombre) }}', {{ json_encode($problema->cursos->map(fn($c) => ['codigo' => $c->codigo, 'nombre' => $c->nombre])) }})"
+                                            title="Ver cursos asignados">
+                                        <i class="fa fa-graduation-cap me-1"></i> Ver ({{ count($problema->cursos) }})
+                                    </button>
+                                @endif
                             @else
-                                <span class="badge border border-secondary text-secondary text-xxs bg-white">Sin Curso</span>
+                                <span class="text-xxs text-secondary">Sin Curso</span>
                             @endif
                         </div>
                     </td>
@@ -176,20 +183,42 @@
                                     $difProbClass = ($problema->dificultad == 'Fácil') ? 'border-success text-success' : (($problema->dificultad == 'Difícil') ? 'border-danger text-danger' : 'border-warning text-warning');
                                 @endphp
                                 <span class="badge border {{ $difProbClass }} text-xxs bg-white">{{ $problema->dificultad ?? 'Medio' }}</span>
-                                @if(isset($problema->categorias))
-                                    @foreach ($problema->categorias as $categoria)
-                                        <span class="badge border border-danger text-danger text-xxs bg-white">{{ $categoria->nombre }}</span>
-                                    @endforeach
+                                @if(isset($problema->categorias) && $problema->categorias->isNotEmpty())
+                                    @php
+                                        $cats = $problema->categorias;
+                                    @endphp
+                                    @if($cats->count() == 1)
+                                        <span class="badge border border-danger text-danger text-xxs bg-white">{{ $cats->first()->nombre }}</span>
+                                    @else
+                                        <button type="button" class="btn btn-xs btn-outline-danger mb-0 d-inline-flex align-items-center"
+                                                onclick="verEtiquetasModal('Categorías de {{ addslashes($problema->nombre) }}', {{ json_encode($cats->pluck('nombre')) }}, 'danger', 'fa-tags')"
+                                                title="Ver categorías asignadas">
+                                            <i class="fa fa-tags me-1"></i> Ver ({{ $cats->count() }})
+                                        </button>
+                                    @endif
                                 @endif
                             </div>
                         </div>
                     </td>
                     <td class="align-middle text-center">
                         <div class="d-flex flex-wrap gap-1 justify-content-center">
-                            @if(isset($problema->lenguajes))
-                                @foreach ($problema->lenguajes->pluck('abreviatura')->unique() as $lenguaje)
-                                    <span class="badge border border-dark text-dark text-xxs bg-white">{{ $lenguaje }}</span>
-                                @endforeach
+                            @if(isset($problema->lenguajes) && $problema->lenguajes->isNotEmpty())
+                                @php
+                                    $langs = $problema->lenguajes->pluck('abreviatura')->unique();
+                                @endphp
+                                @if($langs->count() <= 2)
+                                    @foreach ($langs as $lenguaje)
+                                        <span class="badge border border-dark text-dark text-xxs bg-white">{{ $lenguaje }}</span>
+                                    @endforeach
+                                @else
+                                    <button type="button" class="btn btn-xs btn-outline-dark mb-0 d-inline-flex align-items-center"
+                                            onclick="verEtiquetasModal('Lenguajes de {{ addslashes($problema->nombre) }}', {{ json_encode($langs->values()) }}, 'dark', 'fa-code')"
+                                            title="Ver todos los lenguajes">
+                                        <i class="fa fa-code me-1"></i> Ver ({{ $langs->count() }})
+                                    </button>
+                                @endif
+                            @else
+                                <span class="text-xxs text-secondary">-</span>
                             @endif
                         </div>
                     </td>

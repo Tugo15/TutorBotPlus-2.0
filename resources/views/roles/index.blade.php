@@ -59,11 +59,15 @@
                                             </div>
                                         </td>
                                         <td class="align-middle text-center">
-                                            <div class="d-flex flex-wrap gap-1 py-1 justify-content-center">
-                                                @foreach ($rol->permissions as $perm)
-                                                    <span class="badge border border-info text-info text-xxs px-2 py-1 bg-white">{{ $perm->name }}</span>
-                                                @endforeach
-                                            </div>
+                                            @if ($rol->permissions->isEmpty())
+                                                <span class="text-xxs text-secondary">Sin permisos</span>
+                                            @else
+                                                <button type="button" class="btn btn-xs btn-outline-info mb-0 d-inline-flex align-items-center"
+                                                        onclick="verPermisosModal('{{ addslashes($rol->name) }}', {{ json_encode($rol->permissions->pluck('name')) }})"
+                                                        title="Ver los {{ $rol->permissions->count() }} permisos de este rol">
+                                                    <i class="fa fa-key me-1"></i> Ver ({{ $rol->permissions->count() }})
+                                                </button>
+                                            @endif
                                         </td>
                                         <td class="align-middle text-center text-sm">
                                             <p class="text-xs text-secondary font-weight-bold mb-0">
@@ -104,5 +108,5 @@
 
 <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}?v={{ @filemtime(public_path('assets/js/DataTables/gestion_initialize_es_cl.js')) ?: '1.0' }}"></script>
 
-<script src="{{ asset('assets/js/alertas_administracion.js') }}"></script> 
+<script src="{{ asset('assets/js/alertas_administracion.js') }}?v={{ @filemtime(public_path('assets/js/alertas_administracion.js')) ?: '1.0' }}"></script> 
 @endpush

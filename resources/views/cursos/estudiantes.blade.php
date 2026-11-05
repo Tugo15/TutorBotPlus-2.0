@@ -97,9 +97,17 @@
                                                 <span class="text-xs text-secondary">{{ $estudiante->email }}</span>
                                             </td>
                                             <td class="align-middle text-center py-2">
-                                                @foreach($estudiante->roles as $r)
-                                                    <span class="badge {{ $r->name == 'profesor' ? 'bg-primary' : 'bg-light text-dark' }} text-xxs">{{ ucfirst($r->name) }}</span>
-                                                @endforeach
+                                                @if($estudiante->roles->count() <= 1)
+                                                    <span class="badge {{ optional($estudiante->roles->first())->name == 'profesor' ? 'bg-primary' : 'bg-light text-dark' }} text-xxs">
+                                                        {{ ucfirst(optional($estudiante->roles->first())->name ?? 'Estudiante') }}
+                                                    </span>
+                                                @else
+                                                    <button type="button" class="btn btn-xs btn-outline-info mb-0 d-inline-flex align-items-center"
+                                                            onclick="verEtiquetasModal('Roles de {{ addslashes($estudiante->firstname . ' ' . $estudiante->lastname) }}', {{ json_encode($estudiante->roles->pluck('name')) }}, 'info', 'fa-shield-alt')"
+                                                            title="Ver roles asignados">
+                                                        <i class="fa fa-shield-alt me-1"></i> Ver ({{ $estudiante->roles->count() }})
+                                                    </button>
+                                                @endif
                                             </td>
                                             <td class="align-middle text-center py-2">
                                                 <button type="button" class="btn btn-xs btn-outline-danger mb-0" 
@@ -282,6 +290,7 @@
     <link href="{{ asset('assets/js/DataTables/datatables.min.css') }}" rel="stylesheet">
     <script src="{{ asset('assets/js/DataTables/datatables.min.js') }}"></script>
     <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}?v={{ @filemtime(public_path('assets/js/DataTables/gestion_initialize_es_cl.js')) ?: '1.0' }}"></script>
+    <script src="{{ asset('assets/js/alertas_administracion.js') }}?v={{ @filemtime(public_path('assets/js/alertas_administracion.js')) ?: '1.0' }}"></script>
 
     <script>
         // Check all en la tabla principal

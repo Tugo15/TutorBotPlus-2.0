@@ -114,18 +114,36 @@
                                             </div>
                                         </td>
                                         <td class="align-middle text-center">
-                                            <div class="d-flex flex-wrap gap-1 justify-content-center">
-                                                @foreach ($user->getRoleNames() as $rol)
-                                                    <span class="badge border border-info text-info text-xxs px-2 py-1 bg-white">{{ $rol }}</span>
-                                                @endforeach
-                                            </div>
+                                            @php
+                                                $rolesUsuario = $user->getRoleNames();
+                                            @endphp
+                                            @if ($rolesUsuario->isEmpty())
+                                                <span class="text-xxs text-secondary">Sin rol</span>
+                                            @elseif ($rolesUsuario->count() == 1)
+                                                <span class="badge border border-info text-info text-xxs px-2 py-1 bg-white">{{ $rolesUsuario->first() }}</span>
+                                            @else
+                                                <button type="button" class="btn btn-xs btn-outline-info mb-0 d-inline-flex align-items-center"
+                                                        onclick="verEtiquetasModal('Roles de {{ addslashes($user->firstname . ' ' . $user->lastname) }}', {{ json_encode($rolesUsuario) }}, 'info', 'fa-shield-alt')"
+                                                        title="Ver roles asignados">
+                                                    <i class="fa fa-shield-alt me-1"></i> Ver ({{ $rolesUsuario->count() }})
+                                                </button>
+                                            @endif
                                         </td>
                                         <td class="align-middle text-center">
-                                            <div class="d-flex flex-wrap gap-1 justify-content-center">
-                                                @foreach ($user->cursos()->get() as $curso)
-                                                    <span class="badge border border-primary text-primary text-xxs px-2 py-1 bg-white" title="{{ $curso->nombre }}">{{ $curso->codigo }}</span>
-                                                @endforeach
-                                            </div>
+                                            @php
+                                                $cursosUsuario = $user->cursos;
+                                            @endphp
+                                            @if ($cursosUsuario->isEmpty())
+                                                <span class="text-xxs text-secondary">Sin cursos</span>
+                                            @elseif ($cursosUsuario->count() == 1)
+                                                <span class="badge border border-primary text-primary text-xxs px-2 py-1 bg-white" title="{{ $cursosUsuario->first()->nombre }}">{{ $cursosUsuario->first()->codigo }}</span>
+                                            @else
+                                                <button type="button" class="btn btn-xs btn-outline-primary mb-0 d-inline-flex align-items-center"
+                                                        onclick="verCursosModal('Cursos de {{ addslashes($user->firstname . ' ' . $user->lastname) }}', {{ json_encode($cursosUsuario->map(fn($c) => ['codigo' => $c->codigo, 'nombre' => $c->nombre])) }})"
+                                                        title="Ver todos los cursos asignados">
+                                                    <i class="fa fa-graduation-cap me-1"></i> Ver ({{ $cursosUsuario->count() }})
+                                                </button>
+                                            @endif
                                         </td>
                                         <td class="align-middle text-center">
                                             <div class="d-flex px-3 py-1 justify-content-center">
@@ -177,7 +195,7 @@
  
 <script src="{{asset('assets/js/DataTables/datatables.min.js')}}"></script>
 <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}?v={{ @filemtime(public_path('assets/js/DataTables/gestion_initialize_es_cl.js')) ?: '1.0' }}"></script>
-<script src="{{ asset('assets/js/alertas_administracion.js') }}"></script> 
+<script src="{{ asset('assets/js/alertas_administracion.js') }}?v={{ @filemtime(public_path('assets/js/alertas_administracion.js')) ?: '1.0' }}"></script> 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         setTimeout(() => {
