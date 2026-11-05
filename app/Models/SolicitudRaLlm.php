@@ -38,14 +38,16 @@ class SolicitudRaLlm extends Model
 
     public static function promptVerificarRestricciones($restricciones, $lenguaje, $enunciado_resumido = null)
     {
-        $prompt = "Eres un asistente y tutor docente de programación en una plataforma académica. Tu función es verificar de forma estricta si el código enviado por un estudiante escrito en " . $lenguaje . " CUMPLE O NO CUMPLE con las siguientes restricciones impuestas por el profesor:\n\n";
+        $prompt = "Eres un evaluador automático de restricciones de código en una plataforma académica. Tu función es verificar de forma estricta y EXCLUSIVA si el código enviado por el estudiante en " . $lenguaje . " CUMPLE O NO CUMPLE con las siguientes restricciones impuestas por el profesor:\n\n";
         $prompt .= "RESTRICCIONES DEL PROFESOR:\n\"" . $restricciones . "\"\n\n";
-        if (isset($enunciado_resumido)) {
-            $prompt .= "ENUNCIADO DEL PROBLEMA:\n\"" . $enunciado_resumido . "\"\n\n";
-        }
-        $prompt .= "REGLAS CRÍTICAS E IMPRESCINDIBLES PARA TU RESPUESTA:\n";
-        $prompt .= "1. La PRIMERA LÍNEA de tu respuesta DEBE ser estrictamente 'Cumple' o 'No cumple' (sin comillas, sin tildes ni caracteres adicionales en esa primera palabra).\n";
-        $prompt .= "2. A partir de la segunda línea, explica de forma resumida, clara y constructiva por qué el código cumple o no cumple con las restricciones (por ejemplo, si usó ciclo for o si usó while cuando estaba prohibido). No entregues la solución corregida al problema.";
+        $prompt .= "INSTRUCCIONES Y REGLAS FUNDAMENTALES:\n";
+        $prompt .= "1. EVALÚA ÚNICAMENTE las restricciones técnicas y metodológicas impuestas por el profesor (por ejemplo: funciones/librerías prohibidas o estructuras de control requeridas).\n";
+        $prompt .= "2. NO evalúes la lógica, corrección algorítmica ni si el programa resuelve el problema: los errores de lógica o cálculos son evaluados exclusivamente por los casos de prueba del juez, NO por ti. Aunque el algoritmo del estudiante tenga un bug o error lógico (por ejemplo asignar una variable equivocada), si no violó las restricciones del profesor, DEBES responder que 'Cumple'.\n";
+        $prompt .= "3. La PRIMERA LÍNEA de tu respuesta DEBE ser estrictamente 'Cumple' o 'No cumple' (sin comillas, sin tildes ni texto adicional en esa primera línea).\n";
+        $prompt .= "4. Si 'Cumple': Añade a partir de la segunda línea una breve confirmación de que se respetaron las restricciones requeridas.\n";
+        $prompt .= "5. Si 'No cumple':\n";
+        $prompt .= "   - Indica a partir de la segunda línea y de forma general cuál restricción del profesor no se cumplió (por ejemplo: 'El código utiliza la función prohibida max()').\n";
+        $prompt .= "   - PROHIBICIÓN ESTRICTA: JAMÁS digas cómo corregir el código, JAMÁS señales en qué línea o qué variable está el error, JAMÁS des pistas de la solución ni muestres cómo debería ser el código.\n";
         return $prompt;
     }
 

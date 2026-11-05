@@ -38,6 +38,13 @@ class OutputComparatorService
             return true;
         }
 
+        // 3.1 Normalización de espacios alrededor de delimitadores tabulares comunes (|)
+        $pipeNormActual = preg_replace('/\s*\|\s*/', '|', $normActual);
+        $pipeNormExpected = preg_replace('/\s*\|\s*/', '|', $normExpected);
+        if ($pipeNormActual === $pipeNormExpected || mb_strtolower($pipeNormActual) === mb_strtolower($pipeNormExpected)) {
+            return true;
+        }
+
         // 4. Tokenización: Comparación de palabras y números ignorando diferencias de espacios, saltos de línea y mayúsculas/minúsculas
         $tokensActual = preg_split('/\s+/', trim($normActual), -1, PREG_SPLIT_NO_EMPTY);
         $tokensExpected = preg_split('/\s+/', trim($normExpected), -1, PREG_SPLIT_NO_EMPTY);

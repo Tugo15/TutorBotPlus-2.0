@@ -101,12 +101,31 @@ class EnvioSolucionProblemaController extends Controller
             $problema = $envio->problema;
             $juez = $envio->juez_virtual;
             $fuenteCodigo = $envio->codigo;
+
+            // Detección de lenguaje SQL para evaluación especializada (vistas, triggers, funciones, consultas)
+            $lenguajeObj = $envio->lenguaje;
+            $esSql = false;
+            if ($lenguajeObj) {
+                $nombreLenguaje = strtolower($lenguajeObj->nombre ?? '');
+                $abrevLenguaje = strtolower($lenguajeObj->abreviatura ?? '');
+                if (str_contains($nombreLenguaje, 'sql') || str_contains($abrevLenguaje, 'sql')) {
+                    $esSql = true;
+                }
+            }
+            if (is_string($lenguaje) && str_contains(strtolower($lenguaje), 'sql')) {
+                $esSql = true;
+            }
+
+            if ($esSql) {
+                return app(\App\Services\SqlEvaluationService::class)->evaluar($envio);
+            }
+
             if (isset($problema->archivo_adicional) && !str_contains($fuenteCodigo, '.open')) {
                 $fuenteCodigo = ".open db.sqlite\n" . $fuenteCodigo;
             }
             $codigo = base64_encode($fuenteCodigo);
         } catch (\PDOException $e) {
-            return ["estado" => false];
+            return ["estado" => false, "mensaje" => $e->getMessage()];
         }
         //Transformación a JSON en batch del código fuente, los casos de prueba (entradas y salidas) y su memoria limite y tiempo limite.
         $batch_submissions = [];
@@ -158,7 +177,11 @@ class EnvioSolucionProblemaController extends Controller
             if (app()->environment('local') || str_contains($juez->direccion, '127.0.0.1') || str_contains($juez->direccion, 'localhost')) {
                 return $this->simular_evaluacion_local($envio, $casos, $problema);
             }
-            return ["estado" => false, "mensaje" => "No se pudo conectar al juez virtual Judge0 (" . $juez->direccion . "): " . $e->getMessage()];
+            $nombreLenguaje = $envio->lenguaje->nombre ?? 'este lenguaje';
+            return [
+                "estado" => false,
+                "mensaje" => "No se pudo conectar al juez virtual Judge0 (" . $juez->direccion . ") para compilar y evaluar soluciones en " . $nombreLenguaje . ". Verifique que el contenedor de Judge0 (Docker) esté en ejecución."
+            ];
         }
         try {
             DB::beginTransaction();
@@ -182,10 +205,174 @@ class EnvioSolucionProblemaController extends Controller
 
     private function simular_evaluacion_local($envio, $casos, $problema)
     {
+        $lenguajeObj = $envio->lenguaje;
+        if ($lenguajeObj && (str_contains(strtolower($lenguajeObj->nombre ?? ''), 'sql') || str_contains(strtolower($lenguajeObj->abreviatura ?? ''), 'sql'))) {
+            return app(\App\Services\SqlEvaluationService::class)->evaluar($envio);
+        }
+
+        $abreviatura = strtolower($lenguajeObj->abreviatura ?? '');
+        $nombreLenguaje = strtolower($lenguajeObj->nombre ?? '');
+        $isCpp = str_contains($abreviatura, 'cpp') || str_contains($abreviatura, 'c++') || str_contains($nombreLenguaje, 'c++');
+        $isC = !$isCpp && (str_contains($abreviatura, 'c') || str_contains($nombreLenguaje, 'c'));
+
+        if ($isC || $isCpp) {
+            return $this->evaluar_c_local($envio, $casos, $problema, $isCpp);
+        }
+
+        if (str_contains($abreviatura, 'py') || str_contains($nombreLenguaje, 'python')) {
+            return $this->evaluar_python_local($envio, $casos, $problema);
+        }
+
+        return [
+            "estado" => false,
+            "mensaje" => "La evaluación local no está disponible para " . ($lenguajeObj->nombre ?? 'este lenguaje') . ". Se requiere el servicio Judge0 (Docker) activo."
+        ];
+    }
+
+    private function evaluar_c_local($envio, $casos, $problema, bool $isCpp = false)
+    {
+        $tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'eval_c_' . $envio->id . '_' . time();
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0777, true);
+        }
+
+        $compiler = $isCpp ? 'C:\MinGW\bin\g++.exe' : 'C:\MinGW\bin\gcc.exe';
+        if (!file_exists($compiler)) {
+            $compiler = $isCpp ? 'g++' : 'gcc';
+        }
+
+        $sourceExt = $isCpp ? '.cpp' : '.c';
+        $sourceFile = $tempDir . DIRECTORY_SEPARATOR . 'solution' . $sourceExt;
+        $exeFile = $tempDir . DIRECTORY_SEPARATOR . 'solution.exe';
+
+        file_put_contents($sourceFile, $envio->codigo);
+
+        $cmdCompile = escapeshellarg($compiler) . ' -O2 -o ' . escapeshellarg($exeFile) . ' ' . escapeshellarg($sourceFile) . ' -lm 2>&1';
+        exec($cmdCompile, $compileOutputLines, $compileReturnCode);
+        $compileOutput = implode("\n", $compileOutputLines);
+
+        $comparator = app(\App\Services\OutputComparatorService::class);
+        $cantResueltos = 0;
+        $puntajeTotal = 0;
+
         try {
             DB::beginTransaction();
-            $cantResueltos = 0;
-            $puntajeTotal = 0;
+            $envio->evaluaciones()->delete();
+
+            if ($compileReturnCode !== 0 || !file_exists($exeFile)) {
+                foreach ($casos as $caso) {
+                    $evaluacion = new EvaluacionSolucion;
+                    $evaluacion->token = \Illuminate\Support\Str::random(40);
+                    $evaluacion->envio()->associate($envio);
+                    $evaluacion->casos_pruebas()->associate($caso);
+                    $evaluacion->estado = 'Error';
+                    $evaluacion->resultado = 'Error de Compilación';
+                    $evaluacion->error_compilacion = $compileOutput;
+                    $evaluacion->stout = base64_encode('');
+                    $evaluacion->tiempo = '0.000';
+                    $evaluacion->memoria = '0';
+                    $evaluacion->save();
+                }
+            } else {
+                foreach ($casos as $caso) {
+                    $evaluacion = new EvaluacionSolucion;
+                    $evaluacion->token = \Illuminate\Support\Str::random(40);
+                    $evaluacion->envio()->associate($envio);
+                    $evaluacion->casos_pruebas()->associate($caso);
+
+                    $salidaEsperada = trim($caso->salidas ?? '');
+                    $entrada = $caso->entradas ?? '';
+
+                    $startTime = microtime(true);
+                    $descriptorspec = [
+                        0 => ["pipe", "r"],
+                        1 => ["pipe", "w"],
+                        2 => ["pipe", "w"],
+                    ];
+
+                    $process = proc_open(escapeshellarg($exeFile), $descriptorspec, $pipes, $tempDir);
+                    $salidaObtenida = '';
+                    $stderr = '';
+
+                    if (is_resource($process)) {
+                        if (!empty($entrada)) {
+                            fwrite($pipes[0], $entrada);
+                        }
+                        fclose($pipes[0]);
+
+                        $salidaObtenida = stream_get_contents($pipes[1]);
+                        fclose($pipes[1]);
+
+                        $stderr = stream_get_contents($pipes[2]);
+                        fclose($pipes[2]);
+
+                        proc_close($process);
+                    }
+
+                    $tiempo = number_format(microtime(true) - $startTime, 4, '.', '');
+                    $salidaObtenidaTrim = trim($salidaObtenida);
+
+                    $exactMatch = ($salidaObtenidaTrim === $salidaEsperada);
+                    $flexMatch = !$exactMatch && $comparator->isMatch($salidaObtenidaTrim, $salidaEsperada);
+                    $isAccepted = $exactMatch || $flexMatch;
+
+                    $evaluacion->estado = $isAccepted ? 'Aceptado' : 'Rechazado';
+                    $evaluacion->resultado = $exactMatch ? 'Accepted' : ($flexMatch ? 'Aceptado (Variación de Formato)' : 'Wrong Answer');
+                    $evaluacion->stout = base64_encode($salidaObtenida);
+                    $evaluacion->tiempo = $tiempo;
+                    $evaluacion->memoria = '1500';
+                    $evaluacion->save();
+
+                    if ($isAccepted) {
+                        $cantResueltos++;
+                        $puntajeTotal += ($caso->puntos ?? 0);
+                    }
+                }
+            }
+
+            $envio->cant_casos_resuelto = $cantResueltos;
+            $envio->puntaje = $puntajeTotal;
+            $envio->solucionado = ($cantResueltos === count($casos) && count($casos) > 0);
+            $envio->save();
+            DB::commit();
+
+            if (!empty(trim($problema->restricciones ?? ''))) {
+                try {
+                    LlmController::ejecutar_verificacion_restricciones($envio);
+                } catch (\Exception $e) {}
+            }
+
+            return ["estado" => true];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return ["estado" => false, "mensaje" => "Error al evaluar localmente: " . $e->getMessage()];
+        } finally {
+            @unlink($sourceFile);
+            @unlink($exeFile);
+            if (is_dir($tempDir)) {
+                @rmdir($tempDir);
+            }
+        }
+    }
+
+    private function evaluar_python_local($envio, $casos, $problema)
+    {
+        $tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'eval_py_' . $envio->id . '_' . time();
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0777, true);
+        }
+
+        $sourceFile = $tempDir . DIRECTORY_SEPARATOR . 'solution.py';
+        file_put_contents($sourceFile, $envio->codigo);
+
+        $pythonCmd = 'python';
+        $comparator = app(\App\Services\OutputComparatorService::class);
+        $cantResueltos = 0;
+        $puntajeTotal = 0;
+
+        try {
+            DB::beginTransaction();
+            $envio->evaluaciones()->delete();
 
             foreach ($casos as $caso) {
                 $evaluacion = new EvaluacionSolucion;
@@ -193,77 +380,84 @@ class EnvioSolucionProblemaController extends Controller
                 $evaluacion->envio()->associate($envio);
                 $evaluacion->casos_pruebas()->associate($caso);
 
-                $salidaEsperada = trim($caso->salidas);
-                $salidaObtenida = $salidaEsperada;
+                $salidaEsperada = trim($caso->salidas ?? '');
+                $entrada = $caso->entradas ?? '';
 
-                if (isset($problema->archivo_adicional) && str_ends_with($problema->archivo_adicional, '.zip')) {
-                    $zipPath = storage_path('app/public/archivos_adicionales/' . $problema->archivo_adicional);
-                    if (file_exists($zipPath)) {
-                        $tempDir = sys_get_temp_dir() . '/sqlite_eval_' . $envio->id;
-                        if (!file_exists($tempDir)) mkdir($tempDir, 0777, true);
-                        
-                        $zip = new \ZipArchive();
-                        if ($zip->open($zipPath) === TRUE) {
-                            $zip->extractTo($tempDir);
-                            $zip->close();
-                            $dbFile = $tempDir . '/db.sqlite';
-                            if (file_exists($dbFile)) {
-                                try {
-                                    $pdo = new \PDO('sqlite:' . $dbFile);
-                                    $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-                                    
-                                    $cleanSql = preg_replace('/^\s*\.open\s+\S+/m', '', $envio->codigo);
-                                    $cleanSql = trim($cleanSql);
+                $startTime = microtime(true);
+                $descriptorspec = [
+                    0 => ["pipe", "r"],
+                    1 => ["pipe", "w"],
+                    2 => ["pipe", "w"],
+                ];
 
-                                    $stmt = $pdo->query($cleanSql);
-                                    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
-                                    
-                                    $outLines = [];
-                                    foreach ($rows as $row) {
-                                        $outLines[] = implode('|', $row);
-                                    }
-                                    $salidaObtenida = implode("\n", $outLines);
-                                } catch (\PDOException $ex) {
-                                    $salidaObtenida = "Error SQL: " . $ex->getMessage();
-                                }
-                            }
-                        }
+                $process = proc_open("$pythonCmd " . escapeshellarg($sourceFile), $descriptorspec, $pipes, $tempDir);
+                $salidaObtenida = '';
+                $stderr = '';
+
+                if (is_resource($process)) {
+                    if (!empty($entrada)) {
+                        fwrite($pipes[0], $entrada);
+                    }
+                    fclose($pipes[0]);
+
+                    $salidaObtenida = stream_get_contents($pipes[1]);
+                    fclose($pipes[1]);
+
+                    $stderr = stream_get_contents($pipes[2]);
+                    fclose($pipes[2]);
+
+                    proc_close($process);
+                }
+
+                $tiempo = number_format(microtime(true) - $startTime, 4, '.', '');
+
+                if (!empty($stderr) && empty($salidaObtenida)) {
+                    $evaluacion->estado = 'Error';
+                    $evaluacion->resultado = 'Runtime Error';
+                    $evaluacion->error_compilacion = $stderr;
+                    $evaluacion->stout = base64_encode('');
+                } else {
+                    $salidaObtenidaTrim = trim($salidaObtenida);
+                    $exactMatch = ($salidaObtenidaTrim === $salidaEsperada);
+                    $flexMatch = !$exactMatch && $comparator->isMatch($salidaObtenidaTrim, $salidaEsperada);
+                    $isAccepted = $exactMatch || $flexMatch;
+
+                    $evaluacion->estado = $isAccepted ? 'Aceptado' : 'Rechazado';
+                    $evaluacion->resultado = $exactMatch ? 'Accepted' : ($flexMatch ? 'Aceptado (Variación de Formato)' : 'Wrong Answer');
+                    $evaluacion->stout = base64_encode($salidaObtenida);
+
+                    if ($isAccepted) {
+                        $cantResueltos++;
+                        $puntajeTotal += ($caso->puntos ?? 0);
                     }
                 }
 
-                $exactMatch = ($salidaObtenida === $salidaEsperada);
-                $comparator = app(\App\Services\OutputComparatorService::class);
-                $flexMatch = !$exactMatch && $comparator->isMatch($salidaObtenida, $salidaEsperada);
-                $match = $exactMatch || $flexMatch;
-
-                $evaluacion->estado = $match ? 'Aceptado' : 'Rechazado';
-                $evaluacion->resultado = $exactMatch ? 'Accepted' : ($flexMatch ? 'Aceptado (Variación de Formato)' : 'Wrong Answer');
-                $evaluacion->stout = base64_encode($salidaObtenida);
-                $evaluacion->tiempo = '0.004';
-                $evaluacion->memoria = '1200';
+                $evaluacion->tiempo = $tiempo;
+                $evaluacion->memoria = '1500';
                 $evaluacion->save();
-
-                if ($match) {
-                    $cantResueltos++;
-                    $puntajeTotal += $caso->puntos ?? 0;
-                }
             }
 
             $envio->cant_casos_resuelto = $cantResueltos;
             $envio->puntaje = $puntajeTotal;
-            $envio->solucionado = ($cantResueltos == count($casos) && count($casos) > 0);
+            $envio->solucionado = ($cantResueltos === count($casos) && count($casos) > 0);
             $envio->save();
-
             DB::commit();
 
-            if (!empty(trim($problema->restricciones))) {
-                LlmController::ejecutar_verificacion_restricciones($envio);
+            if (!empty(trim($problema->restricciones ?? ''))) {
+                try {
+                    LlmController::ejecutar_verificacion_restricciones($envio);
+                } catch (\Exception $e) {}
             }
 
             return ["estado" => true];
-        } catch (\Exception $ex) {
+        } catch (\Exception $e) {
             DB::rollBack();
-            return ["estado" => false, "mensaje" => "Error en evaluación simulada local: " . $ex->getMessage()];
+            return ["estado" => false, "mensaje" => "Error al evaluar localmente: " . $e->getMessage()];
+        } finally {
+            @unlink($sourceFile);
+            if (is_dir($tempDir)) {
+                @rmdir($tempDir);
+            }
         }
     }
 }

@@ -31,8 +31,9 @@ class CasosPruebasController extends Controller
             $casos = $problema->casos_de_prueba()->orderBy('created_at','desc')->get();
             return view("problemas.casos_pruebas.assign", compact('problema', 'casos', 'es_wizard'));
         } else {
-            $caso = $problema->casos_de_prueba()->orderBy('created_at','desc')->first();
-            return view("problemas.casos_pruebas.assign_sql", compact('problema', 'caso', 'es_wizard'));
+            $casos = $problema->casos_de_prueba()->orderBy('id','asc')->get();
+            $caso = $casos->first();
+            return view("problemas.casos_pruebas.assign_sql", compact('problema', 'caso', 'casos', 'es_wizard'));
         }
     }
 
@@ -56,23 +57,30 @@ class CasosPruebasController extends Controller
         $validated = $request->validate(Casos_Pruebas::$rules);
         try{
             DB::beginTransaction();
-            $caso = Casos_Pruebas::where('id_problema', '=', $request->id)->first();
-            $problema = Problemas::find( $request->id );
+            if ($request->filled('id_caso')) {
+                $caso = Casos_Pruebas::where('id', $request->id_caso)->where('id_problema', $request->id)->first();
+            } else {
+                $caso = Casos_Pruebas::where('id_problema', '=', $request->id)->first();
+            }
+            $problema = Problemas::findOrFail($request->id);
             if(!isset($caso)){
                 $caso = new Casos_Pruebas;
+                $problema->puntaje_total = ($problema->puntaje_total ?? 0) + ($request->puntos ?? 0);
+            } else {
+                $problema->puntaje_total = ($problema->puntaje_total ?? 0) - ($caso->puntos ?? 0) + ($request->puntos ?? 0);
             }
             $caso->ejemplo = true;
+            $caso->entradas = $request->entradas;
             $caso->salidas = $request->salidas;
             $caso->puntos = $request->puntos;
             $problema->casos_de_prueba()->save($caso);
-            $problema->puntaje_total = $problema->puntaje_total + $caso->puntos;
-            $problema->refresh();
+            $problema->save();
             DB::commit();
         }catch( \PDOException $e){
             DB::rollback();
             return redirect()->back()->with('error', $e->getMessage());
         }
-        return redirect()->route('casos_pruebas.assign', ["id"=>$caso->id_problema])->with('success', 'El caso de prueba ha sido modificado');
+        return redirect()->route('casos_pruebas.assign', ["id"=>$caso->id_problema])->with('success', 'El caso de prueba ha sido guardado exitosamente');
     }
     public function add_caso(Request $request){
 

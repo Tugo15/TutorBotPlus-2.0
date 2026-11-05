@@ -168,6 +168,13 @@ class ProblemasController extends Controller
                 $problema->visible = false;
             }
 
+            if ($request->hasFile('archivos_adicionales')) {
+                $file = $request->file('archivos_adicionales');
+                $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9_\.]/', '', $file->getClientOriginalName());
+                $file->storeAs('public/archivos_adicionales', $filename);
+                $problema->archivo_adicional = $filename;
+            }
+
             $problema->save();
             if(isset($request->sql) && $request->sql==1){
                 $id_sql = LenguajesProgramaciones::where('nombre', 'LIKE', '%sql%')->pluck('id');

@@ -142,7 +142,7 @@ class LlmController extends Controller
             return ['estado' => true, 'respuesta' => $simulacion['respuesta'], 'cumple' => $simulacion['cumple']];
         }
 
-        $prompt = SolicitudRaLlm::promptVerificarRestricciones($problema->restricciones, $lenguaje, $problema->body_problema_resumido);
+        $prompt = SolicitudRaLlm::promptVerificarRestricciones($problema->restricciones, $lenguaje);
 
         try {
             $result = OpenAI::chat()->create([
