@@ -38,6 +38,7 @@ class User extends Authenticatable implements CanResetPassword
         'rut',
         'fecha_nacimiento',
         'current_session_id',
+        'last_login_ip',
     ];
 
     /**

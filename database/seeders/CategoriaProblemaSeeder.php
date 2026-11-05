@@ -24,10 +24,10 @@ class CategoriaProblemaSeeder extends Seeder
             "Programación Dinámica",
         ];
         foreach ($categorias as $categoria) {
-            DB::table('categoria__problemas')->insert([
-                'nombre' => $categoria,
-                'created_at' => Carbon::now()->toDateString(),
-            ]);
+            DB::table('categoria__problemas')->updateOrInsert(
+                ['nombre' => $categoria],
+                ['created_at' => Carbon::now()]
+            );
         }
     }
 }

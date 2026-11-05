@@ -37,7 +37,7 @@ class LoginController extends Controller
             $request->session()->regenerate();
 
             // Register current session as the only active session for this user
-            $this->sessionService->registerSession(Auth::user(), $request->session()->getId());
+            $this->sessionService->registerSession(Auth::user(), $request->session()->getId(), $request->ip());
 
             // Limpiar redirecciones residuales que apunten a la raíz del host o fuera de /tutorbot
             $intended = session('url.intended');

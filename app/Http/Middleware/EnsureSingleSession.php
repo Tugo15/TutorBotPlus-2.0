@@ -55,6 +55,18 @@ class EnsureSingleSession
                 now()->timestamp,
                 now()->addMinutes(config('session.lifetime', 120))
             );
+
+            $clientIp = $request->ip();
+            \Illuminate\Support\Facades\Cache::put(
+                'user_last_ip_' . $user->id,
+                $clientIp,
+                now()->addMinutes(config('session.lifetime', 120))
+            );
+
+            if ($user->last_login_ip !== $clientIp) {
+                $user->last_login_ip = $clientIp;
+                $user->saveQuietly();
+            }
         }
 
         return $next($request);

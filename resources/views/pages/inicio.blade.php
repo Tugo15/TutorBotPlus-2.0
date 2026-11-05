@@ -111,7 +111,7 @@
                                     <tr>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Usuario</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Rol</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Cursos</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Dirección IP</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end pe-3">Actividad</th>
                                     </tr>
                                 </thead>
@@ -126,7 +126,9 @@
                                                 <span class="badge border border-secondary text-secondary bg-white text-xxs">{{ $uCon->roles_str }}</span>
                                             </td>
                                             <td class="text-center py-2">
-                                                <span class="text-xs text-secondary">{{ $uCon->cursos_str ?: 'Sin cursos' }}</span>
+                                                <span class="badge border border-info text-info bg-white text-xxs px-2 py-1">
+                                                    <i class="fa fa-network-wired me-1"></i>{{ $uCon->ip }}
+                                                </span>
                                             </td>
                                             <td class="text-end pe-3 py-2 text-xxs text-secondary">
                                                 {{ $uCon->ultima_actividad }}
@@ -240,6 +242,7 @@
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Problema</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Curso</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Lenguaje</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">IP Origen</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Estado</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Fecha</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Acción</th>
@@ -267,6 +270,15 @@
                                                 <span class="badge border border-dark text-dark bg-white text-xxs">{{ $uEnv->nombre_lenguaje }}</span>
                                             </td>
                                             <td class="text-center py-2">
+                                                @if(!empty($uEnv->ip_origen))
+                                                    <span class="badge border border-info text-info bg-white text-xxs px-2 py-0.5">
+                                                        <i class="fa fa-network-wired me-1"></i>{{ $uEnv->ip_origen }}
+                                                    </span>
+                                                @else
+                                                    <span class="text-xxs text-secondary">-</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-center py-2">
                                                 @if($esAceptado)
                                                     <span class="badge bg-success text-xxs">
                                                         {{ !empty($uEnv->variacion_formato) ? 'Aceptado (Variación de Formato)' : 'Aceptado' }}
@@ -290,7 +302,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="7" class="text-center py-3 text-xs text-secondary">Sin envíos registrados.</td>
+                                            <td colspan="8" class="text-center py-3 text-xs text-secondary">Sin envíos registrados.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>

@@ -19,13 +19,17 @@ class SingleSessionService
      * @param string $sessionId
      * @return void
      */
-    public function registerSession(User $user, string $sessionId): void
+    public function registerSession(User $user, string $sessionId, ?string $ip = null): void
     {
         $lifetimeMinutes = config('session.lifetime', 120);
 
         // 1. Update Cache store (Redis or File cache)
         Cache::put(self::CACHE_PREFIX . $user->id, $sessionId, now()->addMinutes($lifetimeMinutes));
         Cache::put('user_last_seen_' . $user->id, now()->timestamp, now()->addMinutes($lifetimeMinutes));
+        if ($ip) {
+            Cache::put('user_last_ip_' . $user->id, $ip, now()->addMinutes($lifetimeMinutes));
+            $user->last_login_ip = $ip;
+        }
 
         // 2. Persist in database as fallback
         $user->current_session_id = $sessionId;

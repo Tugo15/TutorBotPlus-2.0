@@ -83,6 +83,10 @@ class HomeController extends Controller
             return Cache::has('user_active_session_' . $u->id);
         })->map(function ($u) use ($currentUserId) {
             $lastSeen = Cache::get('user_last_seen_' . $u->id);
+            $lastIp = Cache::get('user_last_ip_' . $u->id) ?: $u->last_login_ip;
+            if ($u->id === $currentUserId && (!$lastIp || $lastIp === '127.0.0.1')) {
+                $lastIp = request()->ip() ?: $lastIp;
+            }
             if (!$lastSeen && $u->current_session_id) {
                 $sessionFile = storage_path('framework/sessions/' . $u->current_session_id);
                 if (is_file($sessionFile)) {
@@ -100,7 +104,7 @@ class HomeController extends Controller
                 $u->ultimo_ts = 0;
             }
             $u->roles_str = $u->getRoleNames()->map(fn($r) => ucfirst($r))->implode(', ') ?: 'Estudiante';
-            $u->cursos_str = $u->cursos->pluck('codigo')->implode(', ');
+            $u->ip = $lastIp ?: '127.0.0.1';
             return $u;
         })->sortByDesc('ultimo_ts')->values();
 
@@ -197,6 +201,7 @@ class HomeController extends Controller
                 'envio_solucion_problemas.id',
                 'envio_solucion_problemas.token',
                 'envio_solucion_problemas.solucionado',
+                'envio_solucion_problemas.ip_origen',
                 'envio_solucion_problemas.puntaje',
                 'envio_solucion_problemas.cant_casos_resuelto',
                 'envio_solucion_problemas.created_at',

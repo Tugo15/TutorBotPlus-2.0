@@ -220,6 +220,7 @@
                                 <option value="Todas">Todas las Categorías</option>
                                 @php
                                     $cats_select = isset($categorias_existentes) ? $categorias_existentes : \App\Models\Categoria_Problema::orderBy('nombre')->get();
+                                    $cats_select = $cats_select->unique('nombre');
                                 @endphp
                                 @foreach($cats_select as $cat)
                                     <option value="{{ $cat->id }}">{{ $cat->nombre }}</option>
@@ -241,8 +242,9 @@
                                 $difBadgeClass = $prob->dificultad == 'Fácil' ? 'border border-success text-success bg-white' : ($prob->dificultad == 'Difícil' ? 'border border-danger text-danger bg-white' : 'border border-warning text-warning bg-white');
                                 $probCats = $prob->categorias;
                                 $catIdsStr = $probCats ? implode(',', $probCats->pluck('id')->toArray()) : '';
+                                $catNamesStr = $probCats ? strtolower(implode(',', $probCats->pluck('nombre')->toArray())) : '';
                             @endphp
-                            <div class="col-md-6 problem-item-card" data-nombre="{{ strtolower($prob->nombre) }}" data-codigo="{{ strtolower($prob->codigo) }}" data-categorias="{{ $catIdsStr }}">
+                            <div class="col-md-6 problem-item-card" data-nombre="{{ strtolower($prob->nombre) }}" data-codigo="{{ strtolower($prob->codigo) }}" data-categorias="{{ $catIdsStr }}" data-cat-nombres="{{ $catNamesStr }}">
                                 <label class="selection-card w-100 mb-0 @if($isProbChecked) checked @endif" for="prob_{{ $prob->id }}">
                                     <input type="checkbox" id="prob_{{ $prob->id }}" name="problemas[]" value="{{ $prob->id }}" @if($isProbChecked) checked @endif onchange="onProblemToggle(this)">
                                     <div class="selection-card-content">
@@ -311,16 +313,20 @@
         var query = document.getElementById('search_problemas').value.toLowerCase().trim();
         var catSelect = document.getElementById('filter_categoria');
         var selectedCat = catSelect ? catSelect.value : 'Todas';
+        var selectedCatName = (catSelect && catSelect.selectedIndex >= 0 && selectedCat !== 'Todas') 
+            ? catSelect.options[catSelect.selectedIndex].text.toLowerCase().trim() 
+            : '';
         var cards = document.querySelectorAll('.problem-item-card');
 
         cards.forEach(function(card) {
             var nombre = card.getAttribute('data-nombre') || '';
             var codigo = card.getAttribute('data-codigo') || '';
             var catsStr = card.getAttribute('data-categorias') || '';
+            var catNamesStr = card.getAttribute('data-cat-nombres') || '';
             var catArray = catsStr.split(',').filter(Boolean);
 
             var matchesSearch = (nombre.indexOf(query) !== -1 || codigo.indexOf(query) !== -1);
-            var matchesCat = (selectedCat === 'Todas' || catArray.indexOf(selectedCat) !== -1);
+            var matchesCat = (selectedCat === 'Todas' || catArray.indexOf(selectedCat) !== -1 || (selectedCatName && catNamesStr.indexOf(selectedCatName) !== -1));
 
             if (matchesSearch && matchesCat) {
                 card.classList.remove('d-none');
