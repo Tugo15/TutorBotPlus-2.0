@@ -168,6 +168,18 @@ class ProblemasController extends Controller
                 $problema->visible = false;
             }
 
+            if (isset($request->habilitar_llm) && $request->habilitar_llm) {
+                $problema->habilitar_llm = true;
+            } else {
+                $problema->habilitar_llm = false;
+            }
+
+            if ($request->filled('limite_llm')) {
+                $problema->limite_llm = (int)$request->input('limite_llm');
+            } else if ($request->has('limite_llm')) {
+                $problema->limite_llm = 0;
+            }
+
             if ($request->hasFile('archivos_adicionales')) {
                 $file = $request->file('archivos_adicionales');
                 $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9_\.]/', '', $file->getClientOriginalName());

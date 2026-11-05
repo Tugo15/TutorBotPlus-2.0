@@ -162,7 +162,7 @@ class EnvioSolucionProblemaController extends Controller
             $string_json = $string_json.'}';
             array_push($batch_submissions, $string_json);
         }
-        $client = new Client(['timeout' => 4.0]);
+        $client = new Client(['timeout' => 15.0]);
         //Crea el header para el request dependiendo del tipo de autenticación que se utiliza, revisar el modelo JuecesVirtuales.
         $headerRequest = JuecesVirtuales::generateHeaderRequest($juez);
         $headerRequest['Content-Type'] = 'application/json';
@@ -231,9 +231,13 @@ class EnvioSolucionProblemaController extends Controller
 
     private function evaluar_c_local($envio, $casos, $problema, bool $isCpp = false)
     {
-        $tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'eval_c_' . $envio->id . '_' . time();
+        $baseTemp = storage_path('app/temp');
+        if (!file_exists($baseTemp)) {
+            @mkdir($baseTemp, 0777, true);
+        }
+        $tempDir = $baseTemp . DIRECTORY_SEPARATOR . 'eval_c_' . $envio->id . '_' . time();
         if (!file_exists($tempDir)) {
-            mkdir($tempDir, 0777, true);
+            @mkdir($tempDir, 0777, true);
         }
 
         $compiler = $isCpp ? 'C:\MinGW\bin\g++.exe' : 'C:\MinGW\bin\gcc.exe';
@@ -243,13 +247,17 @@ class EnvioSolucionProblemaController extends Controller
 
         $sourceExt = $isCpp ? '.cpp' : '.c';
         $sourceFile = $tempDir . DIRECTORY_SEPARATOR . 'solution' . $sourceExt;
-        $exeFile = $tempDir . DIRECTORY_SEPARATOR . 'solution.exe';
+        $exeFile = $tempDir . DIRECTORY_SEPARATOR . (PHP_OS_FAMILY === 'Windows' ? 'solution.exe' : 'solution.out');
 
         file_put_contents($sourceFile, $envio->codigo);
 
         $cmdCompile = escapeshellarg($compiler) . ' -O2 -o ' . escapeshellarg($exeFile) . ' ' . escapeshellarg($sourceFile) . ' -lm 2>&1';
         exec($cmdCompile, $compileOutputLines, $compileReturnCode);
         $compileOutput = implode("\n", $compileOutputLines);
+
+        if (file_exists($exeFile)) {
+            @chmod($exeFile, 0755);
+        }
 
         $comparator = app(\App\Services\OutputComparatorService::class);
         $cantResueltos = 0;
@@ -357,15 +365,24 @@ class EnvioSolucionProblemaController extends Controller
 
     private function evaluar_python_local($envio, $casos, $problema)
     {
-        $tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'eval_py_' . $envio->id . '_' . time();
+        $baseTemp = storage_path('app/temp');
+        if (!file_exists($baseTemp)) {
+            @mkdir($baseTemp, 0777, true);
+        }
+        $tempDir = $baseTemp . DIRECTORY_SEPARATOR . 'eval_py_' . $envio->id . '_' . time();
         if (!file_exists($tempDir)) {
-            mkdir($tempDir, 0777, true);
+            @mkdir($tempDir, 0777, true);
         }
 
         $sourceFile = $tempDir . DIRECTORY_SEPARATOR . 'solution.py';
         file_put_contents($sourceFile, $envio->codigo);
 
         $pythonCmd = 'python';
+        if (PHP_OS_FAMILY !== 'Windows') {
+            $whichPython3 = trim(shell_exec('which python3 2>/dev/null') ?? '');
+            $whichPython = trim(shell_exec('which python 2>/dev/null') ?? '');
+            $pythonCmd = !empty($whichPython3) ? $whichPython3 : (!empty($whichPython) ? $whichPython : 'python3');
+        }
         $comparator = app(\App\Services\OutputComparatorService::class);
         $cantResueltos = 0;
         $puntajeTotal = 0;

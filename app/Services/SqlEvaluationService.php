@@ -316,19 +316,30 @@ class SqlEvaluationService
                 $zip->extractTo($extractDir);
                 $zip->close();
 
-                // Buscar archivo .sqlite o .db en el contenido extraído
-                $dbFiles = glob($extractDir . '/*.{sqlite,db,sqlite3}', GLOB_BRACE);
-                if (!empty($dbFiles)) {
-                    copy($dbFiles[0], $templateDb);
+                // Buscar archivo .sqlite, .db o .sql recursivamente en el ZIP
+                $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($extractDir, \FilesystemIterator::SKIP_DOTS));
+                $foundDb = null;
+                $foundSql = null;
+                foreach ($iterator as $item) {
+                    if ($item->isFile()) {
+                        $ext = strtolower($item->getExtension());
+                        if (in_array($ext, ['sqlite', 'db', 'sqlite3']) && !$foundDb) {
+                            $foundDb = $item->getPathname();
+                        } else if ($ext === 'sql' && !$foundSql) {
+                            $foundSql = $item->getPathname();
+                        }
+                    }
+                }
+
+                if ($foundDb) {
+                    copy($foundDb, $templateDb);
                     return $templateDb;
                 }
 
-                // Buscar archivo .sql para inicializar
-                $sqlFiles = glob($extractDir . '/*.sql');
-                if (!empty($sqlFiles)) {
+                if ($foundSql) {
                     $pdo = new PDO('sqlite:' . $templateDb);
                     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                    $pdo->exec(file_get_contents($sqlFiles[0]));
+                    $pdo->exec(file_get_contents($foundSql));
                     return $templateDb;
                 }
             }
