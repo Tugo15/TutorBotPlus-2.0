@@ -5,27 +5,51 @@
         <div class="row">
             <div class="col-sm col-xs-12">
                 <div class="card border-danger" style="height:100%">
-                    <div class="card-header">
-                        Resultados
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Resultados de la Evaluación</span>
+                        <span class="badge {{ $envio->solucionado ? 'bg-success' : 'bg-secondary' }}">
+                            Puntaje: {{ $envio->puntaje ?? 0 }} pts ({{ $envio->cant_casos_resuelto ?? 0 }}/{{ count($evaluaciones) }} casos)
+                        </span>
                     </div>
                     <div class="card-body">
+                        @php
+                            $tieneEjemplos = $evaluaciones->contains(fn($ev) => (bool)($ev->casos_pruebas->ejemplo ?? false));
+                            // Casos visibles: los marcados como ejemplo (o el primer caso si ninguno tiene la marca de ejemplo)
+                            $evaluacionesVisibles = $evaluaciones->filter(function($ev, $idx) use ($tieneEjemplos) {
+                                return $tieneEjemplos ? (bool)($ev->casos_pruebas->ejemplo ?? false) : ($idx === 0);
+                            });
+
+                            $evaluacionesOcultas = $evaluaciones->reject(function($ev, $idx) use ($tieneEjemplos) {
+                                return $tieneEjemplos ? (bool)($ev->casos_pruebas->ejemplo ?? false) : ($idx === 0);
+                            });
+
+                            $totalOcultos = $evaluacionesOcultas->count();
+                            $aceptadosOcultos = $evaluacionesOcultas->filter(fn($e) => $e->estado === 'Aceptado')->count();
+                            $falladosOcultos = $evaluacionesOcultas->filter(fn($e) => $e->estado !== 'Aceptado' && $e->estado !== 'En Proceso');
+                            $enProcesoOcultos = $evaluacionesOcultas->filter(fn($e) => $e->estado === 'En Proceso')->count();
+                        @endphp
+
+                        {{-- LISTA DE CASOS VISIBLES (EJEMPLOS) --}}
                         <div class="accordion accordion-flush" id="resultados_accord">
-                            @for ($i = 0; $i < count($evaluaciones); $i++)
-                                <div class="accordion-item">
+                            @foreach ($evaluacionesVisibles as $evVisible)
+                                @php
+                                    $i = $evaluaciones->search(fn($item) => $item->id == $evVisible->id);
+                                    if ($i === false) $i = $loop->index;
+                                @endphp
+                                <div class="accordion-item mb-2 border rounded">
                                     <h2 class="accordion-header">
                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                                             data-bs-target="#resultados_{{ $i }}" aria-expanded="false"
                                             aria-controls="resultados_{{ $i }}"
                                             id="evaluacion_{{$i}}_button">
-                                            @if($evaluaciones[$i]->estado=="En Proceso") 
-                                            Caso de Prueba #{{ $i + 1 }}: <span class="mx-2 badge text-bg-warning" id="badge_estado_{{$i}}">In Process</span><span id="informacion_span_{{$i}}"></span>
-                                            @else Caso de Prueba #{{ $i + 1 }}:<span class="mx-2 badge {{ $evaluaciones[$i]->estado == 'Aceptado' ? 'text-bg-success' : 'text-bg-danger' }}">{{ $evaluaciones[$i]->resultado }}</span>
-                                            - Tiempo: {{ $evaluaciones[$i]->tiempo ? $evaluaciones[$i]->tiempo : '0' }}
-                                            segundos - Memoria:
-                                            {{ $evaluaciones[$i]->memoria ? $evaluaciones[$i]->memoria : '0' }} KB
-                                            @if(isset($problema->restricciones) && trim($problema->restricciones) !== '' && !is_null($envio->cumple_restricciones))
-                                                <span class="mx-2 badge {{ $envio->cumple_restricciones ? 'text-bg-success' : 'text-bg-danger' }}">{{ $envio->cumple_restricciones ? 'Cumple' : 'No cumple' }}</span>
-                                            @endif
+                                            @if($evVisible->estado=="En Proceso") 
+                                                Caso Visible #{{ $loop->iteration }}: <span class="mx-2 badge text-bg-warning" id="badge_estado_{{$i}}">In Process</span><span id="informacion_span_{{$i}}"></span>
+                                            @else 
+                                                Caso Visible #{{ $loop->iteration }}: <span class="mx-2 badge {{ $evVisible->estado == 'Aceptado' ? 'text-bg-success' : 'text-bg-danger' }}" id="badge_estado_{{$i}}">{{ $evVisible->resultado }}</span>
+                                                <span id="informacion_span_{{$i}}">- Tiempo: {{ $evVisible->tiempo ? $evVisible->tiempo : '0' }} seg - Memoria: {{ $evVisible->memoria ? $evVisible->memoria : '0' }} KB</span>
+                                                @if(isset($problema->restricciones) && trim($problema->restricciones) !== '' && !is_null($envio->cumple_restricciones))
+                                                    <span class="mx-2 badge {{ $envio->cumple_restricciones ? 'text-bg-success' : 'text-bg-danger' }}">{{ $envio->cumple_restricciones ? 'Cumple' : 'No cumple' }}</span>
+                                                @endif
                                             @endif
                                         </button>
                                     </h2>
@@ -44,52 +68,106 @@
                                                     @endif
                                                 </div>
                                             @endif
-                                            <div class="d-flex flex-row mb-3">
-                                                @if (!isset($res_certamen) && isset($evaluaciones[$i]->casos_pruebas->entradas) && $evaluaciones[$i]->casos_pruebas->ejemplo == true)
-                                                    <div class="card">
-                                                        <div class="card-body">
-                                                            <h5 class="card-title">Entradas</h5>
-                                                             <p class="card-text"  id="evaluacion_{{$i}}_e">
-                                                                {!! nl2br(e($evaluaciones[$i]->casos_pruebas->entradas)) !!}</p>
+                                            <div class="d-flex flex-row mb-3 flex-wrap gap-2">
+                                                @if (!isset($res_certamen) && isset($evVisible->casos_pruebas->entradas))
+                                                    <div class="card flex-grow-1" style="min-width: 140px;">
+                                                        <div class="card-body p-3">
+                                                            <h6 class="card-title text-xs font-weight-bold">Entradas</h6>
+                                                            <p class="card-text font-monospace text-xs mb-0" id="evaluacion_{{$i}}_e">
+                                                                {!! nl2br(e($evVisible->casos_pruebas->entradas)) !!}</p>
                                                         </div>
                                                     </div>
                                                 @endif
-                                                @if (!isset($res_certamen) && isset($evaluaciones[$i]->casos_pruebas->salidas) && $evaluaciones[$i]->casos_pruebas->ejemplo == true)
-                                                    <div class="card mx-2">
-                                                        <div class="card-body">
-                                                            <h5 class="card-title">Salidas Esperadas</h5>
-                                                            <p class="card-text" id="evaluacion_{{$i}}_se">{!! nl2br(e($evaluaciones[$i]->casos_pruebas->salidas)) !!}
-                                                            </p>
+                                                @if (!isset($res_certamen) && isset($evVisible->casos_pruebas->salidas))
+                                                    <div class="card flex-grow-1" style="min-width: 140px;">
+                                                        <div class="card-body p-3">
+                                                            <h6 class="card-title text-xs font-weight-bold">Salidas Esperadas</h6>
+                                                            <p class="card-text font-monospace text-xs mb-0" id="evaluacion_{{$i}}_se">{!! nl2br(e($evVisible->casos_pruebas->salidas)) !!}</p>
                                                         </div>
                                                     </div>
                                                 @endif
-                                                <div
-                                                    class="card {{ $evaluaciones[$i]->estado == 'Rechazado' || $evaluaciones[$i]->estado == 'Error' ? 'border-danger' : 'border-success' }}" id="card_evaluacion_{{$i}}">
-                                                    <div class="card-body">
-                                                        <h5 class="card-title">Salidas</h5>
-                                                        <p class="card-text" id="evaluacion_{{$i}}_s">
-                                                            {!! $evaluaciones[$i]->stout ? nl2br(e(base64_decode($evaluaciones[$i]->stout))) : '-' !!}</p>
+                                                <div class="card flex-grow-1 {{ $evVisible->estado == 'Rechazado' || $evVisible->estado == 'Error' ? 'border-danger' : 'border-success' }}" style="min-width: 140px;" id="card_evaluacion_{{$i}}">
+                                                    <div class="card-body p-3">
+                                                        <h6 class="card-title text-xs font-weight-bold">Salidas Obtenidas</h6>
+                                                        <p class="card-text font-monospace text-xs mb-0" id="evaluacion_{{$i}}_s">
+                                                            {!! $evVisible->stout ? nl2br(e(base64_decode($evVisible->stout))) : '-' !!}</p>
                                                     </div>
                                                 </div>
                                             </div>
-                                                <div class="card border-danger @if (!isset($evaluaciones[$i]->error_compilacion)) d-none @endif" id="card_error_compilacion_{{$i}}">
-                                                    <div class="card-body">
-                                                        <h5 class="card-title">Mensaje del Compilador</h5>
-                                                        <p class="card-text text-danger"  id="evaluacion_{{$i}}_ec">
-                                                            @php
-                                                                $ecRaw = $evaluaciones[$i]->error_compilacion ?? '';
-                                                                $ecDecoded = base64_decode($ecRaw, true);
-                                                                $ecTexto = ($ecDecoded !== false && base64_encode($ecDecoded) === $ecRaw && mb_check_encoding($ecDecoded, 'UTF-8')) ? $ecDecoded : $ecRaw;
-                                                            @endphp
-                                                            {!! $ecTexto ? nl2br(e($ecTexto)) : '-' !!}</p>
-                                                    </div>
+                                            <div class="card border-danger @if (!isset($evVisible->error_compilacion)) d-none @endif" id="card_error_compilacion_{{$i}}">
+                                                <div class="card-body p-3">
+                                                    <h6 class="card-title text-danger text-xs font-weight-bold">Mensaje del Compilador</h6>
+                                                    <p class="card-text text-danger font-monospace text-xs mb-0" id="evaluacion_{{$i}}_ec">
+                                                        @php
+                                                            $ecRaw = $evVisible->error_compilacion ?? '';
+                                                            $ecDecoded = base64_decode($ecRaw, true);
+                                                            $ecTexto = ($ecDecoded !== false && base64_encode($ecDecoded) === $ecRaw && mb_check_encoding($ecDecoded, 'UTF-8')) ? $ecDecoded : $ecRaw;
+                                                        @endphp
+                                                        {!! $ecTexto ? nl2br(e($ecTexto)) : '-' !!}</p>
                                                 </div>
-                                            
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            @endfor
+                            @endforeach
                         </div>
+
+                        {{-- RESUMEN COMPACTO DE CASOS DE PRUEBA DE EVALUACIÓN (OCULTOS) --}}
+                        @if($totalOcultos > 0)
+                            @if($enProcesoOcultos > 0)
+                                <div class="alert alert-warning py-2 px-3 mt-3 d-flex align-items-center" id="alert_ocultos_proceso">
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                    <span class="text-xs">Evaluando {{ $totalOcultos }} casos de prueba de evaluación...</span>
+                                </div>
+                            @elseif($falladosOcultos->isEmpty())
+                                <div class="alert alert-success border-success py-2 px-3 mt-3 d-flex align-items-center justify-content-between shadow-xs">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fa fa-check-circle fa-lg text-success me-2"></i>
+                                        <strong class="text-xs text-dark">Casos de prueba de evaluación:</strong>
+                                        <span class="badge bg-success ms-2">{{ $aceptadosOcultos }} de {{ $totalOcultos }} casos aceptados</span>
+                                    </div>
+                                    <span class="badge text-bg-success">100% Superado</span>
+                                </div>
+                            @else
+                                <div class="card border-danger mt-3 shadow-xs">
+                                    <div class="card-header bg-light py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fa fa-times-circle text-danger me-2"></i>
+                                            <strong class="text-xs text-dark">Casos de prueba de evaluación:</strong>
+                                            <span class="badge bg-success ms-2">{{ $aceptadosOcultos }} aceptados</span>
+                                            <span class="badge bg-danger ms-1">{{ $falladosOcultos->count() }} con error</span>
+                                        </div>
+                                        <span class="text-xxs text-muted">Resumen compacto</span>
+                                    </div>
+                                    <div class="card-body p-2" style="max-height: 250px; overflow-y: auto;">
+                                        @foreach($falladosOcultos as $evOculta)
+                                            @php
+                                                $idxReal = $evaluaciones->search(fn($x) => $x->id == $evOculta->id);
+                                                $numCaso = ($idxReal !== false) ? $idxReal + 1 : $loop->iteration;
+                                                $ecRaw = $evOculta->error_compilacion ?? '';
+                                                $ecDecoded = base64_decode($ecRaw, true);
+                                                $ecTexto = ($ecDecoded !== false && base64_encode($ecDecoded) === $ecRaw && mb_check_encoding($ecDecoded, 'UTF-8')) ? $ecDecoded : $ecRaw;
+                                            @endphp
+                                            <div class="py-1 px-2 border-bottom d-flex flex-column">
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <span class="text-xs font-weight-bold text-danger">
+                                                        <i class="fa fa-times me-1"></i> Error en el Caso #{{ $numCaso }}
+                                                    </span>
+                                                    <span class="badge text-bg-danger">
+                                                        {{ $evOculta->resultado ?? $evOculta->estado }}
+                                                    </span>
+                                                </div>
+                                                @if(!empty(trim($ecTexto)))
+                                                    <small class="text-xxs text-danger font-monospace mt-1 bg-light p-1 rounded">
+                                                        {{ Str::limit(trim($ecTexto), 200) }}
+                                                    </small>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        @endif
                     </div>
                 </div>
             </div>
@@ -227,57 +305,59 @@
                 clearInterval(actualizacion_estado)
             }else{
                 fetch(ruta_actualizacion, {
-                method: 'GET', 
-                headers: {
-                'Content-Type': 'application/json',
-                },
+                    method: 'GET', 
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
                 })
                 .then(function(response) {
                     return response.json();
                 })
                 .then(function(result) {
+                    var finalizado = true;
                     for(var i=0; i<result.length;i++){
                         let button_evaluacion = document.getElementById('evaluacion_'+i+'_button');
                         let texto_salidas = document.getElementById('evaluacion_'+i+'_s');
                         let texto_error_compilacion = document.getElementById('evaluacion_'+i+'_ec');
                         let card_evaluacion = document.getElementById('card_evaluacion_'+i);
                         let badge_estado = document.getElementById('badge_estado_'+i);
-                        if(result[i]["estado"]=="Rechazado" || result[i]["estado"]=="Error"){
-                            badge_estado.classList.remove('text-bg-warning')
-                            badge_estado.classList.add('text-bg-danger')
-                            card_evaluacion.classList.add('border-danger')
-                            evaluaciones_pendientes = evaluaciones_pendientes - 1;
-                            if(habilitarLlm == true && tieneRetroalimentacion==true && esUsuario == true && esCertamen==false && boton_ayuda){
-                                if(boton_ayuda.classList.contains('d-none')){
-                                    boton_ayuda.classList.toggle('d-none');
-                                }
-                            }else if (habilitarLlm == true && tieneRetroalimentacion==false && esUsuario == true && esCertamen==false && boton_retroalimentacion){
-                                if(boton_retroalimentacion.classList.contains('d-none')){
-                                    boton_retroalimentacion.classList.toggle('d-none');
-                                }
-                            }
-                        }else if(result[i]["estado"]=="Aceptado"){
-                            badge_estado.classList.remove('text-bg-warning')
-                            badge_estado.classList.add('text-bg-success')
-                            card_evaluacion.classList.add('border-success')
-                            evaluaciones_pendientes = evaluaciones_pendientes - 1;
+                        let card_ec = document.getElementById('card_error_compilacion_'+i);
+
+                        if(result[i]["estado"]=="En Proceso"){
+                            finalizado = false;
                         }
-                        if(result[i]["memoria"]!=null && result[i]["tiempo"]!=null){
-                            document.getElementById("informacion_span_"+i).innerHTML = "- Tiempo: "+result[i]["tiempo"]+" segundos - Memoria: "+result[i]["memoria"]+" KB";
-                        }
-                        badge_estado.innerHTML = result[i]["resultado"]!=null? result[i]["resultado"] : "In Process"
-                        if(result[i]["stout"]!=null){
-                            texto_salidas.innerHTML = result[i]["stout"]
+
+                        if(badge_estado){
                             if(result[i]["estado"]=="Rechazado" || result[i]["estado"]=="Error"){
-                                card_evaluacion.classList.add('border-danger')
+                                badge_estado.classList.remove('text-bg-warning', 'text-bg-success');
+                                badge_estado.classList.add('text-bg-danger');
+                                if(card_evaluacion) card_evaluacion.classList.add('border-danger');
                             }else if(result[i]["estado"]=="Aceptado"){
-                                card_evaluacion.classList.add('border-success')
+                                badge_estado.classList.remove('text-bg-warning', 'text-bg-danger');
+                                badge_estado.classList.add('text-bg-success');
+                                if(card_evaluacion) card_evaluacion.classList.add('border-success');
                             }
+                            badge_estado.innerHTML = result[i]["resultado"]!=null? result[i]["resultado"] : "In Process";
                         }
-                        if(result[i]["error_compilacion"]!=null){
+
+                        let spanInfo = document.getElementById("informacion_span_"+i);
+                        if(spanInfo && result[i]["memoria"]!=null && result[i]["tiempo"]!=null){
+                            spanInfo.innerHTML = "- Tiempo: "+result[i]["tiempo"]+" seg - Memoria: "+result[i]["memoria"]+" KB";
+                        }
+
+                        if(texto_salidas && result[i]["stout"]!=null){
+                            texto_salidas.innerHTML = result[i]["stout"];
+                        }
+                        if(texto_error_compilacion && result[i]["error_compilacion"]!=null){
                             texto_error_compilacion.innerHTML = result[i]["error_compilacion"];
-                            document.getElementById('card_error_compilacion_'+i).classList.remove('d-none');
+                            if(card_ec) card_ec.classList.remove('d-none');
                         }
+                    }
+
+                    if(finalizado){
+                        clearInterval(actualizacion_estado);
+                        // Si se procesaban casos en segundo plano, recargamos la página para actualizar el resumen compacto
+                        setTimeout(function(){ location.reload(); }, 1200);
                     }
                 })
                 .catch(function(error) {

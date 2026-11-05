@@ -10,6 +10,7 @@ use App\Models\EvaluacionSolucion;
 use App\Models\JuecesVirtuales;
 use App\Models\LenguajesProgramaciones;
 use App\Models\Problemas;
+use App\Models\Resolver;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
@@ -58,8 +59,9 @@ class EnvioSolucionProblemaController extends Controller
     {
         $validated = $request->validate(EnvioSolucionProblema::$rules);
         //Escoge un juez virtual de manera aleatoria si el usuario escogió eso.
-        if ($request->juez_virtual == "0") {
-            $request->juez_virtual = JuecesVirtuales::inRandomOrder()->first()->id;
+        if ($request->juez_virtual == "0" || empty($request->juez_virtual)) {
+            $juezDef = JuecesVirtuales::first();
+            $request->juez_virtual = $juezDef ? $juezDef->id : 1;
         }
         try {
             DB::beginTransaction();
@@ -68,29 +70,60 @@ class EnvioSolucionProblemaController extends Controller
             }else{
                 $envio = EnvioSolucionProblema::where('id_resolver', '=', $request->id_resolver)->where('id_cursa', '=', $request->id_cursa)->orderBy('created_at', 'DESC')->first();
             }
-            if($envio->termino != null){
-                return redirect()->route('envios.ver', ["token" => $envio->token]);
+
+            // Si no existe un intento abierto o ya fue finalizado, creamos un nuevo registro de envío
+            if(!$envio || $envio->termino != null){
+                $envio = new EnvioSolucionProblema;
+                $envio->token = \Illuminate\Support\Str::random(40);
+                $envio->ip_origen = $request->ip();
+                $envio->inicio = Carbon::now();
+                $envio->id_resolver = $request->id_resolver;
+                if (isset($request->id_certamen)) {
+                    $envio->id_certamen = $request->id_certamen;
+                } else {
+                    $envio->id_cursa = $request->id_cursa;
+                }
             }
+
             $envio->codigo = $request->codigo;
             $envio->ip_origen = $request->ip();
-            $envio->juez_virtual()->associate(JuecesVirtuales::find($request->juez_virtual));
+            $juezVirtual = JuecesVirtuales::find($request->juez_virtual) ?? JuecesVirtuales::first();
+            if ($juezVirtual) {
+                $envio->juez_virtual()->associate($juezVirtual);
+            }
+
             $lenguaje = LenguajesProgramaciones::where("codigo", "=", $request->lenguaje)->first();
-            $pivot_problema_lenguaje = $lenguaje->problemas()->find($request->id_problema)->pivot;
-            $envio->ProblemaLenguaje()->disassociate();
-            $envio->ProblemaLenguaje()->associate($pivot_problema_lenguaje);
+            if ($lenguaje) {
+                $probPivot = $lenguaje->problemas()->find($request->id_problema);
+                if ($probPivot && isset($probPivot->pivot)) {
+                    $envio->ProblemaLenguaje()->disassociate();
+                    $envio->ProblemaLenguaje()->associate($probPivot->pivot);
+                } else {
+                    $resolver = Resolver::where('id_problema', $request->id_problema)->where('id_lenguaje', $lenguaje->id)->first();
+                    if ($resolver) {
+                        $envio->id_resolver = $resolver->id;
+                    }
+                }
+            }
             $envio->termino = Carbon::now();
             $envio->save();
             DB::commit();
-        } catch (\PDOException $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
-            return back()->with('error', $e->getMessage())->with('codigo', $request->codigo);
+            \Log::error("Error en enviar_solucion: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return back()->with('error', 'Error al procesar el envío: ' . $e->getMessage())->with('codigo', $request->codigo);
         }
         
-        $resultado = $this->enviar_api_juez($envio, $request->lenguaje);
-        if ($resultado["estado"]) {            
-            return redirect()->route('envios.ver', ["token" => $envio->token]);
-        } else {
-            return back()->with('error', $resultado["mensaje"])->with("codigo", $request->codigo);
+        try {
+            $resultado = $this->enviar_api_juez($envio, $request->lenguaje);
+            if ($resultado["estado"]) {            
+                return redirect()->route('envios.ver', ["token" => $envio->token]);
+            } else {
+                return back()->with('error', $resultado["mensaje"])->with("codigo", $request->codigo);
+            }
+        } catch (\Throwable $e) {
+            \Log::error("Error critico en evaluacion: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return back()->with('error', 'Error durante la evaluación de la solución: ' . $e->getMessage())->with("codigo", $request->codigo);
         }
     }
 
@@ -99,7 +132,19 @@ class EnvioSolucionProblemaController extends Controller
         $c_codes = [104, 75, 103, 48, 49, 50]; //codigos de compiladores de C en Judge0
         try {
             $problema = $envio->problema;
-            $juez = $envio->juez_virtual;
+            if (!$problema && $envio->id_resolver) {
+                $res = Resolver::with('problema')->find($envio->id_resolver);
+                $problema = $res ? $res->problema : null;
+            }
+            if (!$problema) {
+                return ["estado" => false, "mensaje" => "No se pudo encontrar el problema asociado al envío."];
+            }
+
+            $juez = $envio->juez_virtual ?? JuecesVirtuales::first();
+            if (!$juez) {
+                return ["estado" => false, "mensaje" => "No hay jueces virtuales configurados en la plataforma."];
+            }
+
             $fuenteCodigo = $envio->codigo;
 
             // Detección de lenguaje SQL para evaluación especializada (vistas, triggers, funciones, consultas)
@@ -124,94 +169,93 @@ class EnvioSolucionProblemaController extends Controller
                 $fuenteCodigo = ".open db.sqlite\n" . $fuenteCodigo;
             }
             $codigo = base64_encode($fuenteCodigo);
-        } catch (\PDOException $e) {
-            return ["estado" => false, "mensaje" => $e->getMessage()];
-        }
-        //Transformación a JSON en batch del código fuente, los casos de prueba (entradas y salidas) y su memoria limite y tiempo limite.
-        $batch_submissions = [];
-        $casos = $problema->casos_de_prueba()->get();
-        $initial_json_string = '{"language_id":' . $lenguaje . ',"source_code":"' . $codigo . '"';
-        if(in_array($lenguaje, $c_codes)){
-            //añade la opción de compilador -lm para incluir la libreria <math.h>, esto es solo para soluciones desarrolladas en C.
-            $initial_json_string = $initial_json_string.',"compiler_options":"-lm"';
-        }
-        if(isset($problema->memoria_limite) && $problema->memoria_limite>0){
-            $initial_json_string = $initial_json_string.',"memory_limit":"'.$problema->memoria_limite.'"';
-        }
-        if(isset($problema->tiempo_limite) && $problema->tiempo_limite>0){
-            $initial_json_string = $initial_json_string.',"cpu_time_limit":"'.$problema->tiempo_limite.'"';
-        }
-        if(isset($problema->archivo_adicional)){
-            $base64_encoded_file = base64_encode(Storage::get('public/archivos_adicionales/'.$problema->archivo_adicional));
-            $initial_json_string = $initial_json_string.',"additional_files":"'.$base64_encoded_file.'"';
-        }
-        if(sizeof($casos)==0){
-            $string_json = $initial_json_string.'}';
-            array_push($batch_submissions, $string_json);
-        }
-        foreach ($casos as $caso) {
-            $entrada = base64_encode($caso->entradas);
-            $salida = base64_encode($caso->salidas);
-            $string_json = $initial_json_string;
-            if(isset($entrada)){
-                $string_json = $string_json.',"stdin":"'.$entrada.'"';
+
+            //Transformación a JSON en batch del código fuente, los casos de prueba (entradas y salidas) y su memoria limite y tiempo limite.
+            $batch_submissions = [];
+            $casos = $problema->casos_de_prueba()->get();
+            $initial_json_string = '{"language_id":' . $lenguaje . ',"source_code":"' . $codigo . '"';
+            if(in_array($lenguaje, $c_codes)){
+                //añade la opción de compilador -lm para incluir la libreria <math.h>, esto es solo para soluciones desarrolladas en C.
+                $initial_json_string = $initial_json_string.',"compiler_options":"-lm"';
             }
-            if(isset($salida)){
-                $string_json = $string_json.',"expected_output":"'.$salida.'"';
+            if(isset($problema->memoria_limite) && $problema->memoria_limite>0){
+                $initial_json_string = $initial_json_string.',"memory_limit":"'.$problema->memoria_limite.'"';
             }
-            $string_json = $string_json.'}';
-            array_push($batch_submissions, $string_json);
-        }
-        $client = new Client(['timeout' => 15.0]);
-        //Crea el header para el request dependiendo del tipo de autenticación que se utiliza, revisar el modelo JuecesVirtuales.
-        $headerRequest = JuecesVirtuales::generateHeaderRequest($juez);
-        $headerRequest['Content-Type'] = 'application/json';
-        try {
-            $chunks = array_chunk($batch_submissions, 20);
-            $data = [];
-            foreach ($chunks as $chunk) {
-                $response = $client->request('POST', $juez->direccion . '/submissions/batch?base64_encoded=true', [
-                    'body' => '{"submissions":[' . implode(',', $chunk) . ']}',
-                    'headers' => $headerRequest,
-                ]);
-                $chunkData = json_decode($response->getBody(), true);
-                if (is_array($chunkData)) {
-                    $data = array_merge($data, $chunkData);
+            if(isset($problema->tiempo_limite) && $problema->tiempo_limite>0){
+                $initial_json_string = $initial_json_string.',"cpu_time_limit":"'.$problema->tiempo_limite.'"';
+            }
+            if(isset($problema->archivo_adicional)){
+                $base64_encoded_file = base64_encode(Storage::get('public/archivos_adicionales/'.$problema->archivo_adicional));
+                $initial_json_string = $initial_json_string.',"additional_files":"'.$base64_encoded_file.'"';
+            }
+            if(sizeof($casos)==0){
+                $string_json = $initial_json_string.'}';
+                array_push($batch_submissions, $string_json);
+            }
+            foreach ($casos as $caso) {
+                $entrada = base64_encode($caso->entradas);
+                $salida = base64_encode($caso->salidas);
+                $string_json = $initial_json_string;
+                if(isset($entrada)){
+                    $string_json = $string_json.',"stdin":"'.$entrada.'"';
                 }
+                if(isset($salida)){
+                    $string_json = $string_json.',"expected_output":"'.$salida.'"';
+                }
+                $string_json = $string_json.'}';
+                array_push($batch_submissions, $string_json);
             }
-        } catch (\Exception $e) {
-            \Log::error("Fallo de conexion con Judge0 en " . $juez->direccion . ": " . $e->getMessage());
+            $client = new Client(['timeout' => 15.0]);
+            //Crea el header para el request dependiendo del tipo de autenticación que se utiliza, revisar el modelo JuecesVirtuales.
+            $headerRequest = JuecesVirtuales::generateHeaderRequest($juez);
+            $headerRequest['Content-Type'] = 'application/json';
 
-            // En entorno Windows o si se habilita fallback explícito, usar compilador local
-            if (PHP_OS_FAMILY === 'Windows' || env('JUDGE0_FALLBACK_LOCAL', false)) {
-                return $this->simular_evaluacion_local($envio, $casos, $problema);
+            try {
+                $chunks = array_chunk($batch_submissions, 20);
+                $data = [];
+                foreach ($chunks as $chunk) {
+                    $response = $client->request('POST', $juez->direccion . '/submissions/batch?base64_encoded=true', [
+                        'body' => '{"submissions":[' . implode(',', $chunk) . ']}',
+                        'headers' => $headerRequest,
+                    ]);
+                    $chunkData = json_decode($response->getBody(), true);
+                    if (is_array($chunkData)) {
+                        $data = array_merge($data, $chunkData);
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::error("Fallo de conexion con Judge0 en " . $juez->direccion . ": " . $e->getMessage());
+
+                // En entorno Windows o si se habilita fallback explícito, usar compilador local
+                if (PHP_OS_FAMILY === 'Windows' || env('JUDGE0_FALLBACK_LOCAL', false)) {
+                    return $this->simular_evaluacion_local($envio, $casos, $problema);
+                }
+
+                // En el servidor Linux, alertar de forma clara que Judge0 en Docker no está respondiendo
+                $nombreLenguaje = $envio->lenguaje->nombre ?? 'este lenguaje';
+                return [
+                    "estado" => false,
+                    "mensaje" => "No se pudo conectar con el servicio Judge0 ({$juez->direccion}) para {$nombreLenguaje}. Causa: " . $e->getMessage() . ". Asegúrese de iniciar los contenedores en el servidor con: 'cd /var/www/TutorBotPlus-2.0/judge0-v1.13.0 && sudo docker compose up -d'."
+                ];
             }
 
-            // En el servidor Linux, alertar de forma clara que Judge0 en Docker no está respondiendo
-            $nombreLenguaje = $envio->lenguaje->nombre ?? 'este lenguaje';
-            return [
-                "estado" => false,
-                "mensaje" => "No se pudo conectar con el servicio Judge0 ({$juez->direccion}) para {$nombreLenguaje}. Causa: " . $e->getMessage() . ". Asegúrese de iniciar los contenedores en el servidor con: 'cd /var/www/TutorBotPlus-2.0/judge0-v1.13.0 && sudo docker compose up -d'."
-            ];
-        }
-        try {
             DB::beginTransaction();
             for ($i = 0; $i < sizeof($batch_submissions); $i++) {
-                
                 $evaluacion = new EvaluacionSolucion;
-                $evaluacion->token = $data[$i]['token'];
+                $evaluacion->token = isset($data[$i]['token']) ? $data[$i]['token'] : \Illuminate\Support\Str::random(40);
                 $evaluacion->envio()->associate($envio);
-                if(sizeof($casos)>0){
+                if(sizeof($casos)>0 && isset($casos[$i])){
                     $evaluacion->casos_pruebas()->associate($casos[$i]);
                 }
                 $evaluacion->save();
             }
             DB::commit();
-        } catch (\PDOException $e) {
+            return ["estado" => true];
+        } catch (\Throwable $e) {
             DB::rollBack();
-            return ["estado" => false, "mensaje" => "Error en el ingreso de evaluaciones a la base de datos"];
+            \Log::error("Error general en enviar_api_juez: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return ["estado" => false, "mensaje" => "Error durante el procesamiento del juez: " . $e->getMessage()];
         }
-        return ["estado" => true];
     }
 
     private function simular_evaluacion_local($envio, $casos, $problema)
