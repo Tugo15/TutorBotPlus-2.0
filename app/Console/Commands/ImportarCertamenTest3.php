@@ -430,10 +430,31 @@ class ImportarCertamenTest3 extends Command
      */
     protected function construirEnunciadoMarkdown(array $p): string
     {
+        $base64Img = '';
+        $b64File = __DIR__ . '/steam_2025_base64.php';
+        if (file_exists($b64File)) {
+            $base64Img = require $b64File;
+        }
+
+        // Asegurar que también exista físicamente en public/assets/img/certamenes
+        $imgDir = public_path('assets/img/certamenes');
+        if (!file_exists($imgDir)) {
+            @mkdir($imgDir, 0777, true);
+        }
+        $imgPath = $imgDir . '/steam_2025.png';
+        if (!file_exists($imgPath) && !empty($base64Img)) {
+            @file_put_contents($imgPath, base64_decode($base64Img));
+        }
+
         $md = "### " . htmlspecialchars($p['nombre']) . "\n\n";
         $md .= "#### Descripción del Modelo de Datos\n";
         $md .= "Se dispone de la base de datos de una plataforma de venta y distribución de videojuegos digitales (tipo Steam).\n\n";
-        $md .= "![Diagrama Entidad Relación](/assets/img/certamenes/steam_2025.png)\n\n";
+
+        if (!empty($base64Img)) {
+            $md .= "![Diagrama Entidad Relación](data:image/png;base64," . $base64Img . ")\n\n";
+        } else {
+            $md .= "![Diagrama Entidad Relación](/assets/img/certamenes/steam_2025.png)\n\n";
+        }
         $md .= "**Tablas del sistema:**\n";
         $md .= "- `pais (m49, nombre, moneda, conversion)`\n";
         $md .= "- `usuario (correo, nombre, alias, pais, password)`\n";
