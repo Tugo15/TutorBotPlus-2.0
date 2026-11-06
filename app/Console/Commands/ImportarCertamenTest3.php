@@ -80,13 +80,13 @@ class ImportarCertamenTest3 extends Command
         }
         $this->info("-> Lenguaje SQL: [{$sqlLang->id}] {$sqlLang->nombre}");
 
-        // 3. Verificar base de datos SQLite
+        // 3. Verificar o generar base de datos SQLite
         $sqliteRelPath = 'venta_juegos.sqlite';
         $sqliteFullPath = storage_path('app/public/archivos_adicionales/' . $sqliteRelPath);
 
         if (!file_exists($sqliteFullPath)) {
-            $this->error("Error: No se encontró el archivo SQLite en: {$sqliteFullPath}");
-            return 1;
+            $this->info("-> Generando automáticamente la base de datos SQLite con datos reales...");
+            $this->crearBaseDatosSqlite($sqliteFullPath);
         }
         $this->info("-> Archivo SQLite verificado: {$sqliteRelPath}");
 
@@ -220,6 +220,188 @@ class ImportarCertamenTest3 extends Command
         $this->info("================================================================================\n");
 
         return 0;
+    }
+
+    /**
+     * Genera automáticamente la base de datos SQLite y su archivo ZIP con las 6 tablas y datos.
+     */
+    protected function crearBaseDatosSqlite(string $sqlitePath): void
+    {
+        $dir = dirname($sqlitePath);
+        if (!file_exists($dir)) {
+            mkdir($dir, 0777, true);
+        }
+
+        if (file_exists($sqlitePath)) {
+            unlink($sqlitePath);
+        }
+
+        $pdo = new PDO('sqlite:' . $sqlitePath);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        // 1. Esquema DDL
+        $pdo->exec("
+        CREATE TABLE IF NOT EXISTS amistad (
+            usuario_solicitante TEXT NOT NULL,
+            usuario_solicitado TEXT NOT NULL,
+            aceptado BOOLEAN DEFAULT 0 NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS compra (
+            codigo INTEGER PRIMARY KEY,
+            juego INTEGER NOT NULL,
+            usuario TEXT NOT NULL,
+            fecha DATETIME NOT NULL,
+            precio_final NUMERIC NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS critica (
+            juego INTEGER NOT NULL,
+            usuario TEXT NOT NULL,
+            valoracion BOOLEAN,
+            texto TEXT,
+            fecha DATETIME
+        );
+
+        CREATE TABLE IF NOT EXISTS juego (
+            codigo INTEGER PRIMARY KEY,
+            titulo TEXT NOT NULL,
+            descripcion TEXT,
+            precio NUMERIC NOT NULL,
+            descuento INTEGER DEFAULT 0 NOT NULL,
+            anio INTEGER
+        );
+
+        CREATE TABLE IF NOT EXISTS pais (
+            m49 INTEGER PRIMARY KEY,
+            nombre TEXT NOT NULL,
+            moneda TEXT,
+            conversion NUMERIC
+        );
+
+        CREATE TABLE IF NOT EXISTS usuario (
+            correo TEXT PRIMARY KEY,
+            nombre TEXT NOT NULL,
+            alias TEXT,
+            pais INTEGER NOT NULL,
+            password TEXT NOT NULL
+        );
+        ");
+
+        // 2. Inserción de Datos: amistad
+        $amistades = [
+            ['juanito@gmail.com', 'pimienta@yahoo.es', 1],
+            ['pinguino_azul@yahoo.es', 'luna@gmail.com', 1],
+            ['pinguino_azul@yahoo.es', 'ak47@gmail.com', 1],
+            ['pinguino_azul@yahoo.es', 'dippi@gmail.com', 1],
+            ['pinguino_azul@yahoo.es', 'mark_hoppus228@gmail.com', 1],
+            ['pinguino_azul@yahoo.es', 'pimienta@yahoo.es', 0],
+            ['ak47@gmail.com', 'luna@gmail.com', 1]
+        ];
+        $st = $pdo->prepare("INSERT INTO amistad VALUES (?, ?, ?)");
+        foreach ($amistades as $row) { $st->execute($row); }
+
+        // 3. Inserción de Datos: pais
+        $paises = [
+            [4, 'Afganistan', 'peso afgano', 1000],
+            [192, 'Cuba', 'USD', 1],
+            [218, 'Ecuador', 'dolar ecuatoriano', 45.7],
+            [152, 'Chile', 'peso chileno', 1000],
+            [36, 'Australia', 'dolar australiano', 0.5],
+            [616, 'Polonia', 'peso', 0.5],
+            [997, 'Yemen', 'USD', 1],
+            [12, 'Argelia', 'peso argeliano', 5670]
+        ];
+        $st = $pdo->prepare("INSERT INTO pais VALUES (?, ?, ?, ?)");
+        foreach ($paises as $row) { $st->execute($row); }
+
+        // 4. Inserción de Datos: usuario
+        $usuarios = [
+            ['emperador@gmail.com', 'Daniel Matamala', 'Daniel', 218, '578cdf4690eb82ed556cc8d1cea80ec4'],
+            ['pinguino_azul@yahoo.es', 'Carmen Andrea Fuentes', 'Cleopatra', 36, '49129ef1ee2bdba2a4fe1216af5dd940'],
+            ['juanito@gmail.com', 'Juan Alberto Correa', 'El Mago', 152, '5cad4ea940f5898a2b0631f36b371138'],
+            ['luna@gmail.com', 'Luna Maria Blanco', 'Luna', 152, '818468ddb460c3bd842a28f371bca99e'],
+            ['ak47@gmail.com', 'Tadeo Rojas Silva', 'Tadeo', 152, '8a10f902a2b5eb2871054ae1d05e1b77'],
+            ['malfurion@yahoo.es', 'Malfurion Stormrage', 'Malfurion', 616, '2f37876a6e5c0006ff5fa97437c18302'],
+            ['dippi@gmail.com', 'Irina Alberta Brookesmith', 'Nana', 218, '9d9cd4ca61f672e14144298641484f6d'],
+            ['rennie@outlook.com', 'Renata Saturno', 'Renie', 36, '334baa9dda4aaf367f0efb87b12c824e'],
+            ['mark_hoppus228@gmail.com', 'Mark Hoppus', 'Mark', 616, 'b26dcc2f5c1279d00d8d84be63d7e409'],
+            ['pimienta@yahoo.es', 'Juan Fariña', 'Juano', 152, '3556c84118be692f27f5ac01320b5c06'],
+            ['lavadora@outlook.com', 'Jerry Cantrell', 'Jerry', 616, '6384e2b2184bcbf58eccf10ca7a6563c'],
+            ['filipo_filipo@gmail.com', 'Felipe Orellana', 'Filipo', 36, 'f1405b8e61bcea02c60bb1d376b3e57b']
+        ];
+        $st = $pdo->prepare("INSERT INTO usuario VALUES (?, ?, ?, ?, ?)");
+        foreach ($usuarios as $row) { $st->execute($row); }
+
+        // 5. Inserción de Datos: juego
+        $juegos = [
+            [1, 'Anno 117: Pax Romana', 'Da forma al Imperio romano en este juego de construcción y estrategia que marcó un antes y un después en el género. Construye ciudades mientras amplías tu influencia por las provincias romanas. Gobierna usando tu poderío económico, tu pericia diplomática o tu fuerza militar.', 53, 0, 2025],
+            [2, 'Rust', 'En Rust, el único propósito es sobrevivir. Todo lo que te rodea quiere liquidarte: la fauna de la isla, los demás habitantes, el entorno y otros supervivientes. Haz lo que sea para ver la luz de un nuevo día.', 21, 10, 2018],
+            [3, 'The Elder Scrolls III: Morrowind', 'The Elder Scrolls III: Morrowind® Edición Juego del Año incluye el contenido original del Morrowind más todo el contenido adicional de las expansiones Bloodmoon y Tribunal. El Mod original Construction Set no está incluido en este paquete.', 8, 10, 2002],
+            [4, 'The Void', 'Only brought to life by scarce sparks of Color, the bleak, grey Void is a peculiar place. The player gets to explore it, get to know the Sisters, Brothers, and other weird creatures inhabiting it, and learn the ways of Color, harvesting it and drawing sigils that change the world around them', 3, 35, 2016],
+            [5, 'Red Dead Redemption 2', 'Arthur Morgan y la banda de Van der Linde se ven obligados a huir. Con agentes federales y cazarrecompensas pisándoles los talones, la banda deberá atracar, robar y luchar para sobrevivir en su camino por el escabroso territorio.', 18, 80, 2019],
+            [6, 'Z.A.T.O. // I Love the World and Everything In It', 'USSR, 1986. A girl goes missing in the closed city of Vorkuta-5, yet not a soul seems to be concerned. Uncover the mystery behind her disappearance and transmit your signal to the universe.', 0, 0, 2025],
+            [7, 'FINAL FANTASY VII REMAKE INTERGRADE', 'Cloud Strife, exmiembro de Soldado, se adentra en la ciudad del mako, Midgar. El mundo del clásico juego FINAL FANTASY VII renace con gráficos de última generación, un nuevo sistema de combates y una aventura adicional con Yuffie Kirasagi como protagonista.', 40, 0, 2022],
+            [8, 'Cyberdimension Neptunia: 4 Goddesses Online', 'In this hack \'n\' slash adventure co-developed with Tamsoft and Compile Heart, the 4 Goddesses enter an online fantasy game inspired by... themselves! Choose from 12 characters with unique playstyles and skills to fight in realtime brawls, customize with accessories, and play online with others!', 12, 15, 2018],
+            [9, 'Crusader Kings III', 'Ama, lucha, planea y reclama la grandeza. Determina el legado de tu casa nobiliaria en la gran estrategia en expansión de Crusader Kings III. La muerte solo es el comienzo mientras lideras el linaje de tu dinastía en esta completa simulación realista de la Edad Media.', 35, 0, 2020],
+            [10, 'The Walking Dead: The Telltale Definitive Series', 'The Walking Dead: The Telltale Definitive Series contiene las 4 temporadas, The Walking Dead: 400 Days y The Walking Dead: Michonne, que cuenta con más de 50 horas de juego repartidas en 23 episodios únicos.', 24, 0, 2020],
+            [11, 'Darkest Dungeon', 'Darkest Dungeon es un desafiante juego de rol gótico en mazmorras y por turnos que gira en torno al esfuerzo psicológico de la aventura. Recluta, entrena y lidera a un equipo de héroes imperfectos a través de enrevesados bosques, laberintos olvidados, criptas en ruinas y más allá', 13, 0, 2016],
+            [12, '¡Ark se reinventa desde cero en esta próxima generación de tecnología de videojuegos con Unreal Engine 5! Forma una tribu, domestica y cría cientos de dinosaurios únicos y criaturas primitivas, exploran, cree, construyen y luchan hasta la cima de la cadena alimentaria. ¡Tu nuevo mundo te espera!', '¡Ark se reinventa desde cero en esta próxima generación de tecnología de videojuegos con Unreal Engine 5! Forma una tribu, domestica y cría cientos de dinosaurios únicos y criaturas primitivas, exploran, cree, construyen y luchan hasta la cima de la cadena alimentaria. ¡Tu nuevo mundo te espera!', 42, 50, 2023],
+            [13, 'DREDGE', 'DREDGE es una aventura de pesca para un solo jugador con una siniestra corriente subyacente. Vende lo que pescas, mejora tu barca y ahonda en las profundidades para encontrar antiguos tesoros enterrados.', 32, 40, 2023],
+            [14, 'HoloCure - Save the Fans!', 'Play as your favorite Vtubers from Hololive! Fight, explore, and clear your way through armies of fans and save them from their mind-control in this unofficial free fan-game.', 0, 0, 2023],
+            [15, 'Battlefield 6', 'La experiencia bélica definitiva. En una guerra de tanques, cazas y gigantescos arsenales de combate, el arma más mortífera es tu patrulla.', 63, 0, 2025],
+            [16, 'Kingdom Come: Deliverance II', 'Un emocionante RPG de acción con mucha narrativa y un exuberante mundo abierto situado en la Europa medieval del siglo XV. No te pierdas la aventura medieval definitiva donde vivirás un viaje de proporciones épicas de la mano del joven Henry.', 45, 40, 2025],
+            [17, 'Cyberpunk 2077', 'Cyberpunk 2077 es un RPG de aventura y acción de mundo abierto ambientado en el futuro sombrío de Night City, una peligrosa megalópolis obsesionada con el poder, el glamur y las incesantes modificaciones corporales.', 56, 8, 2020],
+            [18, 'RPG Maker MZ', 'Presentamos RPG Maker MZ, la última versión de la serie RPG Maker que permite crear un RPG de forma sencilla.', 67, 10, 2020],
+            [20, 'Super Neptunia RPG', 'Neptune, stricken with amnesia, awakes in a mysterious world where 2D reigns supreme. With a little help from her friends, Neptune embark on a journey to regain her memory, save the world, and 3D games as we know it. ', 14, 20, 2019],
+            [21, 'Deus Ex: Game of the Year Edition', 'The year is 2052 and the world is a dangerous and chaotic place. Terrorists operate openly - killing thousands; drugs, disease and pollution kill even more. The world\'s economies are close to collapse and the gap between the insanely wealthy and the desperately poor grows ever wider.', 5, 0, 2000]
+        ];
+        $st = $pdo->prepare("INSERT INTO juego VALUES (?, ?, ?, ?, ?, ?)");
+        foreach ($juegos as $row) { $st->execute($row); }
+
+        // 6. Inserción de Datos: compra
+        $compras = [
+            [100, 1, 'juanito@gmail.com', '2025-11-12 20:02:59.7', 60],
+            [101, 9, 'juanito@gmail.com', '2023-01-22 10:03:01.705', 15],
+            [102, 10, 'juanito@gmail.com', '2023-01-22 10:03:01.705', 21],
+            [103, 14, 'pinguino_azul@yahoo.es', '2022-05-17 14:30:00', 0],
+            [104, 1, 'pinguino_azul@yahoo.es', '2022-05-17 14:30:00', 0],
+            [105, 2, 'pinguino_azul@yahoo.es', '2025-11-12 20:16:19.672', 21],
+            [106, 15, 'pinguino_azul@yahoo.es', '2025-11-12 20:16:21.819', 63],
+            [107, 13, 'malfurion@yahoo.es', '2023-08-28 00:00:00', 14],
+            [108, 14, 'malfurion@yahoo.es', '2022-12-24 19:45:00', 0],
+            [109, 1, 'malfurion@yahoo.es', '2025-08-28 00:00:00', 53],
+            [110, 14, 'dippi@gmail.com', '2025-11-12 22:17:22.804', 0],
+            [111, 21, 'lavadora@outlook.com', '2024-11-13 00:39:08.894', 1.5],
+            [112, 21, 'filipo_filipo@gmail.com', '2016-06-07 21:45:50', 1.5],
+            [113, 18, 'luna@gmail.com', '2025-11-13 02:26:13.048', 80]
+        ];
+        $st = $pdo->prepare("INSERT INTO compra VALUES (?, ?, ?, ?, ?)");
+        foreach ($compras as $row) { $st->execute($row); }
+
+        // 7. Inserción de Datos: critica
+        $criticas = [
+            [1, 'juanito@gmail.com', 1, 'muy buen juego; recomendado', '2025-11-12 20:12:24.257'],
+            [9, 'juanito@gmail.com', 1, 'Comprar solo si está con descuento', '2024-12-02 23:10:24.257'],
+            [15, 'pinguino_azul@yahoo.es', 0, 'Este juego es una porqueria', '2025-12-12 00:02:00'],
+            [2, 'pinguino_azul@yahoo.es', 1, null, '2025-12-12 12:37:20'],
+            [1, 'pinguino_azul@yahoo.es', 0, 'No me gusto. Es pesimo', '2022-07-01 14:34:00'],
+            [14, 'dippi@gmail.com', 1, 'Es gratuito!!!', '2025-12-12 22:18:30.684'],
+            [21, 'filipo_filipo@gmail.com', 1, ':D', '2025-11-13 02:25:29.674'],
+            [18, 'luna@gmail.com', 0, 'Muy caro', '2025-11-13 02:26:52.731']
+        ];
+        $st = $pdo->prepare("INSERT INTO critica VALUES (?, ?, ?, ?, ?)");
+        foreach ($criticas as $row) { $st->execute($row); }
+
+        // 8. Crear ZIP para descarga de los estudiantes
+        $zipPath = $dir . '/venta_juegos.zip';
+        if (class_exists('ZipArchive')) {
+            $zip = new \ZipArchive();
+            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+                $zip->addFile($sqlitePath, 'venta_juegos.sqlite');
+                $zip->close();
+            }
+        }
     }
 
     /**
