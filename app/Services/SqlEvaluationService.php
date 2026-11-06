@@ -151,6 +151,9 @@ class SqlEvaluationService
             $cleanCode = preg_replace('/^\s*\.open\s+\S+/mi', '', $codigoEstudiante);
             $cleanCode = trim($cleanCode);
 
+            // Normalización de compatibilidad PostgreSQL (ALL, ANY)
+            $cleanCode = $this->normalizarSintaxisPostgres($cleanCode);
+
             // 2. Consulta o Script de Comprobación del Caso de Prueba
             $scriptVerificacion = trim($caso->entradas ?? '');
 
@@ -292,6 +295,38 @@ class SqlEvaluationService
     }
 
     /**
+     * Normaliza construcciones sintácticas propias de PostgreSQL a equivalentes estándar compatibles con SQLite.
+     */
+    protected function normalizarSintaxisPostgres(string $sql): string
+    {
+        if (empty($sql)) return $sql;
+
+        // Convierte: expr >= ALL (SELECT col FROM ...) en: expr >= (SELECT MAX(col) FROM ...)
+        $sql = preg_replace_callback(
+            '/(>|>=|<|<=)\s*ALL\s*\(\s*SELECT\s+(.+?)\s+FROM\s+/is',
+            function($m) {
+                $op = $m[1];
+                $expr = trim($m[2]);
+                if ($op === '>' || $op === '>=') {
+                    return "{$op} (SELECT max({$expr}) FROM ";
+                } elseif ($op === '<' || $op === '<=') {
+                    return "{$op} (SELECT min({$expr}) FROM ";
+                }
+                return $m[0];
+            },
+            $sql
+        );
+
+        // Convierte: = ANY (...) en: IN (...)
+        $sql = preg_replace('/=\s*ANY\s*\(/i', 'IN (', $sql);
+
+        // Convierte: (!= ALL | <> ALL) en: NOT IN (...)
+        $sql = preg_replace('/(!=|<>)\s*ALL\s*\(/i', 'NOT IN (', $sql);
+
+        return $sql;
+    }
+
+    /**
      * Prepara el archivo SQLite base para el problema a partir de su archivo_adicional.
      */
     protected function prepararBaseDatosPlantilla(Problemas $problema, string $baseDir): ?string
@@ -300,7 +335,11 @@ class SqlEvaluationService
             return null;
         }
 
-        $filePath = storage_path('app/public/archivos_adicionales/' . $problema->archivo_adicional);
+        $rawPath = $problema->archivo_adicional;
+        $filePath = storage_path('app/public/archivos_adicionales/' . basename($rawPath));
+        if (!file_exists($filePath)) {
+            $filePath = storage_path('app/public/' . ltrim($rawPath, '/\\'));
+        }
         if (!file_exists($filePath)) {
             return null;
         }
