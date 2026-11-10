@@ -43,9 +43,18 @@ class SolicitudRaLlm extends Model
         $prompt .= "INSTRUCCIONES Y REGLAS FUNDAMENTALES:\n";
         $prompt .= "1. EVALÚA ÚNICAMENTE las restricciones técnicas y metodológicas impuestas por el profesor (por ejemplo: funciones/librerías prohibidas o estructuras de control requeridas).\n";
         $prompt .= "2. NO evalúes la lógica, corrección algorítmica ni si el programa resuelve el problema: los errores de lógica o cálculos son evaluados exclusivamente por los casos de prueba del juez, NO por ti. Aunque el algoritmo del estudiante tenga un bug o error lógico (por ejemplo asignar una variable equivocada), si no violó las restricciones del profesor, DEBES responder que 'Cumple'.\n";
-        $prompt .= "3. La PRIMERA LÍNEA de tu respuesta DEBE ser estrictamente 'Cumple' o 'No cumple' (sin comillas, sin tildes ni texto adicional en esa primera línea).\n";
-        $prompt .= "4. Si 'Cumple': Añade a partir de la segunda línea una breve confirmación de que se respetaron las restricciones requeridas.\n";
-        $prompt .= "5. Si 'No cumple':\n";
+
+        $esSql = str_contains(strtolower($lenguaje), 'sql');
+        if ($esSql) {
+            $prompt .= "3. REGLAS ESPECÍFICAS PARA CONSULTAS SQL:\n";
+            $prompt .= "   - En SQLite / bases de datos, el operador LIKE es nativamente insensible a mayúsculas y minúsculas (case-insensitive) para caracteres ASCII.\n";
+            $prompt .= "   - Si la restricción solicita considerar mayúsculas y minúsculas (por ejemplo buscar 'RPG' o 'rpg'), el uso de LIKE, ILIKE, LOWER() o UPPER() para buscar el término CUMPLE plenamente con la restricción.\n";
+            $prompt .= "   - Filtros de datos o condiciones en WHERE/HAVING no son prohibiciones metodológicas: si no se utilizan funciones expresamente prohibidas por el profesor, DEBES responder 'Cumple'.\n";
+        }
+
+        $prompt .= "4. La PRIMERA LÍNEA de tu respuesta DEBE ser estrictamente 'Cumple' o 'No cumple' (sin comillas, sin tildes ni texto adicional en esa primera línea).\n";
+        $prompt .= "5. Si 'Cumple': Añade a partir de la segunda línea una breve confirmación de que se respetaron las restricciones requeridas.\n";
+        $prompt .= "6. Si 'No cumple':\n";
         $prompt .= "   - Indica a partir de la segunda línea y de forma general cuál restricción del profesor no se cumplió (por ejemplo: 'El código utiliza la función prohibida max()').\n";
         $prompt .= "   - PROHIBICIÓN ESTRICTA: JAMÁS digas cómo corregir el código, JAMÁS señales en qué línea o qué variable está el error, JAMÁS des pistas de la solución ni muestres cómo debería ser el código.\n";
         return $prompt;
