@@ -527,9 +527,10 @@ class ProblemasController extends Controller
                 } else {
                     DB::table('disponible')->where('id_curso', '=', $request->id_curso)->where('id_problema', '=', $problema->id)->increment('cantidad_intentos');
                 }
-                if (isset($last_envio->termino) && $last_envio->solucionado == false) {
-                    $codigo = $last_envio->codigo;
-                    $envio->codigo = $codigo;
+                if (isset($last_envio->termino)) {
+                    if (!empty($last_envio->codigo)) {
+                        $envio->codigo = $last_envio->codigo;
+                    }
                     $envio->inicio = $last_envio->inicio;
                 }
                 $envio->save();
@@ -548,27 +549,64 @@ class ProblemasController extends Controller
 
     public function pdf_enunciado(Request $request){
         $problema = Problemas::with(['categorias', 'lenguajes'])->find($request->id_problema);
-        $pdf = PDF::loadView('plataforma.problemas.pdf_enunciado', compact('problema'));
-        return $pdf->download($problema->codigo.' - enunciado.pdf');
+        if (!$problema) {
+            return redirect()->back()->with('error', 'El problema solicitado no fue encontrado.');
+        }
+
+        $pdf = PDF::loadView('plataforma.problemas.pdf_enunciado', compact('problema'))
+            ->setPaper('a4', 'portrait')
+            ->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+                'defaultFont' => 'sans-serif',
+            ]);
+
+        $filename = ($problema->codigo ?: 'problema') . ' - enunciado.pdf';
+        return $pdf->download($filename);
     }
 
     public function guardar_codigo(Request $request){
         try{
             DB::beginTransaction();
-            $last_envio = EnvioSolucionProblema::where('id_resolver', '=', $request->id_resolver)->where('id_cursa', '=', $request->id_cursa)->orderBy('created_at', 'DESC')->first();
-            $last_envio->codigo = $request->codigo_save;
-            if(isset($request->lenguaje_save)){
-                $resolver = Resolver::where('id_problema', '=', $request->id_problema)->where('id_lenguaje', '=', $request->lenguaje_save)->first();
-                $last_envio->ProblemaLenguaje()->dissociate();
-                $last_envio->ProblemaLenguaje()->associate($resolver);
+            $last_envio = null;
+
+            if ($request->filled('id_envio')) {
+                $last_envio = EnvioSolucionProblema::find($request->id_envio);
             }
-            $last_envio->save();
+
+            if (!$last_envio && $request->filled('id_cursa')) {
+                $last_envio = EnvioSolucionProblema::where('id_cursa', '=', $request->id_cursa)
+                    ->when($request->filled('id_resolver'), function($q) use ($request) {
+                        $q->where('id_resolver', '=', $request->id_resolver);
+                    })
+                    ->orderBy('created_at', 'DESC')->first();
+            }
+
+            if ($last_envio) {
+                $last_envio->codigo = $request->codigo_save ?? '';
+
+                if($request->filled('lenguaje_save') && $request->filled('id_problema')){
+                    $resolver = Resolver::where('id_problema', '=', $request->id_problema)
+                        ->where(function($q) use ($request) {
+                            $q->where('id_lenguaje', '=', $request->lenguaje_save)
+                              ->orWhere('id', '=', $request->lenguaje_save);
+                        })->first();
+
+                    if ($resolver) {
+                        $last_envio->ProblemaLenguaje()->dissociate();
+                        $last_envio->ProblemaLenguaje()->associate($resolver);
+                    }
+                }
+                $last_envio->save();
+            }
+
             DB::commit();
-        }catch(\PDOException $e){
+        }catch(\Throwable $e){
             DB::rollBack();
+            \Log::error("Error en guardar_codigo: " . $e->getMessage());
             return redirect()->route('problemas.resolver', ['codigo'=>$request->codigo_problema, 'id_curso'=>$request->id_curso])->with('error', $e->getMessage());
         }
-        return redirect()->route('problemas.ver', ['codigo'=>$request->codigo_problema, 'id_curso'=>$request->id_curso])->with('succes', 'El código desarrollado ha sido almacenado');
+        return redirect()->route('problemas.ver', ['codigo'=>$request->codigo_problema, 'id_curso'=>$request->id_curso])->with('success', 'El código desarrollado ha sido almacenado');
     }
 
     public function agregar_problemas_curso(Request $request, $id_curso)

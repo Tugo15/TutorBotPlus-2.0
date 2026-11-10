@@ -435,20 +435,60 @@ class CertamenesController extends Controller
     public function guardar_codigo_certamen(Request $request){
         try{
             DB::beginTransaction();
-            $last_envio = EnvioSolucionProblema::where('id_certamen', '=', $request->id_certamen)->orderBy('created_at', 'DESC')->first();
-            $last_envio->codigo = $request->codigo_save;
-            if(isset($request->lenguaje_save)){
-                $resolver = Resolver::where('id_problema', '=', $request->id_problema)->where('id_lenguaje', '=', $request->lenguaje_save)->first();
-                $last_envio->ProblemaLenguaje()->dissociate();
-                $last_envio->ProblemaLenguaje()->associate($resolver);
+            $last_envio = null;
+
+            // 1. Buscar por id_envio específico si fue enviado
+            if ($request->filled('id_envio')) {
+                $last_envio = EnvioSolucionProblema::find($request->id_envio);
             }
-            $last_envio->save();
+
+            // 2. Si no, buscar por certamen y problema/resolver
+            if (!$last_envio && $request->filled('id_certamen')) {
+                $query = EnvioSolucionProblema::where('id_certamen', '=', $request->id_certamen);
+                if ($request->filled('id_resolver')) {
+                    $query->where('id_resolver', '=', $request->id_resolver);
+                } elseif ($request->filled('id_problema')) {
+                    $query->whereHas('problema', function($q) use ($request) {
+                        $q->where('problemas.id', $request->id_problema);
+                    });
+                }
+                $last_envio = $query->orderBy('created_at', 'DESC')->first();
+            }
+
+            if ($last_envio) {
+                $last_envio->codigo = $request->codigo_save ?? '';
+
+                if ($request->filled('lenguaje_save') && $request->filled('id_problema')) {
+                    $resolver = Resolver::where('id_problema', '=', $request->id_problema)
+                        ->where(function($q) use ($request) {
+                            $q->where('id_lenguaje', '=', $request->lenguaje_save)
+                              ->orWhere('id', '=', $request->lenguaje_save);
+                        })->first();
+
+                    if ($resolver) {
+                        $last_envio->ProblemaLenguaje()->dissociate();
+                        $last_envio->ProblemaLenguaje()->associate($resolver);
+                    }
+                }
+                $last_envio->save();
+            }
+
             DB::commit();
-        }catch(\PDOException $e){
+        }catch(\Throwable $e){
             DB::rollBack();
-            return redirect()->route('certamenes.resolucion', ['token'=>$request->token_certamen])->with('error', $e->getMessage());
+            \Log::error("Error en guardar_codigo_certamen: " . $e->getMessage());
+            $token = $request->token_certamen ?? ($last_envio && $last_envio->certamen ? $last_envio->certamen->token : null);
+            if ($token) {
+                return redirect()->route('certamenes.resolucion', ['token' => $token])->with('error', 'Error al guardar: ' . $e->getMessage());
+            }
+            return back()->with('error', 'Error al guardar: ' . $e->getMessage());
         }
-        return redirect()->route('certamenes.resolucion', ['token'=>$request->token_certamen])->with('succes', 'El código desarrollado ha sido almacenado');
+
+        $token = $request->token_certamen ?? ($last_envio && $last_envio->certamen ? $last_envio->certamen->token : null);
+        if ($token) {
+            return redirect()->route('certamenes.resolucion', ['token' => $token])->with('success', 'El código desarrollado ha sido almacenado');
+        }
+        return back()->with('success', 'El código desarrollado ha sido almacenado');
     }
 }
 

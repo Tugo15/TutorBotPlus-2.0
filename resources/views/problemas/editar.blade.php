@@ -65,6 +65,15 @@
             placeholder: 'Ingrese el enunciado del problema',
             initialValue: @json(old('body_problema', $problema->body_problema ?? '')),
             extendedAutolinks: true,
+            hooks: {
+                addImageBlobHook: (blob, callback) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        callback(e.target.result, blob.name || 'Diagrama');
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            },
             customHTMLRenderer: {
                 codeBlock(node, { innerHTML }) {
                     if (node.info === 'katex' || node.info === 'math' || node.info === 'latex') {
@@ -86,12 +95,19 @@
             window.attachKaTeXToEditor(editor, '#editor');
         }
 
+        function getSanitizedMarkdown() {
+            let md = editor.getMarkdown();
+            // Corrige saltos de línea accidentales entre ![] y (data:image...)
+            md = md.replace(/!\[(.*?)\]\s*\r?\n\s*\((data:image\/[^;]+;base64,[^\)]+)\)/g, '![$1]($2)');
+            return md;
+        }
+
         editor.on('change', () => {
-            document.querySelector('#body_problema').value = editor.getMarkdown();
+            document.querySelector('#body_problema').value = getSanitizedMarkdown();
         });
 
         document.querySelector('#editarForm').addEventListener('submit', e => {
-            document.querySelector('#body_problema').value = editor.getMarkdown();
+            document.querySelector('#body_problema').value = getSanitizedMarkdown();
         });
 
 

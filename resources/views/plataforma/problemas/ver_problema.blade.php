@@ -69,22 +69,22 @@
                     <div class="card-body p-3.5 d-flex flex-column justify-content-between">
                         <div>
                             <div class="d-grid gap-2 px-1">
-                                <a class="btn btn-primary text-nowrap {{ $problema->disponible ? '' : 'disabled' }}"
+                                <a class="btn btn-primary text-wrap {{ $problema->disponible ? '' : 'disabled' }}"
                                     @if (isset($id_curso)) href="{{ route('problemas.resolver', ['codigo' => $problema->codigo, 'id_curso' => $id_curso]) }}" @endif
                                     role="button">{{ $problema->disponible ? 'Resolver Problema' : 'Problema No Disponible' }}</a>
-                                <a class="btn btn-outline-secondary btn-sm"
+                                <a class="btn btn-outline-secondary btn-sm text-wrap"
                                     href="{{ route('problemas.pdf_enunciado', ['id_problema' => $problema->id]) }}"
                                     target="_blank" role="button">Descargar PDF Enunciado</a>
-                                <a class="btn btn-outline-secondary text-nowrap btn-sm {{ isset($problema->body_editorial) ? '' : 'disabled' }}"
+                                <a class="btn btn-outline-secondary text-wrap btn-sm {{ isset($problema->body_editorial) ? '' : 'disabled' }}"
                                     href="{{ route('problemas.ver_editorial', ['codigo' => $problema->codigo, 'id_curso' => $id_curso]) }}"
                                     role="button">{{ isset($problema->body_editorial) ? 'Ver Pistas' : 'Pistas No Disponible' }}</a>
                                 @can('ver informe del problema')
-                                    <a class="btn btn-outline-secondary text-nowrap btn-sm"
+                                    <a class="btn btn-outline-secondary text-wrap btn-sm"
                                         href="{{ route('informe.problema', ['id_curso' => $id_curso, 'id_problema' => $problema->id]) }}"
                                         role="button">Ver Informe del Problema</a>
                                 @endcan
-                                <a class="btn btn-outline-secondary text-nowrap btn-sm"
-                                    href="{{ route('envios.listado', ['id_problema' => $problema->id]) }}" role="button">Ver Mis Envios</a>
+                                <a class="btn btn-outline-secondary text-wrap btn-sm"
+                                    href="{{ route('envios.listado', ['id_problema' => $problema->id]) }}" role="button">Ver Mis Envíos</a>
                             </div>
                             <hr class="my-3">
                             <h6 class="px-1 font-weight-bold text-dark mb-2" style="font-size: 0.95rem;"><i class="fa fa-info-circle me-1 text-primary"></i> Información:</h6>

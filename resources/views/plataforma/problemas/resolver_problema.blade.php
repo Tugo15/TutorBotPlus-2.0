@@ -55,7 +55,12 @@
         });
         document.querySelector('#guardarForm').addEventListener('submit', e => {
             document.querySelector('#codigo_save').value = editor.getValue();
-            formSubmited = true
+            let selectLenguaje = document.querySelector('#lenguaje');
+            if (selectLenguaje && selectLenguaje.selectedIndex >= 0) {
+                let opt = selectLenguaje.options[selectLenguaje.selectedIndex];
+                document.querySelector('#lenguaje_save').value = opt.id || opt.value;
+            }
+            formSubmited = true;
             document.getElementById('guardarForm').submit();
         });
         window.addEventListener("beforeunload", function (e) {

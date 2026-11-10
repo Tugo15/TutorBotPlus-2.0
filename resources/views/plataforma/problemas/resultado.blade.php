@@ -183,30 +183,34 @@
                             </div>
                         @endif
                         <hr>
-                        @if ($envio->usuario->id == auth()->user()->id && !$evaluaciones->contains('estado', '=', 'En Proceso') && $envio->solucionado == false)
-                            <div class="row px-5 mt-2">
-                                <a class="btn btn-outline-secondary text-nowrap btn-block"
+                        @if ($envio->usuario->id == auth()->user()->id && !$evaluaciones->contains('estado', '=', 'En Proceso'))
+                            <div class="row px-2 px-sm-3 mt-2">
+                                <a class="btn btn-outline-secondary text-wrap btn-block w-100"
                                     href="{{ (isset($res_certamen) && $res_certamen->certamen)? route('certamenes.resolver_problema', ['token_certamen'=>$res_certamen->token, 'codigo'=>$envio->problema->codigo, 'id_curso'=>$res_certamen->certamen->id_curso]) : route('problemas.resolver', ['codigo' => $envio->problema->codigo, 'id_curso' => $envio->curso->id]) }}"
-                                    role="button">Volver al intento</a>
+                                    role="button">
+                                    <i class="fa fa-undo me-1"></i> {{ (isset($res_certamen) && $envio->solucionado) ? 'Modificar solución' : 'Volver al intento' }}
+                                </a>
                             </div>
                         @endif
-                        <div class="row px-5 mt-2">
-                            <a class="btn btn-outline-secondary text-nowrap btn-sm btn-block @if(isset($res_certamen) && $res_certamen->finalizado) disabled @endif"
+                        <div class="row px-2 px-sm-3 mt-2">
+                            <a class="btn btn-outline-secondary text-wrap btn-sm btn-block w-100 @if(isset($res_certamen) && $res_certamen->finalizado) disabled @endif"
                                 href="{{ isset($res_certamen)? route('certamenes.resolucion', ["token"=>$res_certamen->token]) : route('problemas.ver', ['codigo' => $problema->codigo, 'id_curso' => $envio->curso->id]) }}"
-                                role="button">{{isset($res_certamen)? "Volver a la Evaluación   " : "Volver al Enunciado"}}</a>
+                                role="button">
+                                <i class="fa fa-arrow-left me-1"></i> {{ isset($res_certamen)? "Volver a la Evaluación" : "Volver al Enunciado" }}
+                            </a>
                         </div>
                         @can('ver informe del problema')
                             @if(!isset($res_certamen))
-                                <div class="row px-5 mt-2">
-                                    <a class="btn btn-outline-secondary btn-sm btn-block"
+                                <div class="row px-2 px-sm-3 mt-2">
+                                    <a class="btn btn-outline-secondary text-wrap btn-sm btn-block w-100"
                                         href="{{ route('informe.envios.problema', ['id_curso' => $envio->curso->id, 'id_problema' => $envio->problema->id]) }}"
-                                        role="button">Volver al informe de envios del problema</a>
+                                        role="button">Volver al informe de envíos del problema</a>
                                 </div>
                             @elseif(isset($res_certamen) && $res_certamen->finalizado == true)
-                            <div class="row px-5 mt-2">
-                                <a class="btn btn-outline-secondary btn-sm btn-block"
+                            <div class="row px-2 px-sm-3 mt-2">
+                                <a class="btn btn-outline-secondary text-wrap btn-sm btn-block w-100"
                                     href="{{route('informe.certamen.detalle', ['id_certamen'=>$res_certamen->id_certamen, 'id_res_certamen'=>$res_certamen->id])}}"
-                                    role="button">Volver al informe de envios de la Evaluación</a>
+                                    role="button">Volver al informe de envíos de la Evaluación</a>
                                 </div>
                             @endif
                         @endcan

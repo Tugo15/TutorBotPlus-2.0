@@ -6,6 +6,23 @@
 @endphp
 @extends('layout_plataforma.app', ['title_html' => $certamenNombre, 'title' => 'Certamen - ' . $certamenNombre, 'breadcrumbs' => [['nombre' => 'Cursos', 'route' => route('cursos.listado')], ['nombre' => $certamenNombre, 'route' => $certamenId ? route('certamenes.ver', ['id_certamen' => $certamenId]) : route('cursos.listado')], ['nombre' => 'Resolución']]])
 
+@push('css')
+<style>
+    #enunciado img, #body_markdown img, .markdown-body img {
+        max-width: 100% !important;
+        height: auto !important;
+        display: block;
+        margin: 1.5rem auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    .btn.text-wrap, .btn {
+        white-space: normal !important;
+        word-break: break-word;
+    }
+</style>
+@endpush
+
 @section('content')
     <div class="container-fluid py-3 px-4">
         @include('components.alert')
@@ -68,11 +85,11 @@
                 </div>
             </div>
             <div class="col-sm-4 col-xs-12">
-                <div class="card border-danger px-5 py-3 mb-3" style="height:11rem">
-                    <div class="d-flex justify-content-center">
+                <div class="card border-danger p-3 px-sm-4 mb-3" style="min-height: 11rem; height: auto;">
+                    <div class="d-flex justify-content-center flex-wrap gap-2">
                         @foreach ($problemas as $key => $problema)
                             <button type="button" id="problema_{{ $key }}"
-                                class="btn btn-lg @if ($key == 0) active @endif me-2 @if (!isset($problema->resuelto)) btn-outline-secondary @elseif($problema->resuelto == true) btn-success @elseif($problema->resuelto == false) btn-danger @endif"
+                                class="btn btn-lg @if ($key == 0) active @endif @if (!isset($problema->resuelto)) btn-outline-secondary @elseif($problema->resuelto == true) btn-success @elseif($problema->resuelto == false) btn-danger @endif"
                                 onclick="seleccion_problema({{ $key }})">{{ $key + 1 }}</button>
                         @endforeach
                     </div>
@@ -81,18 +98,21 @@
                         <form action="{{ route('certamen.finalizar', ['token' => $res_certamen->token]) }}" method="POST"
                             id="finalizar_form" onsubmit="event.preventDefault();advertencia_finalizar()">
                             @csrf
-                            <button class="btn btn-secondary btn-large align-self-center" type="submit">Finalizar</button>
+                            <button class="btn btn-secondary btn-large align-self-center text-wrap" type="submit">Finalizar</button>
                         </form>
                     </div>
                 </div>
                 <div class="card border-danger shadow-sm mb-3">
                     <div class="card-body p-3">
                         <div class="d-grid gap-2 px-2 mt-1">
-                            <a class="btn btn-primary btn-sm @if ($problemas[0]->resuelto == true) disabled @endif"
+                            <a class="btn btn-primary btn-sm text-wrap"
                                 href="{{ $problemas[0]->resolver_ruta }}" role="button" id="boton_resolver">
-                                {{ $problemas[0]->resuelto == true ? 'Problema Resuelto' : 'Resolver Problema' }}</a>
-                            <a class="btn btn-outline-secondary btn-sm" href="{{ $problemas[0]->pdf_ruta }}"
-                                id="boton_pdf" target="_blank" role="button">Descargar PDF del Enunciado</a>
+                                <i class="fa {{ $problemas[0]->resuelto == true ? 'fa-redo' : 'fa-code' }} me-1"></i>
+                                {{ $problemas[0]->resuelto == true ? 'Volver a Resolver' : 'Resolver Problema' }}</a>
+                            <a class="btn btn-outline-secondary btn-sm text-wrap" href="{{ $problemas[0]->pdf_ruta }}"
+                                id="boton_pdf" target="_blank" role="button">
+                                <i class="fa fa-file-pdf me-1"></i> Descargar PDF del Enunciado
+                            </a>
                         </div>
                         <hr class="my-3">
                         <h6 class="px-2 font-weight-bold text-dark mb-2"><i class="fa fa-info-circle me-1 text-primary"></i> Información:</h6>
@@ -211,15 +231,14 @@
                 }
                 let boton_resolver = document.getElementById("boton_resolver");
                 let boton_pdf = document.getElementById("boton_pdf");
-                if (problemas[item]["resuelto"] == true) {
-                    boton_resolver.classList.add('disabled');
-                    boton_resolver.innerHTML = "Problema Resuelto";
+                boton_resolver.classList.remove('disabled');
+                boton_resolver.setAttribute("href", problemas[item]["resolver_ruta"]);
+                boton_pdf.setAttribute("href", problemas[item]["pdf_ruta"]);
 
+                if (problemas[item]["resuelto"] == true) {
+                    boton_resolver.innerHTML = '<i class="fa fa-redo me-1"></i> Volver a Resolver';
                 } else {
-                    boton_resolver.classList.remove('disabled');
-                    boton_resolver.innerHTML = "Resolver Problema";
-                    boton_resolver.setAttribute("href", problemas[item]["resolver_ruta"])
-                    boton_pdf.setAttribute("href", problemas[item]["pdf_ruta"])
+                    boton_resolver.innerHTML = '<i class="fa fa-code me-1"></i> Resolver Problema';
                 }
                 style_table()
             }

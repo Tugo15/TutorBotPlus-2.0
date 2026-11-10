@@ -137,7 +137,12 @@
                                     </td>
                                     <td class="align-middle text-end">
                                         <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1">
-                                            <button type="button" class="btn btn-xs btn-outline-primary mb-0" data-bs-toggle="modal" data-bs-target="#modalCodigoEnvio_{{ $envio->id ?? $loop->index }}">
+                                            <button type="button" class="btn btn-xs btn-outline-primary mb-0 btn-ver-codigo-envio"
+                                                data-estudiante="{{ $nombreEstudiante }}"
+                                                data-problema="{{ $nombreProb }}"
+                                                data-lenguaje="{{ $envio->nombre_lenguaje ?? 'Lenguaje' }}"
+                                                data-ip="{{ $ipOrigen }}"
+                                                data-codigo="{{ base64_encode($codigoFuente) }}">
                                                 <i class="fa fa-code me-1"></i> Ver Código
                                             </button>
                                             @if(isset($envio->token))
@@ -146,45 +151,45 @@
                                                 </a>
                                             @endif
                                         </div>
-
-                                        <!-- Modal de Código Fuente -->
-                                        <div class="modal fade text-start" id="modalCodigoEnvio_{{ $envio->id ?? $loop->index }}" tabindex="-1" aria-labelledby="labelModalCodigo_{{ $envio->id ?? $loop->index }}" aria-hidden="true">
-                                            <div class="modal-dialog modal-lg modal-dialog-centered">
-                                                <div class="modal-content border shadow-lg">
-                                                    <div class="modal-header bg-white border-bottom">
-                                                        <div>
-                                                            <h6 class="modal-title font-weight-bold text-dark" id="labelModalCodigo_{{ $envio->id ?? $loop->index }}">
-                                                                <i class="fa fa-code text-primary me-2"></i>Código de {{ $nombreEstudiante }}
-                                                            </h6>
-                                                            <p class="text-xs text-secondary mb-0">
-                                                                Problema: <strong>{{ $nombreProb }}</strong> | 
-                                                                Lenguaje: <span class="badge bg-secondary text-xxs">{{ $envio->nombre_lenguaje ?? 'N/A' }}</span> | 
-                                                                IP Origen: <span class="badge border border-dark text-dark bg-white font-monospace text-xxs"><i class="fa fa-network-wired me-1"></i>{{ $ipOrigen }}</span>
-                                                            </p>
-                                                        </div>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                    </div>
-                                                    <div class="modal-body p-3 bg-light">
-                                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                                            <span class="text-xs font-weight-bold text-dark">Código Fuente Enviado:</span>
-                                                            <button type="button" class="btn btn-xs btn-outline-secondary mb-0" onclick="navigator.clipboard.writeText(document.getElementById('code_text_{{ $envio->id ?? $loop->index }}').innerText)">
-                                                                <i class="fa fa-copy me-1"></i> Copiar Código
-                                                            </button>
-                                                        </div>
-                                                        <pre class="bg-dark text-white p-3 rounded text-xs mb-0" style="max-height: 400px; overflow-y: auto;"><code id="code_text_{{ $envio->id ?? $loop->index }}">{{ $codigoFuente }}</code></pre>
-                                                    </div>
-                                                    <div class="modal-footer bg-white border-top py-2">
-                                                        <button type="button" class="btn btn-sm btn-outline-secondary mb-0" data-bs-dismiss="modal">Cerrar</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Global de Código Fuente -->
+<div class="modal fade" id="modalVerCodigoGlobal" tabindex="-1" aria-labelledby="labelModalCodigoGlobal" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border shadow-lg">
+            <div class="modal-header bg-white border-bottom">
+                <div>
+                    <h6 class="modal-title font-weight-bold text-dark" id="labelModalCodigoGlobal">
+                        <i class="fa fa-code text-primary me-2"></i>Código de <span id="modalGlobalEstudiante">-</span>
+                    </h6>
+                    <p class="text-xs text-secondary mb-0">
+                        Problema: <strong id="modalGlobalProblema">-</strong> | 
+                        Lenguaje: <span class="badge bg-secondary text-xxs" id="modalGlobalLenguaje">-</span> | 
+                        IP Origen: <span class="badge border border-dark text-dark bg-white font-monospace text-xxs"><i class="fa fa-network-wired me-1"></i><span id="modalGlobalIp">-</span></span>
+                    </p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3 bg-light">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-xs font-weight-bold text-dark">Código Fuente Enviado:</span>
+                    <button type="button" class="btn btn-xs btn-outline-secondary mb-0" id="btnCopiarCodigoModalGlobal">
+                        <i class="fa fa-copy me-1"></i> Copiar Código
+                    </button>
+                </div>
+                <pre class="bg-dark text-white p-3 rounded text-xs mb-0" style="max-height: 420px; overflow-y: auto;"><code id="modalGlobalCodigo" style="white-space: pre-wrap; font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;"></code></pre>
+            </div>
+            <div class="modal-footer bg-white border-top py-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary mb-0" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -228,6 +233,58 @@
                     tableEnvios.search('').columns().search('').draw();
                 });
             }
+
+            $(document).on('click', '.btn-ver-codigo-envio', function(e) {
+                e.preventDefault();
+                var btn = $(this);
+                var estudiante = btn.data('estudiante') || 'Estudiante';
+                var problema = btn.data('problema') || 'Problema';
+                var lenguaje = btn.data('lenguaje') || 'N/A';
+                var ip = btn.data('ip') || '-';
+                var b64Code = btn.data('codigo') || '';
+
+                var decoded = '';
+                if (b64Code) {
+                    try {
+                        decoded = decodeURIComponent(escape(window.atob(b64Code)));
+                    } catch (err) {
+                        try {
+                            decoded = window.atob(b64Code);
+                        } catch (err2) {
+                            decoded = b64Code;
+                        }
+                    }
+                } else {
+                    decoded = '// No se registró código en este envío';
+                }
+
+                $('#modalGlobalEstudiante').text(estudiante);
+                $('#modalGlobalProblema').text(problema);
+                $('#modalGlobalLenguaje').text(lenguaje);
+                $('#modalGlobalIp').text(ip);
+                $('#modalGlobalCodigo').text(decoded);
+
+                var modalEl = document.getElementById('modalVerCodigoGlobal');
+                if (modalEl) {
+                    var myModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    myModal.show();
+                }
+            });
+
+            $(document).on('click', '#btnCopiarCodigoModalGlobal', function(e) {
+                e.preventDefault();
+                var code = $('#modalGlobalCodigo').text();
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(code).then(function() {
+                        var btn = $('#btnCopiarCodigoModalGlobal');
+                        var originalHtml = btn.html();
+                        btn.html('<i class="fa fa-check text-success me-1"></i> ¡Copiado!');
+                        setTimeout(function() {
+                            btn.html(originalHtml);
+                        }, 2000);
+                    });
+                }
+            });
         });
     </script>
 @endpush

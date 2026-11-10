@@ -4,47 +4,129 @@
 <head>
     <title>{{ $problema->nombre }}</title>
     <style>
+        @page {
+            margin: 20mm 15mm 20mm 15mm;
+        }
+
         body {
             font-family: Arial, Helvetica, sans-serif;
+            color: #222;
+            font-size: 12px;
+            line-height: 1.45;
+            margin: 0;
+            padding: 0;
         }
 
         #table_informacion {
-            width: 65%
+            width: 100%;
+            margin-bottom: 12px;
         }
 
         #table_informacion,
         th,
         td {
-            border: 1px solid black;
+            border: 1px solid #999;
             border-collapse: collapse;
         }
 
-        table,
+        table {
+            width: 100%;
+            max-width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
+            margin-bottom: 12px;
+        }
+
         th,
         td {
-            border: 1px solid black;
-            border-collapse: collapse;
-            padding-left: 10px;
-            padding-top: 3px;
-            padding-bottom: 3px;
-        }
-
-        td {
-            padding-left: 6px;
+            border: 1px solid #ccc;
+            padding: 4px 8px;
+            font-size: 11px;
         }
 
         #td_nombre {
-            width: 120px;
+            width: 130px;
+            background-color: #f7f7f7;
         }
 
-        td,
+        h3 {
+            font-size: 15px;
+            color: #111;
+            margin-top: 10px;
+            margin-bottom: 8px;
+            page-break-after: avoid;
+        }
+
+        h4 {
+            font-size: 13px;
+            color: #222;
+            margin-top: 8px;
+            margin-bottom: 6px;
+            page-break-after: avoid;
+        }
+
+        h5 {
+            font-size: 11px;
+            margin: 0;
+        }
+
         p {
-            font-size: 12px;
+            font-size: 11px;
+            margin-top: 4px;
+            margin-bottom: 6px;
+        }
+
+        ul, ol {
+            margin-top: 4px;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            font-size: 11px;
+        }
+
+        li {
+            margin-bottom: 3px;
         }
 
         hr {
-            margin-top: 8px;
+            border: 0;
+            border-top: 1px solid #ccc;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* Adaptación estricta de imágenes dentro del margen de la hoja */
+        img {
+            max-width: 100% !important;
+            height: auto !important;
+            display: block;
+            margin: 10px auto;
+            page-break-inside: avoid;
+        }
+
+        pre, code {
+            font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 10.5px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        pre {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 4px;
             margin-bottom: 8px;
+            page-break-inside: avoid;
+        }
+
+        .ejemplo-card {
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+            border-radius: 4px;
+            background-color: #fafafa;
+            page-break-inside: avoid;
         }
     </style>
 </head>
@@ -92,6 +174,11 @@
         </table>
     </div>
     <hr style="margin-top: 5px; margin-bottom:5px;">
+    @if(isset($problema->restricciones) && trim($problema->restricciones) !== '')
+        <div style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 8px 12px; border-radius: 4px; margin-bottom: 12px; font-size: 11px;">
+            <strong>Restricción:</strong> {{ $problema->restricciones }}
+        </div>
+    @endif
     <h3>Enunciado</h3>
     {!! Str::markdown($problema->body_problema) !!}
 
@@ -102,7 +189,7 @@
     @if($casos_ejemplo->count() > 0)
         <h3 style="margin-top: 20px;">Ejemplos de Entrada y Salida</h3>
         @foreach($casos_ejemplo as $caso)
-            <div style="margin-bottom: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 5px; background-color: #fafafa;">
+            <div class="ejemplo-card">
                 <strong style="font-size: 0.95rem;">Ejemplo #{{ $loop->iteration }}</strong>
                 <table style="width: 100%; margin-top: 8px; border-collapse: collapse;">
                     <tr>

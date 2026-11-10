@@ -87,11 +87,3 @@
         </div>
     </div>
 @endsection
-
-@push('js')
-    <link href="{{ asset('assets/js/DataTables/datatables.min.css') }}" rel="stylesheet">
-
-    <script src="{{ asset('assets/js/DataTables/datatables.min.js') }}"></script>
-
-    <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}"></script>
-@endpush
