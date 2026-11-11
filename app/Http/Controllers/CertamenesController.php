@@ -58,7 +58,15 @@ class CertamenesController extends Controller
             return redirect()->route('certamen.index')->with('error', 'Debe seleccionar un curso para crear una evaluación.');
         }
         $categorias_existentes = \App\Models\Categoria_Problema::orderBy('nombre')->get();
-        return view('certamen.crear', compact('cursos', 'todos_problemas', 'id_curso_preseleccionado', 'categorias_existentes'));
+        $bancos_preguntas = [
+            [
+                'numero' => 1,
+                'id_categoria' => null,
+                'nombre_banco' => 'Pregunta 1',
+                'problemas' => []
+            ]
+        ];
+        return view('certamen.crear', compact('cursos', 'todos_problemas', 'id_curso_preseleccionado', 'categorias_existentes', 'bancos_preguntas'));
     }
     public function editar(Request $request){
         $cursos = auth()->user()->cursos()->get();
@@ -70,16 +78,48 @@ class CertamenesController extends Controller
         $certamen->fecha_termino = Carbon::parse($certamen->fecha_termino);
         $todos_problemas = $certamen->curso ? $certamen->curso->problemas()->with('categorias')->get() : collect();
         
-        $categorias_ids = $certamen->categorias()->pluck('categoria__problemas.id')->toArray();
-        $problemas_seleccionados = DB::table('pertenece')
-            ->whereIn('id_categoria', $categorias_ids)
-            ->whereIn('id_problema', $todos_problemas->pluck('id'))
-            ->pluck('id_problema')
-            ->unique()
-            ->toArray();
+        $bancos_preguntas = [];
+        if (!empty($certamen->bancos_preguntas) && is_array($certamen->bancos_preguntas)) {
+            $bancos_preguntas = $certamen->bancos_preguntas;
+        } else {
+            // Reconstruir bancos a partir de las categorías vinculadas al certamen (o problemas seleccionados)
+            $categoriasCert = $certamen->categorias()->get();
+            if ($categoriasCert->isNotEmpty()) {
+                $num = 1;
+                foreach ($categoriasCert as $cat) {
+                    $probsCat = $todos_problemas->filter(function($p) use ($cat) {
+                        return $p->categorias && $p->categorias->contains('id', $cat->id);
+                    })->pluck('id')->values()->toArray();
+
+                    $bancos_preguntas[] = [
+                        'numero' => $num++,
+                        'id_categoria' => $cat->id,
+                        'nombre_banco' => $cat->nombre,
+                        'problemas' => $probsCat
+                    ];
+                }
+            } elseif (!empty($certamen->problemas_seleccionados) && is_array($certamen->problemas_seleccionados)) {
+                $num = 1;
+                foreach ($certamen->problemas_seleccionados as $probId) {
+                    $bancos_preguntas[] = [
+                        'numero' => $num++,
+                        'id_categoria' => null,
+                        'nombre_banco' => 'Pregunta ' . ($num - 1),
+                        'problemas' => [(int)$probId]
+                    ];
+                }
+            } else {
+                $bancos_preguntas[] = [
+                    'numero' => 1,
+                    'id_categoria' => null,
+                    'nombre_banco' => 'Pregunta 1',
+                    'problemas' => []
+                ];
+            }
+        }
 
         $categorias_existentes = \App\Models\Categoria_Problema::orderBy('nombre')->get();
-        return view('certamen.editar', compact('cursos', 'certamen', 'todos_problemas', 'problemas_seleccionados', 'categorias_existentes'));
+        return view('certamen.editar', compact('cursos', 'certamen', 'todos_problemas', 'categorias_existentes', 'bancos_preguntas'));
     }
     public function store(Request $request){
         $validated = $request->validate(Certamenes::$rules);
@@ -99,16 +139,80 @@ class CertamenesController extends Controller
             }
             $certamen->restriccion_red = $request->boolean("restriccion_red", false);
             $certamen->ips_autorizadas = $request->input("ips_autorizadas");
+            $certamen->password = $request->filled("password") ? $request->input("password") : null;
             $certamen->curso()->associate(Cursos::find($request->curso));
             
-            $problemasSeleccionados = $request->input("problemas", []);
-            $certamen->cantidad_problemas = count($problemasSeleccionados);
+            // Procesar estructura de bancos por pregunta
+            $bancosRaw = $request->input('bancos_preguntas_json');
+            $bancosInput = $bancosRaw ? json_decode($bancosRaw, true) : $request->input('bancos', []);
+
+            $bancosGuardar = [];
+            $todosProblemasIds = [];
+            $todasCategoriasIds = [];
+
+            if (!empty($bancosInput) && is_array($bancosInput)) {
+                $num = 1;
+                foreach ($bancosInput as $b) {
+                    $probIds = isset($b['problemas']) && is_array($b['problemas'])
+                        ? array_values(array_filter(array_map('intval', $b['problemas'])))
+                        : [];
+                    
+                    $catId = !empty($b['id_categoria']) ? (int)$b['id_categoria'] : null;
+                    if (empty($probIds) && $catId) {
+                        $probIds = DB::table('pertenece')
+                            ->join('disponible', 'disponible.id_problema', '=', 'pertenece.id_problema')
+                            ->where('pertenece.id_categoria', $catId)
+                            ->where('disponible.id_curso', $request->input('curso'))
+                            ->pluck('pertenece.id_problema')
+                            ->unique()
+                            ->map(fn($id) => (int)$id)
+                            ->values()
+                            ->toArray();
+                    }
+
+                    if (!empty($probIds)) {
+                        $nombreBanco = !empty($b['nombre_banco']) ? $b['nombre_banco'] : ("Pregunta " . $num);
+                        $bancosGuardar[] = [
+                            'numero' => $num++,
+                            'id_categoria' => $catId,
+                            'nombre_banco' => $nombreBanco,
+                            'problemas' => $probIds
+                        ];
+                        $todosProblemasIds = array_merge($todosProblemasIds, $probIds);
+                        if ($catId) {
+                            $todasCategoriasIds[] = $catId;
+                        }
+                    }
+                }
+            }
+
+            // Fallback en caso de que venga como selección plana antigua
+            if (empty($bancosGuardar) && $request->filled('problemas')) {
+                $problemasSeleccionados = array_values(array_filter(array_map('intval', $request->input("problemas", []))));
+                $todosProblemasIds = $problemasSeleccionados;
+                $num = 1;
+                foreach ($problemasSeleccionados as $pid) {
+                    $bancosGuardar[] = [
+                        'numero' => $num++,
+                        'id_categoria' => null,
+                        'nombre_banco' => 'Pregunta ' . ($num - 1),
+                        'problemas' => [$pid]
+                    ];
+                }
+            }
+
+            $todosProblemasIds = array_values(array_unique($todosProblemasIds));
+            $certamen->cantidad_problemas = !empty($bancosGuardar) ? count($bancosGuardar) : max(1, (int)$request->input('cantidad_problemas', 1));
+            $certamen->bancos_preguntas = !empty($bancosGuardar) ? $bancosGuardar : null;
+            $certamen->problemas_seleccionados = !empty($todosProblemasIds) ? $todosProblemasIds : null;
             $certamen->save();
 
-            if (!empty($problemasSeleccionados)) {
-                // Sincronizar categorías asociadas a los problemas seleccionados
-                $categoriasIds = DB::table('pertenece')->whereIn('id_problema', $problemasSeleccionados)->pluck('id_categoria')->unique()->toArray();
-                $certamen->categorias()->sync($categoriasIds);
+            if (!empty($todosProblemasIds)) {
+                $catsFromProbs = DB::table('pertenece')->whereIn('id_problema', $todosProblemasIds)->pluck('id_categoria')->toArray();
+                $todasCategoriasIds = array_unique(array_merge($todasCategoriasIds, $catsFromProbs));
+                $certamen->categorias()->sync($todasCategoriasIds);
+            } else {
+                $certamen->categorias()->detach();
             }
 
             DB::commit();
@@ -137,18 +241,83 @@ class CertamenesController extends Controller
             }
             $certamen->restriccion_red = $request->boolean("restriccion_red", false);
             $certamen->ips_autorizadas = $request->input("ips_autorizadas");
+            $certamen->password = $request->filled("password") ? $request->input("password") : null;
             if($certamen->curso->id != $request->input('curso')){
                 $certamen->curso()->dissociate();
                 $certamen->curso()->associate(Cursos::find($request->input("curso")));
             }
 
-            $problemasSeleccionados = $request->input("problemas", []);
-            $certamen->cantidad_problemas = count($problemasSeleccionados);
+            // Procesar estructura de bancos por pregunta
+            $bancosRaw = $request->input('bancos_preguntas_json');
+            $bancosInput = $bancosRaw ? json_decode($bancosRaw, true) : $request->input('bancos', []);
+
+            $bancosGuardar = [];
+            $todosProblemasIds = [];
+            $todasCategoriasIds = [];
+
+            if (!empty($bancosInput) && is_array($bancosInput)) {
+                $num = 1;
+                foreach ($bancosInput as $b) {
+                    $probIds = isset($b['problemas']) && is_array($b['problemas'])
+                        ? array_values(array_filter(array_map('intval', $b['problemas'])))
+                        : [];
+                    
+                    $catId = !empty($b['id_categoria']) ? (int)$b['id_categoria'] : null;
+                    if (empty($probIds) && $catId) {
+                        $probIds = DB::table('pertenece')
+                            ->join('disponible', 'disponible.id_problema', '=', 'pertenece.id_problema')
+                            ->where('pertenece.id_categoria', $catId)
+                            ->where('disponible.id_curso', $request->input('curso', $certamen->id_curso))
+                            ->pluck('pertenece.id_problema')
+                            ->unique()
+                            ->map(fn($id) => (int)$id)
+                            ->values()
+                            ->toArray();
+                    }
+
+                    if (!empty($probIds)) {
+                        $nombreBanco = !empty($b['nombre_banco']) ? $b['nombre_banco'] : ("Pregunta " . $num);
+                        $bancosGuardar[] = [
+                            'numero' => $num++,
+                            'id_categoria' => $catId,
+                            'nombre_banco' => $nombreBanco,
+                            'problemas' => $probIds
+                        ];
+                        $todosProblemasIds = array_merge($todosProblemasIds, $probIds);
+                        if ($catId) {
+                            $todasCategoriasIds[] = $catId;
+                        }
+                    }
+                }
+            }
+
+            // Fallback en caso de que venga como selección plana antigua
+            if (empty($bancosGuardar) && $request->filled('problemas')) {
+                $problemasSeleccionados = array_values(array_filter(array_map('intval', $request->input("problemas", []))));
+                $todosProblemasIds = $problemasSeleccionados;
+                $num = 1;
+                foreach ($problemasSeleccionados as $pid) {
+                    $bancosGuardar[] = [
+                        'numero' => $num++,
+                        'id_categoria' => null,
+                        'nombre_banco' => 'Pregunta ' . ($num - 1),
+                        'problemas' => [$pid]
+                    ];
+                }
+            }
+
+            $todosProblemasIds = array_values(array_unique($todosProblemasIds));
+            $certamen->cantidad_problemas = !empty($bancosGuardar) ? count($bancosGuardar) : max(1, (int)$request->input('cantidad_problemas', 1));
+            $certamen->bancos_preguntas = !empty($bancosGuardar) ? $bancosGuardar : null;
+            $certamen->problemas_seleccionados = !empty($todosProblemasIds) ? $todosProblemasIds : null;
             $certamen->save();
 
-            if (!empty($problemasSeleccionados)) {
-                $categoriasIds = DB::table('pertenece')->whereIn('id_problema', $problemasSeleccionados)->pluck('id_categoria')->unique()->toArray();
-                $certamen->categorias()->sync($categoriasIds);
+            if (!empty($todosProblemasIds)) {
+                $catsFromProbs = DB::table('pertenece')->whereIn('id_problema', $todosProblemasIds)->pluck('id_categoria')->toArray();
+                $todasCategoriasIds = array_unique(array_merge($todasCategoriasIds, $catsFromProbs));
+                $certamen->categorias()->sync($todasCategoriasIds);
+            } else {
+                $certamen->categorias()->detach();
             }
 
             DB::commit();
@@ -179,24 +348,89 @@ class CertamenesController extends Controller
         ]);
         try {
             DB::beginTransaction();
-            $original = Certamenes::with('categorias')->findOrFail($request->id_certamen);
+            $original = Certamenes::with('categorias', 'curso')->findOrFail($request->id_certamen);
+            $cursoDestino = Cursos::findOrFail($request->id_curso);
+
             $nuevo = new Certamenes();
             $nuevo->nombre = $original->nombre . ' (Copia)';
             $nuevo->descripcion = $original->descripcion;
-            $nuevo->fecha_inicio = Carbon::now();
-            $nuevo->fecha_termino = Carbon::now()->addDays(7);
+            $nuevo->fecha_inicio = $request->filled('fecha_inicio') ? Carbon::parse($request->input('fecha_inicio')) : Carbon::parse($original->fecha_inicio);
+            $nuevo->fecha_termino = $request->filled('fecha_termino') ? Carbon::parse($request->input('fecha_termino')) : Carbon::parse($original->fecha_termino);
             $nuevo->penalizacion_error = $original->penalizacion_error;
             $nuevo->cantidad_penalizacion = $original->cantidad_penalizacion;
             $nuevo->restriccion_red = $original->restriccion_red;
             $nuevo->ips_autorizadas = $original->ips_autorizadas;
+            $nuevo->password = $original->password;
             $nuevo->dificultad = $original->dificultad ?? 'Medio';
-            $nuevo->cantidad_problemas = $original->cantidad_problemas ?? 0;
-            $nuevo->curso()->associate(Cursos::findOrFail($request->id_curso));
+
+            // Copiar configuración de bancos de preguntas y variantes
+            $bancosPreguntas = $original->bancos_preguntas;
+            $problemasSeleccionados = $original->problemas_seleccionados;
+
+            // Si el original no tenía bancos_preguntas explícitos, reconstruirlos a partir de sus categorías o problemas
+            if (empty($bancosPreguntas)) {
+                $categoriasCert = $original->categorias()->get();
+                if ($categoriasCert->isNotEmpty()) {
+                    $todosProblemas = $original->curso ? $original->curso->problemas()->with('categorias')->get() : collect();
+                    $num = 1;
+                    $bancosPreguntas = [];
+                    foreach ($categoriasCert as $cat) {
+                        $probsCat = $todosProblemas->filter(function($p) use ($cat) {
+                            return $p->categorias && $p->categorias->contains('id', $cat->id);
+                        })->pluck('id')->values()->toArray();
+
+                        $bancosPreguntas[] = [
+                            'numero' => $num++,
+                            'id_categoria' => $cat->id,
+                            'nombre_banco' => $cat->nombre,
+                            'problemas' => $probsCat
+                        ];
+                    }
+                } elseif (!empty($problemasSeleccionados) && is_array($problemasSeleccionados)) {
+                    $num = 1;
+                    $bancosPreguntas = [];
+                    foreach ($problemasSeleccionados as $probId) {
+                        $bancosPreguntas[] = [
+                            'numero' => $num++,
+                            'id_categoria' => null,
+                            'nombre_banco' => 'Pregunta ' . ($num - 1),
+                            'problemas' => [(int)$probId]
+                        ];
+                    }
+                }
+            }
+
+            // Si no tenía problemas_seleccionados pero sí bancos, extraer todos los IDs de variantes
+            if (empty($problemasSeleccionados) && !empty($bancosPreguntas)) {
+                $todosIds = [];
+                foreach ($bancosPreguntas as $b) {
+                    if (!empty($b['problemas'])) {
+                        $todosIds = array_merge($todosIds, $b['problemas']);
+                    }
+                }
+                $problemasSeleccionados = array_values(array_unique($todosIds));
+            }
+
+            $nuevo->cantidad_problemas = !empty($bancosPreguntas) ? count($bancosPreguntas) : ($original->cantidad_problemas ?? 1);
+            $nuevo->bancos_preguntas = !empty($bancosPreguntas) ? $bancosPreguntas : null;
+            $nuevo->problemas_seleccionados = !empty($problemasSeleccionados) ? $problemasSeleccionados : null;
+            $nuevo->curso()->associate($cursoDestino);
             $nuevo->save();
 
+            // Sincronizar categorías asociadas
             if ($original->categorias->isNotEmpty()) {
                 $nuevo->categorias()->sync($original->categorias->pluck('id')->toArray());
             }
+
+            // Asegurar que los problemas involucrados estén disponibles en el curso de destino (tabla disponible)
+            if (!empty($problemasSeleccionados)) {
+                foreach ($problemasSeleccionados as $probId) {
+                    if (!$cursoDestino->problemas()->where('problemas.id', $probId)->exists()) {
+                        $cursoDestino->problemas()->attach($probId, ['visible' => false]);
+                    }
+                }
+            }
+
             DB::commit();
         } catch (\PDOException $e) {
             DB::rollBack();
@@ -317,37 +551,85 @@ class CertamenesController extends Controller
                     throw new \Exception("Error: La evaluación seleccionada no existe.");
                 }
 
+                // Verificar contraseña si la evaluación está protegida
+                if (!empty($certamen->password)) {
+                    $passwordInput = $request->input('password');
+                    if (empty($passwordInput) || $passwordInput !== $certamen->password) {
+                        return redirect()->route('certamenes.ver', ['id_certamen' => $certamen->id])
+                            ->with('error', 'Contraseña incorrecta. Por favor ingrese la clave de acceso proporcionada por el docente.');
+                    }
+                }
+
                 $res_certamen = new ResolucionCertamenes;
                 $res_certamen->token = Str::random(55);
                 $res_certamen->id_usuario = auth()->user()->id;
                 $certamen->resoluciones()->save($res_certamen);
                 
-                $categorias = $certamen->categorias()->get();
                 $problemas_seleccionados = [];
                 $problemas_seleccionados_id = [];
-                foreach ($categorias as $categoria){
-                    // Selecciona un problema aleatorio de la categoría para este curso
-                    $problema_aleatorio = $categoria->problemas()
-                        ->join('disponible', 'disponible.id_problema', '=', 'problemas.id')
-                        ->where('disponible.id_curso', '=', $certamen->id_curso)
-                        ->whereNotIn('problemas.id', $problemas_seleccionados_id)
-                        ->select('problemas.*')
-                        ->inRandomOrder()->first();
 
-                    // Fallback: Si la categoría no tiene un problema disponible sin asignar, buscar cualquier problema disponible del curso
-                    if (!$problema_aleatorio) {
-                        $problema_aleatorio = Problemas::join('disponible', 'disponible.id_problema', '=', 'problemas.id')
+                if (!empty($certamen->bancos_preguntas) && is_array($certamen->bancos_preguntas)) {
+                    // Modo Bancos por Pregunta: cada pregunta selecciona 1 ejercicio al azar de su banco
+                    foreach ($certamen->bancos_preguntas as $banco) {
+                        $candidatos = isset($banco['problemas']) && is_array($banco['problemas']) ? $banco['problemas'] : [];
+                        // Intentar no repetir problemas ya asignados a este estudiante en otras preguntas
+                        $disponibles = array_values(array_diff($candidatos, $problemas_seleccionados_id));
+                        if (empty($disponibles)) {
+                            $disponibles = $candidatos;
+                        }
+
+                        if (!empty($disponibles)) {
+                            $randomId = $disponibles[array_rand($disponibles)];
+                            $probElegido = Problemas::find($randomId);
+                            if ($probElegido) {
+                                $seleccion = new SeleccionProblemasCertamenes;
+                                $seleccion->problema()->associate($probElegido);
+                                $problemas_seleccionados[] = $seleccion;
+                                $problemas_seleccionados_id[] = $probElegido->id;
+                            }
+                        }
+                    }
+                } elseif (!empty($certamen->problemas_seleccionados) && is_array($certamen->problemas_seleccionados)) {
+                    $idsDirectos = array_map('intval', $certamen->problemas_seleccionados);
+                    $cantObjetivo = $certamen->cantidad_problemas > 0 ? $certamen->cantidad_problemas : count($idsDirectos);
+                    if (count($idsDirectos) <= $cantObjetivo) {
+                        $problemasAsignados = Problemas::whereIn('id', $idsDirectos)->get();
+                    } else {
+                        $problemasAsignados = Problemas::whereIn('id', $idsDirectos)->inRandomOrder()->take($cantObjetivo)->get();
+                    }
+
+                    foreach ($problemasAsignados as $prob) {
+                        $seleccion = new SeleccionProblemasCertamenes;
+                        $seleccion->problema()->associate($prob);
+                        array_push($problemas_seleccionados, $seleccion);
+                        array_push($problemas_seleccionados_id, $prob->id);
+                    }
+                } else {
+                    $categorias = $certamen->categorias()->get();
+                    foreach ($categorias as $categoria){
+                        // Selecciona un problema aleatorio de la categoría para este curso
+                        $problema_aleatorio = $categoria->problemas()
+                            ->join('disponible', 'disponible.id_problema', '=', 'problemas.id')
                             ->where('disponible.id_curso', '=', $certamen->id_curso)
                             ->whereNotIn('problemas.id', $problemas_seleccionados_id)
                             ->select('problemas.*')
                             ->inRandomOrder()->first();
-                    }
 
-                    if ($problema_aleatorio) {
-                        $seleccion = new SeleccionProblemasCertamenes;
-                        $seleccion->problema()->associate($problema_aleatorio);
-                        array_push($problemas_seleccionados, $seleccion);        
-                        array_push($problemas_seleccionados_id, $problema_aleatorio->id);
+                        // Fallback: Si la categoría no tiene un problema disponible sin asignar, buscar cualquier problema disponible del curso
+                        if (!$problema_aleatorio) {
+                            $problema_aleatorio = Problemas::join('disponible', 'disponible.id_problema', '=', 'problemas.id')
+                                ->where('disponible.id_curso', '=', $certamen->id_curso)
+                                ->whereNotIn('problemas.id', $problemas_seleccionados_id)
+                                ->select('problemas.*')
+                                ->inRandomOrder()->first();
+                        }
+
+                        if ($problema_aleatorio) {
+                            $seleccion = new SeleccionProblemasCertamenes;
+                            $seleccion->problema()->associate($problema_aleatorio);
+                            array_push($problemas_seleccionados, $seleccion);        
+                            array_push($problemas_seleccionados_id, $problema_aleatorio->id);
+                        }
                     }
                 }
 

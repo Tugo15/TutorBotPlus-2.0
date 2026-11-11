@@ -152,11 +152,14 @@
                                                 </div>
                                             </td>
                                             <td class="align-middle text-center">
-                                                <div class="d-flex justify-content-center">
+                                                <div class="d-flex flex-column align-items-center justify-content-center gap-1">
                                                 @if($certamen->restriccion_red)
                                                     <span class="badge border border-warning text-dark text-xxs bg-white"><i class="fa fa-university me-1 text-warning"></i>Red Institucional</span>
                                                 @else
                                                     <span class="badge border border-info text-info text-xxs bg-white"><i class="fa fa-globe me-1"></i>Acceso Libre</span>
+                                                @endif
+                                                @if($certamen->password)
+                                                    <span class="badge border border-secondary text-dark text-xxs bg-white"><i class="fa fa-key text-warning me-1"></i>Con Contraseña</span>
                                                 @endif
                                                 </div>
                                             </td>
@@ -226,7 +229,7 @@
                                                 </div>
                                                 <div class="modal-body">
                                                     <p class="text-sm text-secondary mb-3">Se creará una copia idéntica de la evaluación <strong>{{ $certamen->nombre }}</strong>. Seleccione el curso de destino:</p>
-                                                    <div class="form-group">
+                                                    <div class="form-group mb-3">
                                                         <label for="id_curso_{{ $certamen->id }}" class="form-control-label font-weight-bold text-sm">Curso / Sección Destino*</label>
                                                         <select class="form-select" name="id_curso" id="id_curso_{{ $certamen->id }}" required>
                                                             @foreach ($cursos as $c)
@@ -235,6 +238,22 @@
                                                                 </option>
                                                             @endforeach
                                                         </select>
+                                                    </div>
+                                                    <div class="row g-2">
+                                                        <div class="col-6">
+                                                            <div class="form-group mb-0">
+                                                                <label class="form-control-label font-weight-bold text-xs">Fecha de Inicio</label>
+                                                                <input type="datetime-local" class="form-control form-control-sm" name="fecha_inicio" 
+                                                                    value="{{ \Carbon\Carbon::parse($certamen->fecha_inicio)->format('Y-m-d\TH:i') }}">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="form-group mb-0">
+                                                                <label class="form-control-label font-weight-bold text-xs">Fecha de Término</label>
+                                                                <input type="datetime-local" class="form-control form-control-sm" name="fecha_termino" 
+                                                                    value="{{ \Carbon\Carbon::parse($certamen->fecha_termino)->format('Y-m-d\TH:i') }}">
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer">

@@ -141,6 +141,29 @@
                         value="{{ isset($certamen) ? old('ips_autorizadas', $certamen->ips_autorizadas) : old('ips_autorizadas') }}">
                     <span class="text-xxs text-muted">Separar múltiples direcciones IP o notación CIDR por comas.</span>
                 </div>
+
+                <div class="mt-3 pt-3 border-top">
+                    <div class="row align-items-center">
+                        <div class="col-md-7 col-12">
+                            <label for="certamen_password" class="form-control-label font-weight-bold text-xs mb-1">
+                                <i class="fa fa-key text-warning me-1"></i> Contraseña de Acceso a la Evaluación (Opcional)
+                            </label>
+                            <p class="text-xxs text-secondary mb-0">Si establece una contraseña, los estudiantes deberán ingresarla obligatoriamente para poder iniciar la evaluación.</p>
+                        </div>
+                        <div class="col-md-5 col-12 mt-2 mt-md-0">
+                            <div class="input-group input-group-sm">
+                                <input class="form-control form-control-sm" type="password" id="certamen_password" name="password" placeholder="Dejar en blanco para acceso libre"
+                                    value="{{ isset($certamen) ? old('password', $certamen->password) : old('password') }}" autocomplete="new-password">
+                                <button class="btn btn-outline-secondary mb-0" type="button" onclick="togglePasswordVisibility('certamen_password', this)" title="Mostrar / Ocultar Contraseña">
+                                    <i class="fa fa-eye"></i>
+                                </button>
+                            </div>
+                            @error('password')
+                                <p class="text-danger text-xxs pt-1 mb-0">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -191,91 +214,82 @@
     </div>
 </div>
 
-<!-- Selector Interactivo de Problemas -->
+<!-- Configuración de Preguntas y Bancos de Preguntas Aleatorios -->
 <div class="row mt-3">
     <div class="col-12">
         <div class="card border shadow-xs mb-3">
             <div class="card-body p-3">
-                <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 pb-2 border-bottom">
                     <div>
-                        <h6 class="mb-0 text-sm font-weight-bold text-dark"><i class="fa fa-puzzle-piece text-primary me-2"></i>Asignar Problemas a la Evaluación</h6>
-                        <p class="text-xs text-secondary mb-0">Seleccione directamente los problemas que formarán parte de esta evaluación:</p>
+                        <h6 class="mb-0 text-sm font-weight-bold text-dark">
+                            <i class="fa fa-cubes text-primary me-2"></i>Estructura de la Evaluación y Bancos de Preguntas
+                        </h6>
+                        <p class="text-xs text-secondary mb-0">
+                            Indique cuántas preguntas tendrá la evaluación. Para cada pregunta, configure su banco (categoría o variantes) desde el cual el sistema asignará <strong>1 ejercicio al azar</strong> para cada estudiante.
+                        </p>
                     </div>
-                    <div>
-                        <span class="badge bg-info text-xs px-2 py-1" id="selected_count_badge">0 Problemas Seleccionados</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-xs font-weight-bold text-secondary me-1">Cantidad de Preguntas:</span>
+                        <div class="input-group input-group-sm" style="width: 140px;">
+                            <button class="btn btn-outline-secondary mb-0 px-2.5" type="button" onclick="modificarCantidadPreguntas(-1)"><i class="fa fa-minus"></i></button>
+                            <input type="number" id="input_cant_preguntas" name="cantidad_problemas" class="form-control text-center font-weight-bold" min="1" max="25" value="{{ count($bancos_preguntas ?? [1]) }}" onchange="onManualCantidadChange(this.value)">
+                            <button class="btn btn-outline-secondary mb-0 px-2.5" type="button" onclick="modificarCantidadPreguntas(1)"><i class="fa fa-plus"></i></button>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-dark mb-0 ms-1" onclick="agregarNuevaPregunta()">
+                            <i class="fa fa-plus me-1"></i> Agregar Pregunta
+                        </button>
                     </div>
                 </div>
 
-                <div class="row g-2 mb-3">
-                    <div class="col-md-6">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text"><i class="fa fa-search"></i></span>
-                            <input type="text" id="search_problemas" class="form-control" placeholder="Buscar problema por nombre o código..." onkeyup="filterProblems()">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text"><i class="fa fa-tags text-danger"></i></span>
-                            <select id="filter_categoria" class="form-select" onchange="filterProblems()">
-                                <option value="Todas">Todas las Categorías</option>
-                                @php
-                                    $cats_select = isset($categorias_existentes) ? $categorias_existentes : \App\Models\Categoria_Problema::orderBy('nombre')->get();
-                                    $cats_select = $cats_select->unique('nombre');
-                                @endphp
-                                @foreach($cats_select as $cat)
-                                    <option value="{{ $cat->id }}">{{ $cat->nombre }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                </div>
+                <input type="hidden" name="bancos_preguntas_json" id="bancos_preguntas_json" value="">
 
-                @php
-                    $selectedProbArray = isset($problemas_seleccionados) ? $problemas_seleccionados : old('problemas', []);
-                @endphp
-                
-                <div class="row g-2" id="problemas-container" style="max-height: 380px; overflow-y: auto;">
-                    @if(isset($todos_problemas) && count($todos_problemas) > 0)
-                        @foreach($todos_problemas as $prob)
-                            @php
-                                $isProbChecked = in_array($prob->id, $selectedProbArray);
-                                $difBadgeClass = $prob->dificultad == 'Fácil' ? 'border border-success text-success bg-white' : ($prob->dificultad == 'Difícil' ? 'border border-danger text-danger bg-white' : 'border border-warning text-warning bg-white');
-                                $probCats = $prob->categorias;
-                                $catIdsStr = $probCats ? implode(',', $probCats->pluck('id')->toArray()) : '';
-                                $catNamesStr = $probCats ? strtolower(implode(',', $probCats->pluck('nombre')->toArray())) : '';
-                            @endphp
-                            <div class="col-md-6 problem-item-card" data-nombre="{{ strtolower($prob->nombre) }}" data-codigo="{{ strtolower($prob->codigo) }}" data-categorias="{{ $catIdsStr }}" data-cat-nombres="{{ $catNamesStr }}">
-                                <label class="selection-card w-100 mb-0 @if($isProbChecked) checked @endif" for="prob_{{ $prob->id }}">
-                                    <input type="checkbox" id="prob_{{ $prob->id }}" name="problemas[]" value="{{ $prob->id }}" @if($isProbChecked) checked @endif onchange="onProblemToggle(this)">
-                                    <div class="selection-card-content">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <div class="selection-card-title mb-0">{{ $prob->nombre }}</div>
-                                            <span class="badge {{ $difBadgeClass }} text-xxs ms-2">{{ $prob->dificultad ?? 'Medio' }}</span>
-                                        </div>
-                                        <div class="selection-card-subtitle d-flex flex-wrap align-items-center gap-1">
-                                            <span>Código: <span class="badge bg-secondary text-xxs px-2 py-0.5">{{ $prob->codigo }}</span></span>
-                                            @if($probCats && $probCats->isNotEmpty())
-                                                @foreach($probCats as $c)
-                                                    <span class="badge border border-danger text-danger bg-white text-xxs px-1.5 py-0.5">{{ $c->nombre }}</span>
-                                                @endforeach
-                                            @endif
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                        @endforeach
-                    @else
-                        <div class="col-12 text-center py-4">
-                            <p class="text-secondary text-sm mb-0">No se encontraron problemas disponibles en la plataforma.</p>
-                        </div>
-                    @endif
+                <!-- Contenedor dinámico de Preguntas y sus Bancos -->
+                <div id="preguntas-dinamicas-container" class="d-flex flex-column gap-3">
+                    <!-- Se renderiza vía JavaScript -->
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+@php
+    $todos_problemas_js = isset($todos_problemas) ? $todos_problemas->map(function($p) {
+        return [
+            'id' => (int)$p->id,
+            'nombre' => $p->nombre,
+            'codigo' => $p->codigo,
+            'dificultad' => $p->dificultad ?? 'Medio',
+            'categoria_ids' => $p->categorias ? $p->categorias->pluck('id')->map(fn($id)=>(int)$id)->toArray() : [],
+            'categoria_nombres' => $p->categorias ? $p->categorias->pluck('nombre')->toArray() : [],
+        ];
+    })->values() : collect();
+
+    $categorias_js = isset($categorias_existentes) ? $categorias_existentes->map(function($c) {
+        return [
+            'id' => (int)$c->id,
+            'nombre' => $c->nombre,
+        ];
+    })->values() : collect();
+
+    $bancos_init = isset($bancos_preguntas) && !empty($bancos_preguntas) ? $bancos_preguntas : [
+        [
+            'numero' => 1,
+            'id_categoria' => null,
+            'nombre_banco' => 'Pregunta 1',
+            'problemas' => []
+        ]
+    ];
+@endphp
+
 <script>
+    const todosProblemasData = @json($todos_problemas_js);
+    const categoriasData = @json($categorias_js);
+    let bancosData = @json($bancos_init);
+
+    if (!Array.isArray(bancosData) || bancosData.length === 0) {
+        bancosData = [{ numero: 1, id_categoria: null, nombre_banco: 'Pregunta 1', problemas: [] }];
+    }
+
     function toggleIpOptions(show) {
         var container = document.getElementById('container_ips_autorizadas');
         var cardLibre = document.getElementById('restriccion_libre').closest('.selection-card');
@@ -291,52 +305,442 @@
         }
     }
 
-    function onProblemToggle(checkbox) {
-        var card = checkbox.closest('.selection-card');
-        if (card) {
-            card.classList.toggle('checked', checkbox.checked);
+    function togglePasswordVisibility(inputId, btn) {
+        var input = document.getElementById(inputId);
+        if (!input) return;
+        var icon = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            if (icon) {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        } else {
+            input.type = 'password';
+            if (icon) {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
         }
-        updateSelectedBadge();
     }
 
-    function updateSelectedBadge() {
-        var container = document.getElementById('problemas-container');
+    function syncBancosJson() {
+        var hiddenInput = document.getElementById('bancos_preguntas_json');
+        if (hiddenInput) {
+            hiddenInput.value = JSON.stringify(bancosData);
+        }
+        var inputCant = document.getElementById('input_cant_preguntas');
+        if (inputCant) {
+            inputCant.value = bancosData.length;
+        }
+    }
+
+    function getNombreCategoria(catId) {
+        var cat = categoriasData.find(function(c) { return c.id == catId; });
+        return cat ? cat.nombre : 'Categoría #' + catId;
+    }
+
+    function renderPreguntas() {
+        var container = document.getElementById('preguntas-dinamicas-container');
         if (!container) return;
-        var checkedCount = container.querySelectorAll('input[type="checkbox"]:checked').length;
-        var badge = document.getElementById('selected_count_badge');
-        if (badge) {
-            badge.innerText = checkedCount + ' Problema(s) Seleccionado(s)';
+        container.innerHTML = '';
+
+        bancosData.forEach(function(banco, idx) {
+            var num = idx + 1;
+            banco.numero = num;
+            var probCount = Array.isArray(banco.problemas) ? banco.problemas.length : 0;
+            var tituloBanco = banco.nombre_banco || (banco.id_categoria ? getNombreCategoria(banco.id_categoria) : 'Sin banco asignado');
+            var badgeClase = probCount > 0 ? 'bg-success' : 'bg-warning text-dark';
+            var disabledEliminar = bancosData.length <= 1 ? 'disabled style="opacity: 0.5;"' : '';
+
+            // Opciones del select de categorías
+            var optionsCats = '';
+            categoriasData.forEach(function(cat) {
+                var selected = (banco.id_categoria == cat.id) ? 'selected' : '';
+                var countEnCat = todosProblemasData.filter(function(p) {
+                    return p.categoria_ids.indexOf(cat.id) !== -1;
+                }).length;
+                optionsCats += `<option value="${cat.id}" ${selected}>${cat.nombre} (${countEnCat} disponibles)</option>`;
+            });
+
+            var isCustom = (banco.id_categoria === null && probCount > 0);
+
+            // Generar cards de problemas para el drawer de esta pregunta
+            var cardsProbsHtml = '';
+            todosProblemasData.forEach(function(p) {
+                var isChecked = banco.problemas && banco.problemas.indexOf(p.id) !== -1;
+                var difClass = p.dificultad === 'Fácil' ? 'border-success text-success' : (p.dificultad === 'Difícil' ? 'border-danger text-danger' : 'border-warning text-warning');
+                var catBadges = p.categoria_nombres.map(function(cn) {
+                    return `<span class="badge border border-secondary text-secondary bg-white text-xxs px-1 py-0.5 me-1">${cn}</span>`;
+                }).join('');
+
+                cardsProbsHtml += `
+                    <div class="col-md-6 col-12 item-problema-drawer" data-id="${p.id}" data-nombre="${p.nombre.toLowerCase()}" data-codigo="${p.codigo.toLowerCase()}">
+                        <label class="selection-card w-100 mb-0 py-2 px-2.5 ${isChecked ? 'checked' : ''}" for="prob_q${idx}_${p.id}">
+                            <input type="checkbox" id="prob_q${idx}_${p.id}" value="${p.id}" ${isChecked ? 'checked' : ''} onchange="onProblemaToggle(${idx}, ${p.id}, this)">
+                            <div class="selection-card-content">
+                                <div class="d-flex justify-content-between align-items-center mb-0.5">
+                                    <span class="selection-card-title text-xs mb-0">${p.nombre}</span>
+                                    <span class="badge border ${difClass} bg-white text-xxs ms-1">${p.dificultad}</span>
+                                </div>
+                                <div class="selection-card-subtitle d-flex flex-wrap align-items-center gap-1 mt-0">
+                                    <span class="text-xxs text-muted">Código: <span class="badge bg-secondary text-xxs px-1.5 py-0.2">${p.codigo}</span></span>
+                                    ${catBadges}
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                `;
+            });
+
+            var cardHtml = `
+                <div class="card border shadow-xs pregunta-card" id="card_pregunta_${idx}">
+                    <div class="card-header bg-gray-100 py-2.5 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary text-xs px-2.5 py-1">Pregunta #${num}</span>
+                            <span class="text-xs font-weight-bold text-dark banco-titulo-label" id="label_titulo_${idx}">
+                                <i class="fa fa-layer-group text-danger me-1"></i> Banco: ${tituloBanco}
+                            </span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge ${badgeClase} text-xxs px-2 py-1 banco-contador-badge" id="badge_count_${idx}">
+                                ${probCount} Variante(s) en Banco
+                            </span>
+                            <button type="button" class="btn btn-xs btn-outline-primary mb-0 py-1 px-2" onclick="toggleDrawerPregunta(${idx})" title="Ver o ajustar las variantes exactas del banco">
+                                <i class="fa fa-sliders-h me-1"></i> Configurar Variantes
+                            </button>
+                            <button type="button" class="btn btn-xs btn-outline-danger mb-0 py-1 px-2" onclick="eliminarPregunta(${idx})" title="Eliminar pregunta" ${disabledEliminar}>
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-7 col-12">
+                                <label class="form-control-label text-xs font-weight-bold mb-1">
+                                    Asignar Banco / Categoría de Origen:
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text"><i class="fa fa-folder-open text-warning"></i></span>
+                                    <select class="form-select form-select-sm select-categoria-banco" id="select_cat_${idx}" onchange="onCategoriaChange(${idx}, this.value)">
+                                        <option value="">-- Seleccionar Banco (Categoría) --</option>
+                                        ${optionsCats}
+                                        <option value="custom" ${isCustom ? 'selected' : ''}>-- Selección Personalizada / Múltiples Categorías --</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-5 col-12 text-md-end text-start mt-2 mt-md-0">
+                                <span class="text-xxs text-secondary d-block">
+                                    <i class="fa fa-random text-info me-1"></i> Cada estudiante recibirá <strong>1 ejercicio al azar</strong> de este banco.
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Drawer colapsable para ver/ajustar variantes -->
+                        <div class="drawer-ejercicios mt-3 pt-3 border-top" id="drawer_${idx}" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-xs font-weight-bold text-dark">Variantes disponibles para esta pregunta:</span>
+                                    <span class="text-xxs text-muted">(Marque los ejercicios que entran al sorteo)</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-1">
+                                    <button type="button" class="btn btn-xxs btn-outline-secondary mb-0 py-0.5 px-2" onclick="marcarTodosPregunta(${idx}, true)">
+                                        Marcar Todos
+                                    </button>
+                                    <button type="button" class="btn btn-xxs btn-outline-secondary mb-0 py-0.5 px-2" onclick="marcarTodosPregunta(${idx}, false)">
+                                        Desmarcar Todos
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="input-group input-group-sm mb-2" style="max-width: 320px;">
+                                <span class="input-group-text"><i class="fa fa-search text-xs"></i></span>
+                                <input type="text" class="form-control form-control-sm" placeholder="Buscar por nombre o código..." onkeyup="filtrarProblemasDrawer(${idx}, this.value)">
+                            </div>
+
+                            <div class="row g-2 contenedor-lista-problemas" id="lista_probs_${idx}" style="max-height: 240px; overflow-y: auto;">
+                                ${cardsProbsHtml}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', cardHtml);
+        });
+
+        syncBancosJson();
+    }
+
+    function toggleDrawerPregunta(idx) {
+        var drawer = document.getElementById('drawer_' + idx);
+        if (drawer) {
+            if (drawer.style.display === 'none' || drawer.style.display === '') {
+                drawer.style.display = 'block';
+            } else {
+                drawer.style.display = 'none';
+            }
         }
     }
 
-    function filterProblems() {
-        var query = document.getElementById('search_problemas').value.toLowerCase().trim();
-        var catSelect = document.getElementById('filter_categoria');
-        var selectedCat = catSelect ? catSelect.value : 'Todas';
-        var selectedCatName = (catSelect && catSelect.selectedIndex >= 0 && selectedCat !== 'Todas') 
-            ? catSelect.options[catSelect.selectedIndex].text.toLowerCase().trim() 
-            : '';
-        var cards = document.querySelectorAll('.problem-item-card');
+    function onCategoriaChange(idx, val) {
+        var banco = bancosData[idx];
+        if (!banco) return;
 
-        cards.forEach(function(card) {
-            var nombre = card.getAttribute('data-nombre') || '';
-            var codigo = card.getAttribute('data-codigo') || '';
-            var catsStr = card.getAttribute('data-categorias') || '';
-            var catNamesStr = card.getAttribute('data-cat-nombres') || '';
-            var catArray = catsStr.split(',').filter(Boolean);
+        if (!val || val === '') {
+            banco.id_categoria = null;
+            banco.nombre_banco = 'Sin banco asignado';
+            banco.problemas = [];
+        } else if (val === 'custom') {
+            banco.id_categoria = null;
+            banco.nombre_banco = 'Selección Personalizada';
+            var drawer = document.getElementById('drawer_' + idx);
+            if (drawer) drawer.style.display = 'block';
+        } else {
+            var catId = parseInt(val);
+            banco.id_categoria = catId;
+            banco.nombre_banco = getNombreCategoria(catId);
+            var probIds = [];
+            todosProblemasData.forEach(function(p) {
+                if (p.categoria_ids.indexOf(catId) !== -1) {
+                    probIds.push(p.id);
+                }
+            });
+            banco.problemas = probIds;
+        }
 
-            var matchesSearch = (nombre.indexOf(query) !== -1 || codigo.indexOf(query) !== -1);
-            var matchesCat = (selectedCat === 'Todas' || catArray.indexOf(selectedCat) !== -1 || (selectedCatName && catNamesStr.indexOf(selectedCatName) !== -1));
+        actualizarCardPregunta(idx);
+        syncBancosJson();
+    }
 
-            if (matchesSearch && matchesCat) {
-                card.classList.remove('d-none');
+    function onProblemaToggle(preguntaIdx, probId, checkbox) {
+        var banco = bancosData[preguntaIdx];
+        if (!banco) return;
+        if (!Array.isArray(banco.problemas)) banco.problemas = [];
+
+        var pId = parseInt(probId);
+        var card = checkbox.closest('.selection-card');
+        if (checkbox.checked) {
+            if (banco.problemas.indexOf(pId) === -1) {
+                banco.problemas.push(pId);
+            }
+            if (card) card.classList.add('checked');
+        } else {
+            banco.problemas = banco.problemas.filter(function(id) { return id !== pId; });
+            if (card) card.classList.remove('checked');
+        }
+
+        actualizarCardPregunta(preguntaIdx);
+        syncBancosJson();
+    }
+
+    function marcarTodosPregunta(preguntaIdx, marcar) {
+        var banco = bancosData[preguntaIdx];
+        if (!banco) return;
+
+        var drawer = document.getElementById('drawer_' + preguntaIdx);
+        if (!drawer) return;
+
+        if (marcar) {
+            var allIds = [];
+            todosProblemasData.forEach(function(p) { allIds.push(p.id); });
+            banco.problemas = allIds;
+        } else {
+            banco.problemas = [];
+        }
+
+        actualizarCardPregunta(preguntaIdx);
+        syncBancosJson();
+    }
+
+    function filtrarProblemasDrawer(idx, query) {
+        var q = (query || '').toLowerCase().trim();
+        var drawer = document.getElementById('drawer_' + idx);
+        if (!drawer) return;
+
+        var items = drawer.querySelectorAll('.item-problema-drawer');
+        items.forEach(function(item) {
+            var nombre = item.getAttribute('data-nombre') || '';
+            var codigo = item.getAttribute('data-codigo') || '';
+            if (nombre.indexOf(q) !== -1 || codigo.indexOf(q) !== -1) {
+                item.classList.remove('d-none');
             } else {
-                card.classList.add('d-none');
+                item.classList.add('d-none');
             }
         });
     }
 
+    function actualizarCardPregunta(idx) {
+        var banco = bancosData[idx];
+        if (!banco) return;
+
+        var probCount = Array.isArray(banco.problemas) ? banco.problemas.length : 0;
+        var labelTitulo = document.getElementById('label_titulo_' + idx);
+        if (labelTitulo) {
+            var titulo = banco.nombre_banco || (banco.id_categoria ? getNombreCategoria(banco.id_categoria) : 'Sin banco asignado');
+            labelTitulo.innerHTML = `<i class="fa fa-layer-group text-danger me-1"></i> Banco: ${titulo}`;
+        }
+
+        var badgeCount = document.getElementById('badge_count_' + idx);
+        if (badgeCount) {
+            badgeCount.className = `badge ${probCount > 0 ? 'bg-success' : 'bg-warning text-dark'} text-xxs px-2 py-1 banco-contador-badge`;
+            badgeCount.innerText = `${probCount} Variante(s) en Banco`;
+        }
+
+        var drawer = document.getElementById('drawer_' + idx);
+        if (drawer) {
+            var checkboxes = drawer.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(function(cb) {
+                var pId = parseInt(cb.value);
+                var isChecked = banco.problemas.indexOf(pId) !== -1;
+                cb.checked = isChecked;
+                var card = cb.closest('.selection-card');
+                if (card) {
+                    if (isChecked) card.classList.add('checked');
+                    else card.classList.remove('checked');
+                }
+            });
+        }
+    }
+
+    function modificarCantidadPreguntas(delta) {
+        var nuevaCant = bancosData.length + delta;
+        if (nuevaCant < 1) nuevaCant = 1;
+        if (nuevaCant > 25) nuevaCant = 25;
+        setCantidadPreguntas(nuevaCant);
+    }
+
+    function onManualCantidadChange(val) {
+        var num = parseInt(val);
+        if (isNaN(num) || num < 1) num = 1;
+        if (num > 25) num = 25;
+        setCantidadPreguntas(num);
+    }
+
+    function setCantidadPreguntas(targetCount) {
+        while (bancosData.length < targetCount) {
+            bancosData.push({
+                numero: bancosData.length + 1,
+                id_categoria: null,
+                nombre_banco: 'Pregunta ' + (bancosData.length + 1),
+                problemas: []
+            });
+        }
+        while (bancosData.length > targetCount) {
+            bancosData.pop();
+        }
+        renderPreguntas();
+    }
+
+    function agregarNuevaPregunta() {
+        bancosData.push({
+            numero: bancosData.length + 1,
+            id_categoria: null,
+            nombre_banco: 'Pregunta ' + (bancosData.length + 1),
+            problemas: []
+        });
+        renderPreguntas();
+    }
+
+    function eliminarPregunta(idx) {
+        if (bancosData.length <= 1) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Acción no permitida',
+                    text: 'La evaluación debe tener al menos una pregunta.',
+                    confirmButtonText: 'Entendido'
+                });
+            } else {
+                alert('La evaluación debe tener al menos una pregunta.');
+            }
+            return;
+        }
+
+        bancosData.splice(idx, 1);
+        renderPreguntas();
+    }
+
+    function validarBancosAntesDeEnviar() {
+        syncBancosJson();
+
+        if (bancosData.length === 0) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Evaluación incompleta',
+                    text: 'Debe configurar al menos una pregunta para la evaluación.',
+                    confirmButtonText: 'Entendido'
+                });
+            } else {
+                alert('Debe configurar al menos una pregunta para la evaluación.');
+            }
+            return false;
+        }
+
+        for (var i = 0; i < bancosData.length; i++) {
+            var b = bancosData[i];
+            if (!b.problemas || b.problemas.length === 0) {
+                var numPreg = i + 1;
+                var drawer = document.getElementById('drawer_' + i);
+                if (drawer) drawer.style.display = 'block';
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Pregunta sin banco asignado',
+                        text: `La Pregunta #${numPreg} no tiene ningún ejercicio asignado en su banco. Seleccione una categoría o marque al menos un ejercicio.`,
+                        confirmButtonText: 'Revisar Pregunta'
+                    });
+                } else {
+                    alert(`La Pregunta #${numPreg} no tiene ningún ejercicio asignado en su banco.`);
+                }
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Interceptar submitFormCrear y submitFormEditar para validar antes del modal
+    if (typeof window.submitFormCrear === 'function') {
+        const origSubmitCrear = window.submitFormCrear;
+        window.submitFormCrear = function() {
+            if (!validarBancosAntesDeEnviar()) return;
+            origSubmitCrear();
+        };
+    }
+
+    if (typeof window.submitFormEditar === 'function') {
+        const origSubmitEditar = window.submitFormEditar;
+        window.submitFormEditar = function(item) {
+            if (!validarBancosAntesDeEnviar()) return;
+            origSubmitEditar(item);
+        };
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        updateSelectedBadge();
+        renderPreguntas();
+
+        // En caso de submit directo
+        var formCrear = document.getElementById('crearForm');
+        if (formCrear) {
+            formCrear.addEventListener('submit', function(e) {
+                if (!validarBancosAntesDeEnviar()) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    return false;
+                }
+            }, true);
+        }
+
+        var formEditar = document.getElementById('editarForm');
+        if (formEditar) {
+            formEditar.addEventListener('submit', function(e) {
+                if (!validarBancosAntesDeEnviar()) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    return false;
+                }
+            }, true);
+        }
     });
 </script>

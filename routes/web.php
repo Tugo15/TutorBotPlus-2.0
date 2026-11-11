@@ -84,7 +84,7 @@ Route::group(['middleware'=>['auth', 'certamen_en_resolucion']], function(){
 
 	Route::get('/evaluaciones', [CertamenesController::class, "listado_certamenes"])->name('certamenes.listado')->withoutMiddleware('certamen_en_resolucion');
 	Route::get('/evaluaciones/{id_certamen}', [CertamenesController::class, "ver_certamen"])->name('certamenes.ver')->withoutMiddleware('certamen_en_resolucion');
-	Route::get('/evaluaciones/{id_certamen}/resolver', [CertamenesController::class, "inicializar_certamen"])->name('certamenes.iniciar_resolucion')->withoutMiddleware('certamen_en_resolucion')->middleware('red_institucional');
+	Route::match(['get', 'post'], '/evaluaciones/{id_certamen}/resolver', [CertamenesController::class, "inicializar_certamen"])->name('certamenes.iniciar_resolucion')->withoutMiddleware('certamen_en_resolucion')->middleware('red_institucional');
 
 	Route::get('/evaluaciones/{token}/resolucion', [CertamenesController::class, "resolver_certamen"])->name('certamenes.resolucion')->withoutMiddleware('certamen_en_resolucion')->middleware(['chequear_fecha_certamen', 'red_institucional']);
 	Route::get('/evaluaciones/{token_certamen}/problema/{codigo}', [ProblemasController::class, "resolver_problema"])->name('certamenes.resolver_problema')->withoutMiddleware('certamen_en_resolucion')->middleware(['chequear_fecha_certamen', 'red_institucional']);

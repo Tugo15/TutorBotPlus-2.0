@@ -26,9 +26,16 @@
                                     href="{{ route('certamenes.resolucion', ['token' => $res_certamen->token]) }}"
                                     role="button">{{ $res_certamen->finalizado == true ? 'Has finalizado la evaluación' : 'Volver a la Evaluación' }}</a>
                             @else
-                                <a class="btn btn-primary text-nowrap btn-block {{ $certamen->disponibilidad ? '' : 'disabled' }}"
-                                    href="{{ route('certamenes.iniciar_resolucion', ['id_certamen' => $certamen->id]) }}"
-                                    role="button">{{ $certamen->disponibilidad ? 'Resolver Evaluación' : 'Evaluación No Disponible' }}</a>
+                                @if (!empty($certamen->password))
+                                    <button type="button" class="btn btn-primary text-nowrap btn-block {{ $certamen->disponibilidad ? '' : 'disabled' }}"
+                                        @if($certamen->disponibilidad) data-bs-toggle="modal" data-bs-target="#modalPasswordCertamen" @else disabled @endif>
+                                        <i class="fa fa-lock me-1"></i> Resolver Evaluación
+                                    </button>
+                                @else
+                                    <a class="btn btn-primary text-nowrap btn-block {{ $certamen->disponibilidad ? '' : 'disabled' }}"
+                                        href="{{ route('certamenes.iniciar_resolucion', ['id_certamen' => $certamen->id]) }}"
+                                        role="button">{{ $certamen->disponibilidad ? 'Resolver Evaluación' : 'Evaluación No Disponible' }}</a>
+                                @endif
                             @endif
                         </div>
                         @can('ver informe del certamen')
@@ -61,6 +68,14 @@
                                 <li class="list-group-item"><strong>Finalizado:</strong>
                                     {{ $certamen->fecha_termino }}</li>
                             @endif
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Acceso:</strong>
+                                @if(!empty($certamen->password))
+                                    <span class="badge bg-warning text-dark"><i class="fa fa-lock me-1"></i>Requiere Contraseña</span>
+                                @else
+                                    <span class="badge bg-success"><i class="fa fa-unlock me-1"></i>Libre</span>
+                                @endif
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -100,6 +115,37 @@
             @endif
         </div>
     </div>
+
+    @if (!isset($res_certamen) && !empty($certamen->password))
+        <div class="modal fade" id="modalPasswordCertamen" tabindex="-1" aria-labelledby="modalPasswordCertamenLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form action="{{ route('certamenes.iniciar_resolucion', ['id_certamen' => $certamen->id]) }}" method="POST">
+                        @csrf
+                        <div class="modal-header">
+                            <h5 class="modal-title font-weight-bold" id="modalPasswordCertamenLabel">
+                                <i class="fa fa-key text-warning me-2"></i>Contraseña de Acceso Requerida
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-sm text-secondary mb-3">
+                                Esta evaluación está protegida. Ingrese la clave de acceso proporcionada por su docente para comenzar a rendirla:
+                            </p>
+                            <div class="form-group mb-0">
+                                <label for="input_password_certamen" class="form-control-label font-weight-bold text-sm">Contraseña de la Evaluación*</label>
+                                <input type="password" name="password" id="input_password_certamen" class="form-control" placeholder="Ingrese la contraseña aquí..." required autofocus autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-unlock me-1"></i> Validar y Comenzar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
 @endsection
 
 @push('js')

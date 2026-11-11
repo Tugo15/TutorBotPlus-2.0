@@ -23,19 +23,4 @@ class banco_problemas_certamenes extends Pivot
     public function categorias(): HasMany{
         return $this->hasMany(Categoria_Problema::class, 'id_categoria');
     }
-
-    protected static function booted()
-    {
-        static::created(function ($banco) {
-            $certamen = $banco->certamen;
-            $certamen->cantidad_problemas += 1;
-            $certamen->save(); 
-        });
-
-        static::deleting(function ($banco){
-            $certamen = $banco->certamen;
-            $certamen->cantidad_problemas -= 1;
-            $certamen->save(); 
-        });
-    }
 }

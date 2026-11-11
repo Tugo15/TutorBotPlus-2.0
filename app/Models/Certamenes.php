@@ -28,12 +28,18 @@ class Certamenes extends Model
         "penalizacion_error" => ["nullable", "min:0"],
         "restriccion_red" => ["nullable", "boolean"],
         "ips_autorizadas" => ["nullable", "string"],
+        "password" => ["nullable", "string", "max:100"],
         "dificultad" => ["nullable", "in:Fácil,Medio,Difícil"],
-        "problemas" => ["nullable", "array"]
+        "problemas" => ["nullable", "array"],
+        "bancos" => ["nullable", "array"],
+        "bancos_preguntas_json" => ["nullable", "string"],
+        "cantidad_problemas" => ["nullable", "integer", "min:1"]
     ];
 
     protected $casts = [
         'restriccion_red' => 'boolean',
+        'problemas_seleccionados' => 'array',
+        'bancos_preguntas' => 'array',
     ];
     public function curso(): BelongsTo
     {

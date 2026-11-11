@@ -1,6 +1,6 @@
 @php
     $toastSuccess = session('success') ?? session('succes');
-    $toastError = session('error') ?? session('status') ?? ($errors->has('session') ? $errors->first('session') : null);
+    $toastError = session('error') ?? session('status') ?? (isset($errors) && $errors->has('session') ? $errors->first('session') : null);
     $toastWarning = session('warning');
 @endphp
 
