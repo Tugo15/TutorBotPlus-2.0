@@ -20,8 +20,13 @@ use Illuminate\Support\Str;
 class CertamenesController extends Controller
 {
     public function index(Request $request){
-        $userCursos = auth()->user()->cursos();
-        $cursos = $userCursos->withCount('certamenes')->get();
+        $esAdmin = auth()->user()->hasRole('administrador');
+        if ($esAdmin) {
+            $cursos = Cursos::withCount('certamenes')->get();
+        } else {
+            $userCursos = auth()->user()->cursos();
+            $cursos = $userCursos->withCount('certamenes')->get();
+        }
         $id_curso_activo = $request->input('id_curso');
         $curso_activo = null;
 
@@ -34,8 +39,14 @@ class CertamenesController extends Controller
         }
 
         $certamenes = $query->get()->map(function ($item){
-            $item->fecha_inicio = Carbon::parse($item->fecha_inicio)->locale('es_ES')->isoFormat('lll');
-            $item->fecha_termino = Carbon::parse($item->fecha_termino)->locale('es_ES')->isoFormat('lll');
+            $item->fecha_inicio_raw = $item->fecha_inicio;
+            $item->fecha_termino_raw = $item->fecha_termino;
+            $item->fecha_inicio_input = $item->fecha_inicio ? Carbon::parse($item->fecha_inicio)->format('Y-m-d\TH:i') : '';
+            $item->fecha_termino_input = $item->fecha_termino ? Carbon::parse($item->fecha_termino)->format('Y-m-d\TH:i') : '';
+            $item->fecha_inicio_texto = $item->fecha_inicio ? Carbon::parse($item->fecha_inicio)->locale('es_ES')->isoFormat('lll') : 'No Definido';
+            $item->fecha_termino_texto = $item->fecha_termino ? Carbon::parse($item->fecha_termino)->locale('es_ES')->isoFormat('lll') : 'No Definido';
+            $item->fecha_inicio = $item->fecha_inicio_texto;
+            $item->fecha_termino = $item->fecha_termino_texto;
             $item->creado = Carbon::parse($item->created_at)->locale('es_ES')->isoFormat('lll');
             return $item;
         });

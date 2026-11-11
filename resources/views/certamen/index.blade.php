@@ -244,14 +244,14 @@
                                                             <div class="form-group mb-0">
                                                                 <label class="form-control-label font-weight-bold text-xs">Fecha de Inicio</label>
                                                                 <input type="datetime-local" class="form-control form-control-sm" name="fecha_inicio" 
-                                                                    value="{{ \Carbon\Carbon::parse($certamen->fecha_inicio)->format('Y-m-d\TH:i') }}">
+                                                                    value="{{ $certamen->fecha_inicio_input ?? '' }}">
                                                             </div>
                                                         </div>
                                                         <div class="col-6">
                                                             <div class="form-group mb-0">
                                                                 <label class="form-control-label font-weight-bold text-xs">Fecha de Término</label>
                                                                 <input type="datetime-local" class="form-control form-control-sm" name="fecha_termino" 
-                                                                    value="{{ \Carbon\Carbon::parse($certamen->fecha_termino)->format('Y-m-d\TH:i') }}">
+                                                                    value="{{ $certamen->fecha_termino_input ?? '' }}">
                                                             </div>
                                                         </div>
                                                     </div>
