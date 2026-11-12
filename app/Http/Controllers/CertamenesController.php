@@ -424,7 +424,6 @@ class CertamenesController extends Controller
         }
         return redirect()->route('certamen.index', ['id_curso' => $idCurso])->with('success', 'La evaluación "'.$certamen->nombre.'" ha sido eliminada.');
     }
-    }
 
     public function duplicar(Request $request){
         $request->validate([
