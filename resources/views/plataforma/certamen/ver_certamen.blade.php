@@ -76,6 +76,12 @@
                                     <span class="badge bg-success"><i class="fa fa-unlock me-1"></i>Libre</span>
                                 @endif
                             </li>
+                            @if($certamen->restriccion_red)
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <strong>Red:</strong>
+                                    <span class="badge bg-danger"><i class="fa fa-university me-1"></i>Red Institucional Requerida</span>
+                                </li>
+                            @endif
                         </ul>
                     </div>
                 </div>

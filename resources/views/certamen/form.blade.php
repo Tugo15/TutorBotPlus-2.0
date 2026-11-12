@@ -232,7 +232,7 @@
                         <span class="text-xs font-weight-bold text-secondary me-1">Cantidad de Preguntas:</span>
                         <div class="input-group input-group-sm" style="width: 140px;">
                             <button class="btn btn-outline-secondary mb-0 px-2.5" type="button" onclick="modificarCantidadPreguntas(-1)"><i class="fa fa-minus"></i></button>
-                            <input type="number" id="input_cant_preguntas" name="cantidad_problemas" class="form-control text-center font-weight-bold" min="1" max="25" value="{{ count($bancos_preguntas ?? [1]) }}" onchange="onManualCantidadChange(this.value)">
+                            <input type="number" id="input_cant_preguntas" name="cantidad_problemas" class="form-control text-center font-weight-bold" min="1" max="25" value="{{ old('cantidad_problemas', count($bancos_preguntas ?? [1])) }}" onchange="onManualCantidadChange(this.value)">
                             <button class="btn btn-outline-secondary mb-0 px-2.5" type="button" onclick="modificarCantidadPreguntas(1)"><i class="fa fa-plus"></i></button>
                         </div>
                         <button type="button" class="btn btn-sm btn-dark mb-0 ms-1" onclick="agregarNuevaPregunta()">
@@ -241,7 +241,7 @@
                     </div>
                 </div>
 
-                <input type="hidden" name="bancos_preguntas_json" id="bancos_preguntas_json" value="">
+                <input type="hidden" name="bancos_preguntas_json" id="bancos_preguntas_json" value="{{ old('bancos_preguntas_json', isset($bancos_preguntas) ? json_encode($bancos_preguntas) : '') }}">
 
                 <!-- Contenedor dinámico de Preguntas y sus Bancos -->
                 <div id="preguntas-dinamicas-container" class="d-flex flex-column gap-3">
@@ -271,14 +271,33 @@
         ];
     })->values() : collect();
 
-    $bancos_init = isset($bancos_preguntas) && !empty($bancos_preguntas) ? $bancos_preguntas : [
-        [
-            'numero' => 1,
-            'id_categoria' => null,
-            'nombre_banco' => 'Pregunta 1',
-            'problemas' => []
-        ]
-    ];
+    $bancosOld = null;
+    if (old('bancos_preguntas_json')) {
+        $bancosOld = json_decode(old('bancos_preguntas_json'), true);
+    } elseif (old('problemas')) {
+        $pIds = array_values(array_filter(array_map('intval', (array)old('problemas'))));
+        if (!empty($pIds)) {
+            $bancosOld = [
+                [
+                    'numero' => 1,
+                    'id_categoria' => null,
+                    'nombre_banco' => 'Pregunta 1',
+                    'problemas' => $pIds
+                ]
+            ];
+        }
+    }
+
+    $bancos_init = (!empty($bancosOld) && is_array($bancosOld))
+        ? $bancosOld
+        : ((isset($bancos_preguntas) && !empty($bancos_preguntas)) ? $bancos_preguntas : [
+            [
+                'numero' => 1,
+                'id_categoria' => null,
+                'nombre_banco' => 'Pregunta 1',
+                'problemas' => []
+            ]
+        ]);
 @endphp
 
 <script>
@@ -368,7 +387,7 @@
             // Generar cards de problemas para el drawer de esta pregunta
             var cardsProbsHtml = '';
             todosProblemasData.forEach(function(p) {
-                var isChecked = banco.problemas && banco.problemas.indexOf(p.id) !== -1;
+                var isChecked = banco.problemas && banco.problemas.some(function(id) { return String(id) === String(p.id); });
                 var difClass = p.dificultad === 'Fácil' ? 'border-success text-success' : (p.dificultad === 'Difícil' ? 'border-danger text-danger' : 'border-warning text-warning');
                 var catBadges = p.categoria_nombres.map(function(cn) {
                     return `<span class="badge border border-secondary text-secondary bg-white text-xxs px-1 py-0.5 me-1">${cn}</span>`;
@@ -517,15 +536,15 @@
         if (!banco) return;
         if (!Array.isArray(banco.problemas)) banco.problemas = [];
 
-        var pId = parseInt(probId);
+        var pId = parseInt(probId, 10);
         var card = checkbox.closest('.selection-card');
         if (checkbox.checked) {
-            if (banco.problemas.indexOf(pId) === -1) {
+            if (!banco.problemas.some(function(id) { return String(id) === String(pId); })) {
                 banco.problemas.push(pId);
             }
             if (card) card.classList.add('checked');
         } else {
-            banco.problemas = banco.problemas.filter(function(id) { return id !== pId; });
+            banco.problemas = banco.problemas.filter(function(id) { return String(id) !== String(pId); });
             if (card) card.classList.remove('checked');
         }
 
@@ -590,8 +609,8 @@
         if (drawer) {
             var checkboxes = drawer.querySelectorAll('input[type="checkbox"]');
             checkboxes.forEach(function(cb) {
-                var pId = parseInt(cb.value);
-                var isChecked = banco.problemas.indexOf(pId) !== -1;
+                var pId = parseInt(cb.value, 10);
+                var isChecked = banco.problemas.some(function(id) { return String(id) === String(pId); });
                 cb.checked = isChecked;
                 var card = cb.closest('.selection-card');
                 if (card) {

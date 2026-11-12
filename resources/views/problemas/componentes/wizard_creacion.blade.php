@@ -102,7 +102,7 @@
                 <span class="badge bg-light text-dark border text-xxs px-2 py-1">
                     {{ $totalCasos }} caso(s)
                 </span>
-                <a href="{{ route('casos_pruebas.assign', ['id' => $problema->id, 'finalizar_wizard' => 1]) }}"
+                <a href="{{ route('casos_pruebas.assign', array_merge(['id' => $problema->id, 'finalizar_wizard' => 1], (isset($id_curso) && $id_curso ? ['id_curso' => $id_curso] : []))) }}"
                    class="btn btn-xs btn-success mb-0">
                     <i class="fa fa-check me-1"></i> Finalizar
                 </a>

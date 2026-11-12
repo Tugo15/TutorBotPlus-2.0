@@ -9,7 +9,10 @@
                   </div>
             </div>
             <div class="card-body px-5" #body_markdown>
-                {!! Str::markdown($problema->body_editorial, [
+                @php
+                    $bodyEditorialSanitized = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $problema->body_editorial ?? '');
+                @endphp
+                {!! Str::markdown($bodyEditorialSanitized, [
                     'html_input' => 'strip',
                     'allow_unsafe_links' => false
                 ])!!}

@@ -318,11 +318,11 @@
                                         </form>
                                     @endif
                                     <a class="btn btn-xs btn-outline-info mb-0" title="Casos de Prueba"
-                                        href="{{ route('casos_pruebas.assign', ['id' => $problema->id]) }}"><i class="fa fa-vials me-1"></i> Casos</a>
+                                        href="{{ route('casos_pruebas.assign', array_merge(['id' => $problema->id], (isset($id_curso_activo) && $id_curso_activo ? ['id_curso' => $id_curso_activo] : []))) }}"><i class="fa fa-vials me-1"></i> Casos</a>
                                     <a class="btn btn-xs btn-outline-secondary mb-0" title="Editar Pistas"
-                                        href="{{ route('problemas.editorial', ['id' => $problema->id]) }}"><i class="fa fa-book me-1"></i> Editar Pistas</a>
+                                        href="{{ route('problemas.editorial', array_merge(['id' => $problema->id], (isset($id_curso_activo) && $id_curso_activo ? ['id_curso' => $id_curso_activo] : []))) }}"><i class="fa fa-book me-1"></i> Editar Pistas</a>
                                     <a class="btn btn-xs btn-outline-warning mb-0" title="Editar Problema"
-                                        href="{{ route('problemas.editar', ['id' => $problema->id]) }}"><i class="fa fa-pencil me-1"></i> Editar</a>
+                                        href="{{ route('problemas.editar', array_merge(['id' => $problema->id], (isset($id_curso_activo) && $id_curso_activo ? ['id_curso' => $id_curso_activo] : []))) }}"><i class="fa fa-pencil me-1"></i> Editar</a>
                                 @endcan
                                 @if(isset($id_curso_activo) && $id_curso_activo)
                                     <form action="{{ route('problemas.curso.quitar', ['id_curso' => $id_curso_activo]) }}" method="POST" class="d-inline m-0" id="quitarCursoForm_{{ $problema->id }}">

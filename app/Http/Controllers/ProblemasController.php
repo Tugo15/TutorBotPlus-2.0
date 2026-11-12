@@ -88,8 +88,12 @@ class ProblemasController extends Controller
 
     public function editar(Request $request)
     {
+        $id_curso = $request->input('id_curso');
         $problema = Problemas::with(['cursos', 'categorias', 'lenguajes'])->find($request->id);
         if (!$problema) {
+            if ($id_curso) {
+                return redirect()->route('problemas.index', ['id_curso' => $id_curso])->with('error', 'El problema no existe.');
+            }
             return redirect()->route('problemas.index')->with('error', 'El problema no existe.');
         }
         $problema->sql = $problema->lenguajes()->where('nombre', 'LIKE', '%sql%')->exists();
@@ -105,7 +109,7 @@ class ProblemasController extends Controller
         $categorias = Categoria_Problema::all();
         $cursos = auth()->user()->cursos()->get();
         $lenguajes = LenguajesProgramaciones::where('abreviatura', 'NOT LIKE', '%sql%')->get();
-        return view('problemas.editar', compact('problema', 'categorias', 'lenguajes', 'cursos'))->with('accion', "editar");
+        return view('problemas.editar', compact('problema', 'categorias', 'lenguajes', 'cursos', 'id_curso'))->with('accion', "editar");
     }
     public function editar_config_llm(Request $request)
     {
@@ -147,7 +151,13 @@ class ProblemasController extends Controller
             return redirect()->route('problemas.index')->with('error', $e->getMessage());
         }
         session(['wizard_creacion_problema_' . $problema->id => true]);
-        return redirect()->route('casos_pruebas.assign', ["id" => $problema->id, "wizard" => 1])->with('success', 'Paso 1 completado: El problema "' . $problema->nombre . '" ha sido creado. Ahora agregue los casos de prueba.');
+        $id_curso = $request->input('id_curso');
+        $params = ["id" => $problema->id, "wizard" => 1];
+        if ($id_curso) {
+            $params['id_curso'] = $id_curso;
+            session(['id_curso_problema_' . $problema->id => $id_curso]);
+        }
+        return redirect()->route('casos_pruebas.assign', $params)->with('success', 'Paso 1 completado: El problema "' . $problema->nombre . '" ha sido creado. Ahora agregue los casos de prueba.');
     }
     private static function set_datos_problemas(Problemas $problema, Request $request){
             $problema->nombre = $request->input('nombre');
@@ -168,7 +178,7 @@ class ProblemasController extends Controller
                 $problema->memoria_limite = 0;
             }
             $problema->tiempo_limite = $request->input('tiempo_limite');
-            $problema->body_problema = $request->input('body_problema');
+            $problema->body_problema = self::almacenarImagenesBase64($request->input('body_problema'));
             $problema->body_problema_resumido = $request->input('body_problema_resumido');
             $problema->restricciones = $request->input('restricciones');
             if (isset($request->visible)) {
@@ -229,6 +239,7 @@ class ProblemasController extends Controller
     }
     public function update(Request $request)
     {
+        $id_curso = $request->input('id_curso');
         $validated = $request->validate(Problemas::updateRules(isset($request->set_fecha_inicio) || isset($request->fecha_inicio), isset($request->set_fecha_termino) || isset($request->fecha_termino), $request->id, $request->sql));
         try {
             DB::beginTransaction();
@@ -237,13 +248,22 @@ class ProblemasController extends Controller
             DB::commit();
         } catch (\PDOException $e) {
             DB::rollBack();
+            if ($id_curso) {
+                return redirect()->route('problemas.index', ['id_curso' => $id_curso])->with('error', $e->getMessage());
+            }
             return redirect()->route('problemas.index')->with('error', $e->getMessage());
         }
+
+        if ($id_curso) {
+            return redirect()->route('problemas.index', ['id_curso' => $id_curso])->with('success', 'El problema ' . $problema->nombre . ' ha sido modificado');
+        }
+
         return redirect()->route('problemas.index')->with('success', 'El problema ' . $problema->nombre . ' ha sido modificado');
     }
 
     public function eliminar(Request $request)
     {
+        $id_curso = $request->input('id_curso');
         try {
             DB::beginTransaction();
             $problema = Problemas::find($request->id);
@@ -251,7 +271,13 @@ class ProblemasController extends Controller
             DB::commit();
         } catch (\PDOException $e) {
             DB::rollBack();
+            if ($id_curso) {
+                return redirect()->route('problemas.index', ['id_curso' => $id_curso])->with('error', $e->getMessage());
+            }
             return redirect()->route('problemas.index')->with('error', $e->getMessage());
+        }
+        if ($id_curso) {
+            return redirect()->route('problemas.index', ['id_curso' => $id_curso])->with('success', 'El Problema ' . $problema->nombre . ' ha sido eliminado');
         }
         return redirect()->route('problemas.index')->with('success', 'El Problema ' . $problema->nombre . ' ha sido eliminado');
     }
@@ -310,6 +336,7 @@ class ProblemasController extends Controller
 
     public function update_editorial(Request $request)
     {
+        $id_curso = $request->input('id_curso');
         try {
             $problema = Problemas::find($request->id);
             $problema->body_editorial = $request->input('body_editorial');
@@ -318,18 +345,25 @@ class ProblemasController extends Controller
             DB::rollBack();
             return redirect()->back()->withInput($request->input())->with('error', $e->getMessage());
         }
+        if ($id_curso) {
+            return redirect()->route('problemas.index', ['id_curso' => $id_curso])->with('success', 'Las pistas para el problema "' . $problema->nombre . '" han sido modificadas');
+        }
         return redirect()->route('problemas.index')->with('success', 'Las pistas para el problema "' . $problema->nombre . '" han sido modificadas');
     }
 
     public function editar_editorial(Request $request)
     {
+        $id_curso = $request->input('id_curso');
         try {
             $problema = Problemas::find($request->id);
         } catch (\PDOException $e) {
             DB::rollBack();
+            if ($id_curso) {
+                return redirect()->route('problemas.index', ['id_curso' => $id_curso])->with('error', $e->getMessage());
+            }
             return redirect()->route('problemas.index')->with('error', $e->getMessage());
         }
-        return view('problemas.editorial', compact('problema'));
+        return view('problemas.editorial', compact('problema', 'id_curso'));
     }
 
     public function listado_problemas(Request $request)
@@ -659,5 +693,66 @@ class ProblemasController extends Controller
 
         return redirect()->route('problemas.index', ['id_curso' => $id_curso])
             ->with('success', 'Se ha(n) desvinculado ' . count($ids) . ' ejercicio(s) del curso correctamente.');
+    }
+
+    public function upload_imagen(Request $request)
+    {
+        $request->validate([
+            'image' => ['required', 'file', 'image', 'mimes:jpeg,png,jpg,gif,webp,svg', 'max:10240'],
+        ]);
+
+        $file = $request->file('image');
+        $extension = $file->getClientOriginalExtension() ?: 'png';
+        $safeName = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+        $filename = time() . '_' . ($safeName ? substr($safeName, 0, 30) : 'imagen') . '.' . $extension;
+
+        $path = $file->storeAs('problemas/imagenes', $filename, 'public');
+
+        return response()->json([
+            'url' => asset('storage/' . $path),
+            'relative_url' => '/storage/' . $path,
+            'filename' => $filename,
+        ]);
+    }
+
+    public static function almacenarImagenesBase64($contenido)
+    {
+        if (empty($contenido) || !str_contains($contenido, 'data:image/')) {
+            return $contenido;
+        }
+
+        $contenido = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $contenido);
+
+        return preg_replace_callback(
+            '/data:image\/([a-zA-Z0-9\+\-]+);base64,([A-Za-z0-9\/+=\s]+)/',
+            function ($matches) {
+                $rawExt = strtolower($matches[1]);
+                $map = [
+                    'jpeg' => 'jpg',
+                    'jpg' => 'jpg',
+                    'png' => 'png',
+                    'gif' => 'gif',
+                    'webp' => 'webp',
+                    'svg+xml' => 'svg',
+                    'svg' => 'svg'
+                ];
+                $extension = $map[$rawExt] ?? 'png';
+
+                $cleanBase64 = preg_replace('/\s+/', '', $matches[2]);
+                $decoded = base64_decode($cleanBase64, true);
+
+                if ($decoded === false) {
+                    return $matches[0];
+                }
+
+                $filename = time() . '_' . Str::random(12) . '.' . $extension;
+                $relativePath = 'problemas/imagenes/' . $filename;
+
+                Storage::disk('public')->put($relativePath, $decoded);
+
+                return '/storage/' . $relativePath;
+            },
+            $contenido
+        );
     }
 }

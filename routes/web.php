@@ -176,6 +176,7 @@ Route::group(['middleware' => 'auth'], function () {
 		Route::post('/toggle_visibilidad', [ProblemasController::class, 'toggle_visibilidad'])->name('problemas.toggle_visibilidad')->middleware('can:editar problemas'); 
 		Route::post('/store', [ProblemasController::class, 'store'])->name('problemas.store')->middleware('can:crear problemas'); 
 		Route::post('/update', [ProblemasController::class, 'update'])->name('problemas.update')->middleware('can:editar problemas'); 
+		Route::post('/upload_imagen', [ProblemasController::class, 'upload_imagen'])->name('problemas.upload_imagen'); 
 		Route::get('/editar_config_llm', [ProblemasController::class, 'editar_config_llm'])->name('problemas.editar_config_llm')->middleware('can:editar problemas'); 
 		Route::post('/configurar_llm', [ProblemasController::class, 'configurar_llm'])->name('problemas.configurar_llm')->middleware('can:editar problemas'); 
 

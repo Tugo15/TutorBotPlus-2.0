@@ -56,7 +56,7 @@ class CertamenesController extends Controller
 
     public function crear(Request $request){
         $cursos = auth()->user()->cursos()->get();
-        $id_curso_preseleccionado = $request->input('id_curso', $request->input('curso'));
+        $id_curso_preseleccionado = old('curso', $request->input('id_curso', $request->input('curso')));
 
         if (!$id_curso_preseleccionado && $cursos->isNotEmpty()) {
             $id_curso_preseleccionado = $cursos->first()->id;
@@ -69,14 +69,37 @@ class CertamenesController extends Controller
             return redirect()->route('certamen.index')->with('error', 'Debe seleccionar un curso para crear una evaluación.');
         }
         $categorias_existentes = \App\Models\Categoria_Problema::orderBy('nombre')->get();
-        $bancos_preguntas = [
-            [
-                'numero' => 1,
-                'id_categoria' => null,
-                'nombre_banco' => 'Pregunta 1',
-                'problemas' => []
-            ]
-        ];
+        
+        $bancos_preguntas = [];
+        if (old('bancos_preguntas_json')) {
+            $decoded = json_decode(old('bancos_preguntas_json'), true);
+            if (is_array($decoded) && !empty($decoded)) {
+                $bancos_preguntas = $decoded;
+            }
+        } elseif (old('problemas')) {
+            $pIds = array_values(array_filter(array_map('intval', (array)old('problemas'))));
+            if (!empty($pIds)) {
+                $bancos_preguntas = [
+                    [
+                        'numero' => 1,
+                        'id_categoria' => null,
+                        'nombre_banco' => 'Pregunta 1',
+                        'problemas' => $pIds
+                    ]
+                ];
+            }
+        }
+
+        if (empty($bancos_preguntas)) {
+            $bancos_preguntas = [
+                [
+                    'numero' => 1,
+                    'id_categoria' => null,
+                    'nombre_banco' => 'Pregunta 1',
+                    'problemas' => []
+                ]
+            ];
+        }
         return view('certamen.crear', compact('cursos', 'todos_problemas', 'id_curso_preseleccionado', 'categorias_existentes', 'bancos_preguntas'));
     }
     public function editar(Request $request){
@@ -90,7 +113,24 @@ class CertamenesController extends Controller
         $todos_problemas = $certamen->curso ? $certamen->curso->problemas()->with('categorias')->get() : collect();
         
         $bancos_preguntas = [];
-        if (!empty($certamen->bancos_preguntas) && is_array($certamen->bancos_preguntas)) {
+        if (old('bancos_preguntas_json')) {
+            $decoded = json_decode(old('bancos_preguntas_json'), true);
+            if (is_array($decoded) && !empty($decoded)) {
+                $bancos_preguntas = $decoded;
+            }
+        } elseif (old('problemas')) {
+            $pIds = array_values(array_filter(array_map('intval', (array)old('problemas'))));
+            if (!empty($pIds)) {
+                $bancos_preguntas = [
+                    [
+                        'numero' => 1,
+                        'id_categoria' => null,
+                        'nombre_banco' => 'Pregunta 1',
+                        'problemas' => $pIds
+                    ]
+                ];
+            }
+        } elseif (!empty($certamen->bancos_preguntas) && is_array($certamen->bancos_preguntas)) {
             $bancos_preguntas = $certamen->bancos_preguntas;
         } else {
             // Reconstruir bancos a partir de las categorías vinculadas al certamen (o problemas seleccionados)
@@ -138,7 +178,7 @@ class CertamenesController extends Controller
             DB::beginTransaction();
             $certamen = new Certamenes;
             $certamen->nombre = $request->input("nombre");
-            $certamen->descripcion = $request->input("descripcion");
+            $certamen->descripcion = ProblemasController::almacenarImagenesBase64($request->input("descripcion"));
             $certamen->fecha_inicio = Carbon::parse($request->input("fecha_inicio"));
             $certamen->fecha_termino = Carbon::parse($request->input("fecha_termino"));
             $certamen->dificultad = $request->input("dificultad", "Medio");
@@ -240,7 +280,7 @@ class CertamenesController extends Controller
             DB::beginTransaction();
             $certamen = Certamenes::find($request->id);
             $certamen->nombre = $request->input("nombre");
-            $certamen->descripcion = $request->input("descripcion");
+            $certamen->descripcion = ProblemasController::almacenarImagenesBase64($request->input("descripcion"));
             $certamen->fecha_inicio = Carbon::parse($request->input("fecha_inicio"));
             $certamen->fecha_termino = Carbon::parse($request->input("fecha_termino"));
             $certamen->dificultad = $request->input("dificultad", "Medio");

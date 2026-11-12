@@ -40,6 +40,7 @@
 @endphp
 @push('js')
 <script src="{{ asset('assets/js/alertas_administracion.js') }}"></script> 
+<script src="{{ asset('assets/js/tui-editor-image-handler.js') }}"></script> 
     <script type="module">
         const set_fecha_inicio = @json($fecha_inicio);
         const set_fecha_termino = @json($fecha_termino);
@@ -56,6 +57,32 @@
             placeholder: 'Ingrese el enunciado del problema',
             initialValue: @json(old('descripcion', $certamen->descripcion ?? '')),
             extendedAutolinks: true,
+            hooks: {
+                addImageBlobHook: (blob, callback) => {
+                    const formData = new FormData();
+                    formData.append('image', blob);
+                    formData.append('_token', '{{ csrf_token() }}');
+
+                    fetch('{{ route('problemas.upload_imagen') }}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(res => {
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        return res.json();
+                    })
+                    .then(data => {
+                        callback(data.relative_url || data.url, blob.name || 'Diagrama');
+                    })
+                    .catch(err => {
+                        console.error('Error al subir imagen al servidor:', err);
+                        alert('Error al subir la imagen al servidor. Por favor verifique el archivo.');
+                    });
+                }
+            },
             customHTMLRenderer: {
                 codeBlock(node, { innerHTML }) {
                     if (node.info === 'katex' || node.info === 'math' || node.info === 'latex') {
@@ -75,6 +102,10 @@
 
         if (typeof window.attachKaTeXToEditor === 'function') {
             window.attachKaTeXToEditor(editor, '#editor');
+        }
+
+        if (typeof window.attachImageUploadToEditor === 'function') {
+            window.attachImageUploadToEditor(editor, '#editor', '{{ route('problemas.upload_imagen') }}', '{{ csrf_token() }}');
         }
 
         editor.on('change', () => {

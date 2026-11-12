@@ -105,7 +105,7 @@ class InstitutionalNetworkTest extends TestCase
             ->withServerVariables(['REMOTE_ADDR' => '200.50.100.15'])
             ->get(route('certamenes.iniciar_resolucion', ['id_certamen' => $certamen->id]));
 
-        $response->assertRedirect(route('certamenes.listado'));
+        $response->assertRedirect(route('certamenes.ver', ['id_certamen' => $certamen->id]));
         $response->assertSessionHas('error');
         $this->assertStringContainsString('Acceso restringido', session('error'));
     }
@@ -187,7 +187,7 @@ class InstitutionalNetworkTest extends TestCase
             ->withServerVariables(['REMOTE_ADDR' => '198.51.100.1'])
             ->get(route('certamenes.iniciar_resolucion', ['id_certamen' => $certamen->id]));
 
-        $responseDenied->assertRedirect(route('certamenes.listado'));
+        $responseDenied->assertRedirect(route('certamenes.ver', ['id_certamen' => $certamen->id]));
         $responseDenied->assertSessionHas('error');
     }
 }

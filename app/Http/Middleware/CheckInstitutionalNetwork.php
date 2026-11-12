@@ -19,11 +19,13 @@ class CheckInstitutionalNetwork
         $id_certamen = $request->route('id_certamen') ?? $request->input('id_certamen');
 
         // Si se encuentra en la ruta por parámetro o token
-        if (!$id_certamen && $request->route('token')) {
-            $token = $request->route('token');
-            $res = \App\Models\ResolucionCertamenes::where('token', $token)->first();
-            if ($res) {
-                $id_certamen = $res->id_certamen;
+        if (!$id_certamen) {
+            $token = $request->route('token') ?? $request->route('token_certamen') ?? $request->input('token');
+            if ($token) {
+                $res = \App\Models\ResolucionCertamenes::where('token', $token)->first();
+                if ($res) {
+                    $id_certamen = $res->id_certamen;
+                }
             }
         }
 
@@ -41,7 +43,11 @@ class CheckInstitutionalNetwork
                         ], 403);
                     }
 
-                    return redirect()->route('certamenes.listado')->with(
+                    $redirectTarget = ($id_certamen && \Illuminate\Support\Facades\Route::has('certamenes.ver'))
+                        ? route('certamenes.ver', ['id_certamen' => $id_certamen])
+                        : route('certamenes.listado');
+
+                    return redirect($redirectTarget)->with(
                         'error',
                         "Acceso restringido: Esta evaluación requiere estar conectado a la red institucional (IP detectada: {$clientIp})."
                     );

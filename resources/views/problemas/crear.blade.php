@@ -8,11 +8,17 @@
         @include('problemas.componentes.wizard_creacion', ['paso' => 1])
         <form method="POST" action='{{ route('problemas.store') }}' enctype="multipart/form-data" onsubmit="event.preventDefault();submitFormCrear()" id="crearForm">
             @csrf
+            @php
+                $idCursoVolver = $id_curso_preseleccionado ?? request('id_curso');
+            @endphp
+            @if($idCursoVolver)
+                <input type="hidden" name="id_curso" value="{{ $idCursoVolver }}">
+            @endif
             <div class="card shadow-xs border">
                 <div class="card-header pb-0 border-bottom mb-0">
                     <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
                         <div class="d-none d-lg-block" style="flex: 1;">
-                            <a href="{{ route('problemas.index') }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                            <a href="{{ $idCursoVolver ? route('problemas.index', ['id_curso' => $idCursoVolver]) : route('problemas.index') }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                         </div>
                         <div class="text-center" style="flex: 2;">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-plus-circle me-2 text-primary"></i>Crear Nuevo Problema</h6>
@@ -35,6 +41,7 @@
 @endsection
 @push('js')
 <script src="{{ asset('assets/js/alertas_administracion.js') }}"></script> 
+<script src="{{ asset('assets/js/tui-editor-image-handler.js') }}"></script> 
     <script type="module">
         const checkbox = document.getElementById('sql')
         const checkbox_fecha_inicio = document.getElementById('set_fecha_inicio')
@@ -59,11 +66,28 @@
             extendedAutolinks: true,
             hooks: {
                 addImageBlobHook: (blob, callback) => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        callback(e.target.result, blob.name || 'Diagrama');
-                    };
-                    reader.readAsDataURL(blob);
+                    const formData = new FormData();
+                    formData.append('image', blob);
+                    formData.append('_token', '{{ csrf_token() }}');
+
+                    fetch('{{ route('problemas.upload_imagen') }}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(res => {
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        return res.json();
+                    })
+                    .then(data => {
+                        callback(data.relative_url || data.url, blob.name || 'Diagrama');
+                    })
+                    .catch(err => {
+                        console.error('Error al subir imagen al servidor:', err);
+                        alert('Error al subir la imagen al servidor. Por favor verifique el archivo.');
+                    });
                 }
             },
             customHTMLRenderer: {
@@ -87,10 +111,14 @@
             window.attachKaTeXToEditor(editor, '#editor');
         }
 
+        if (typeof window.attachImageUploadToEditor === 'function') {
+            window.attachImageUploadToEditor(editor, '#editor', '{{ route('problemas.upload_imagen') }}', '{{ csrf_token() }}');
+        }
+
         function getSanitizedMarkdown() {
             let md = editor.getMarkdown();
-            // Corrige saltos de línea accidentales entre ![] y (data:image...)
-            md = md.replace(/!\[(.*?)\]\s*\r?\n\s*\((data:image\/[^;]+;base64,[^\)]+)\)/g, '![$1]($2)');
+            // Corrige saltos de línea accidentales entre ![] y (url o data:image...)
+            md = md.replace(/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/g, '![$1]($2)');
             return md;
         }
 

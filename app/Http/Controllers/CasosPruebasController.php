@@ -12,9 +12,30 @@ class CasosPruebasController extends Controller
     public function asignacion_casos(Request $request){
         $problema = Problemas::findOrFail($request->id);
 
+        if ($request->filled('id_curso')) {
+            session(['id_curso_problema_' . $problema->id => $request->input('id_curso')]);
+        }
+        $id_curso = $request->input('id_curso') ?: session('id_curso_problema_' . $problema->id);
+
+        $urlRetorno = session('url_retorno_casos_problema_' . $problema->id);
+        if (!$urlRetorno) {
+            $urlRetorno = $id_curso ? route('problemas.index', ['id_curso' => $id_curso]) : route('problemas.index');
+        }
+
         if ($request->boolean('finalizar_wizard')) {
             session()->forget('wizard_creacion_problema_' . $problema->id);
-            return redirect()->route('problemas.index')->with('success', 'El problema "' . $problema->nombre . '" y sus casos de prueba han sido configurados correctamente.');
+            session()->forget('url_retorno_casos_problema_' . $problema->id);
+            session()->forget('id_curso_problema_' . $problema->id);
+            return redirect($urlRetorno)->with('success', 'El problema "' . $problema->nombre . '" y sus casos de prueba han sido configurados correctamente.');
+        }
+
+        $prevUrl = url()->previous();
+        $currentUrl = $request->fullUrl();
+        $isInternal = !$prevUrl || $prevUrl === $currentUrl || str_contains($prevUrl, '/casos') || str_contains($prevUrl, '/casos_pruebas') || str_contains($prevUrl, '/login');
+
+        if (!$isInternal && $prevUrl !== url('/')) {
+            session(['url_retorno_casos_problema_' . $problema->id => $prevUrl]);
+            $urlRetorno = $prevUrl;
         }
 
         if ($request->boolean('wizard')) {
@@ -29,11 +50,11 @@ class CasosPruebasController extends Controller
 
         if ($has_non_sql_language || !$problema->lenguajes()->exists()) {
             $casos = $problema->casos_de_prueba()->orderBy('created_at','desc')->get();
-            return view("problemas.casos_pruebas.assign", compact('problema', 'casos', 'es_wizard'));
+            return view("problemas.casos_pruebas.assign", compact('problema', 'casos', 'es_wizard', 'id_curso', 'urlRetorno'));
         } else {
             $casos = $problema->casos_de_prueba()->orderBy('id','asc')->get();
             $caso = $casos->first();
-            return view("problemas.casos_pruebas.assign_sql", compact('problema', 'caso', 'casos', 'es_wizard'));
+            return view("problemas.casos_pruebas.assign_sql", compact('problema', 'caso', 'casos', 'es_wizard', 'id_curso', 'urlRetorno'));
         }
     }
 
@@ -50,7 +71,8 @@ class CasosPruebasController extends Controller
             DB::rollback();
             return redirect()->back()->with('error', $e->getMessage());
         }
-        return redirect()->route('casos_pruebas.assign', ["id"=>$caso->id_problema])->with('success', 'El caso de prueba '.$caso->id.' ha sido eliminado');
+        $id_curso = $request->input('id_curso') ?: session('id_curso_problema_' . $caso->id_problema);
+        return redirect()->route('casos_pruebas.assign', array_merge(["id"=>$caso->id_problema], $id_curso ? ['id_curso' => $id_curso] : []))->with('success', 'El caso de prueba '.$caso->id.' ha sido eliminado');
 
     }
     public function caso_sql(Request $request){
@@ -80,7 +102,8 @@ class CasosPruebasController extends Controller
             DB::rollback();
             return redirect()->back()->with('error', $e->getMessage());
         }
-        return redirect()->route('casos_pruebas.assign', ["id"=>$caso->id_problema])->with('success', 'El caso de prueba ha sido guardado exitosamente');
+        $id_curso = $request->input('id_curso') ?: session('id_curso_problema_' . $caso->id_problema);
+        return redirect()->route('casos_pruebas.assign', array_merge(["id"=>$caso->id_problema], $id_curso ? ['id_curso' => $id_curso] : []))->with('success', 'El caso de prueba ha sido guardado exitosamente');
     }
     public function add_caso(Request $request){
 
@@ -104,7 +127,8 @@ class CasosPruebasController extends Controller
             DB::rollback();
             return redirect()->back()->with('error', $e->getMessage());
         }
-        return redirect()->route('casos_pruebas.assign', ["id"=>$request->id])->with('success', 'El caso de prueba '.$caso->id.' ha sido añadido');
+        $id_curso = $request->input('id_curso') ?: session('id_curso_problema_' . $request->id);
+        return redirect()->route('casos_pruebas.assign', array_merge(["id"=>$request->id], $id_curso ? ['id_curso' => $id_curso] : []))->with('success', 'El caso de prueba '.$caso->id.' ha sido añadido');
 
     }
 
@@ -137,7 +161,8 @@ class CasosPruebasController extends Controller
             return redirect()->back()->with('error', 'Error al modificar el caso de prueba: ' . $e->getMessage());
         }
 
-        return redirect()->route('casos_pruebas.assign', ["id" => $caso->id_problema])->with('success', 'El caso de prueba #' . $caso->id . ' ha sido modificado exitosamente.');
+        $id_curso = $request->input('id_curso') ?: session('id_curso_problema_' . $caso->id_problema);
+        return redirect()->route('casos_pruebas.assign', array_merge(["id" => $caso->id_problema], $id_curso ? ['id_curso' => $id_curso] : []))->with('success', 'El caso de prueba #' . $caso->id . ' ha sido modificado exitosamente.');
     }
 
     public function bulk_add_casos(Request $request)
@@ -261,7 +286,8 @@ class CasosPruebasController extends Controller
             $problema->save();
             DB::commit();
 
-            return redirect()->route('casos_pruebas.assign', ['id' => $problema->id])
+            $id_curso = $request->input('id_curso') ?: session('id_curso_problema_' . $problema->id);
+            return redirect()->route('casos_pruebas.assign', array_merge(['id' => $problema->id], $id_curso ? ['id_curso' => $id_curso] : []))
                 ->with('success', "¡Inyección masiva exitosa! Se han insertado {$insertados} casos de prueba en el problema.");
         } catch (\Exception $e) {
             DB::rollback();

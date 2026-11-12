@@ -180,7 +180,12 @@
         </div>
     @endif
     <h3>Enunciado</h3>
-    {!! Str::markdown($problema->body_problema) !!}
+    @php
+        $bodySanitized = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $problema->body_problema ?? '');
+        $renderedHtml = Str::markdown($bodySanitized);
+        $renderedHtml = str_replace('src="/storage/', 'src="' . public_path('storage/') . '/', $renderedHtml);
+    @endphp
+    {!! $renderedHtml !!}
 
     @php
         $casos_ejemplo = $problema->casos_de_prueba()->where('ejemplo', true)->get();

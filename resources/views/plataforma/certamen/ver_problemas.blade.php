@@ -36,9 +36,12 @@
                         <h4 id="titulo_problema">{{ $problemas[0]->nombre }}</h4>
                         <hr>
                         <div id="enunciado">
-                            {!! Str::markdown($problemas[0]->body_problema, [
+                            @php
+                                $bodyProblemaSanitized = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $problemas[0]->body_problema ?? '');
+                            @endphp
+                            {!! Str::markdown($bodyProblemaSanitized, [
                                 'html_input' => 'strip',
-                                'allow_unsafe_links' => false,
+                                'allow_unsafe_links' => true,
                             ]) !!}
 
                             @php
@@ -196,7 +199,9 @@
                 document.getElementById("problema_" + item).classList.add('active');
                 id_problema_activo = item
                 console.log(problemas[item])
-                let htmlEnunciado = converter.makeHtml(problemas[item]["body_problema"]);
+                let mdRaw = problemas[item]["body_problema"] || '';
+                let mdClean = mdRaw.replace(/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/g, '![$1]($2)');
+                let htmlEnunciado = converter.makeHtml(mdClean);
                 if (problemas[item]["casos_de_prueba"] && problemas[item]["casos_de_prueba"].length > 0) {
                     htmlEnunciado += '<div class="mt-4 pt-3 border-top"><h6 class="font-weight-bold text-primary mb-3"><i class="fa fa-vials me-2"></i>Ejemplos de Entrada y Salida</h6><div class="row">';
                     problemas[item]["casos_de_prueba"].forEach((caso, idx) => {

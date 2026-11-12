@@ -7,13 +7,13 @@
     <div class="row mt-4 mx-4">
         <div class="col-12">
             @if(!empty($es_wizard))
-                @include('problemas.componentes.wizard_creacion', ['paso' => 2, 'problema' => $problema, 'casos' => $casos])
+                @include('problemas.componentes.wizard_creacion', ['paso' => 2, 'problema' => $problema, 'casos' => $casos, 'id_curso' => $id_curso ?? null])
             @endif
             <div class="card mb-4">
                 <div class="card-header pb-0 border-bottom mb-3">
                     <div class="row align-items-center pb-2 gy-2">
                         <div class="col-12 col-lg d-flex justify-content-center justify-content-lg-start">
-                            <a href="{{ route('problemas.index') }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                            <a href="{{ $urlRetorno ?? ((isset($id_curso) && $id_curso) || request('id_curso') ? route('problemas.index', ['id_curso' => $id_curso ?? request('id_curso')]) : route('problemas.index')) }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                         </div>
                         <div class="col-12 col-lg-auto text-center">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-vials me-2 text-warning"></i>Casos de Prueba: {{ $problema->nombre }}</h6>
@@ -46,8 +46,11 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('casos_pruebas.add', ['id' => $problema->id]) }}" method="POST" onsubmit="deshabilitar_boton()">
+                    <form action="{{ route('casos_pruebas.add', array_merge(['id' => $problema->id], (isset($id_curso) && $id_curso ? ['id_curso' => $id_curso] : []))) }}" method="POST" onsubmit="deshabilitar_boton()">
                         @csrf
+                        @if(isset($id_curso) && $id_curso)
+                            <input type="hidden" name="id_curso" value="{{ $id_curso }}">
+                        @endif
                         @include('problemas.casos_pruebas.form')
                     </form>
                     
@@ -96,6 +99,9 @@
                                                     <form action="{{ route('casos_pruebas.eliminar', ['id' => $item->id]) }}"
                                                         method="POST" onsubmit="deshabilitar_boton()" class="mb-0">
                                                         @csrf
+                                                        @if(isset($id_curso) && $id_curso)
+                                                            <input type="hidden" name="id_curso" value="{{ $id_curso }}">
+                                                        @endif
                                                         <button type="submit" class="btn btn-sm btn-outline-danger delete_button mb-0" title="Eliminar Caso">
                                                             <i class="fa fa-fw fa-trash"></i>
                                                         </button>
@@ -127,6 +133,9 @@
                     <form action="{{ route('casos_pruebas.bulk_add') }}" method="POST" onsubmit="deshabilitar_boton()">
                         @csrf
                         <input type="hidden" name="id_problema" value="{{ $problema->id }}">
+                        @if(isset($id_curso) && $id_curso)
+                            <input type="hidden" name="id_curso" value="{{ $id_curso }}">
+                        @endif
                         <div class="modal-body">
                             <div class="alert alert-info text-white text-xs mb-3">
                                 <i class="fa fa-info-circle me-1"></i> Inyecte múltiples casos pegando texto en cualquiera de los siguientes formatos: <strong>JSON</strong>, <strong>Bloques con delimitadores (===)</strong> o <strong>Líneas por tubería (Entrada | Salida)</strong>.
@@ -183,6 +192,9 @@
                         <form action="{{ route('casos_pruebas.update') }}" method="POST" onsubmit="deshabilitar_boton()">
                             @csrf
                             <input type="hidden" name="id_caso" value="{{ $item->id }}">
+                            @if(isset($id_curso) && $id_curso)
+                                <input type="hidden" name="id_curso" value="{{ $id_curso }}">
+                            @endif
                             <div class="modal-body">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">

@@ -23,6 +23,9 @@ class SingleSessionService
     {
         $lifetimeMinutes = config('session.lifetime', 120);
 
+        // Clear forced logout flag if present
+        Cache::forget('user_forced_logout_' . $user->id);
+
         // 1. Update Cache store (Redis or File cache)
         Cache::put(self::CACHE_PREFIX . $user->id, $sessionId, now()->addMinutes($lifetimeMinutes));
         Cache::put('user_last_seen_' . $user->id, now()->timestamp, now()->addMinutes($lifetimeMinutes));
@@ -45,6 +48,11 @@ class SingleSessionService
      */
     public function isValidSession(User $user, string $currentSessionId): bool
     {
+        // 0. If user was forcibly logged out by admin, deny immediately
+        if (Cache::has('user_forced_logout_' . $user->id)) {
+            return false;
+        }
+
         // 1. Check Cache store first
         $activeSessionId = Cache::get(self::CACHE_PREFIX . $user->id);
 
@@ -58,7 +66,7 @@ class SingleSessionService
             }
         }
 
-        // If no active session registered yet, allow current session & register it
+        // If no active session registered yet (e.g. in tests using actingAs), allow & register it
         if (!$activeSessionId) {
             $this->registerSession($user, $currentSessionId);
             return true;
@@ -75,8 +83,17 @@ class SingleSessionService
      */
     public function invalidateSession(User $user): void
     {
+        $oldSessionId = $user->current_session_id ?: Cache::get(self::CACHE_PREFIX . $user->id);
+        if ($oldSessionId) {
+            $sessionFile = storage_path('framework/sessions/' . $oldSessionId);
+            if (is_file($sessionFile)) {
+                @unlink($sessionFile);
+            }
+        }
+
         Cache::forget(self::CACHE_PREFIX . $user->id);
         Cache::forget('user_last_seen_' . $user->id);
+        Cache::forget('user_last_ip_' . $user->id);
 
         $user->current_session_id = null;
         $user->save();
@@ -90,15 +107,29 @@ class SingleSessionService
      */
     public function forceInvalidateSession(User $user): void
     {
-        // 1. Remove from Cache
+        $oldSessionId = $user->current_session_id ?: Cache::get(self::CACHE_PREFIX . $user->id);
+
+        // 1. Delete physical session file if file driver is used
+        if ($oldSessionId) {
+            $sessionFile = storage_path('framework/sessions/' . $oldSessionId);
+            if (is_file($sessionFile)) {
+                @unlink($sessionFile);
+            }
+        }
+
+        // 2. Remove from Cache
         Cache::forget(self::CACHE_PREFIX . $user->id);
         Cache::forget('user_last_seen_' . $user->id);
+        Cache::forget('user_last_ip_' . $user->id);
 
-        // 2. Clear Database Session ID
+        // 3. Mark as forcibly logged out
+        Cache::put('user_forced_logout_' . $user->id, true, now()->addMinutes(config('session.lifetime', 120)));
+
+        // 4. Clear Database Session ID
         $user->current_session_id = null;
         $user->save();
 
-        // 3. Revoke API / Sanctum Tokens if present
+        // 5. Revoke API / Sanctum Tokens if present
         if (method_exists($user, 'tokens')) {
             $user->tokens()->delete();
         }

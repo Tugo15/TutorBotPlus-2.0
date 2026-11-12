@@ -7,13 +7,13 @@
     <div class="row mt-4 mx-4">
         <div class="col-12">
             @if(!empty($es_wizard))
-                @include('problemas.componentes.wizard_creacion', ['paso' => 2, 'problema' => $problema, 'caso' => $caso])
+                @include('problemas.componentes.wizard_creacion', ['paso' => 2, 'problema' => $problema, 'caso' => $caso, 'id_curso' => $id_curso ?? null])
             @endif
             <div class="card mb-4">
                 <div class="card-header pb-0 border-bottom mb-3">
                     <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
                         <div class="d-none d-lg-block" style="flex: 1;">
-                            <a href="{{ route('problemas.index') }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                            <a href="{{ $urlRetorno ?? ((isset($id_curso) && $id_curso) || request('id_curso') ? route('problemas.index', ['id_curso' => $id_curso ?? request('id_curso')]) : route('problemas.index')) }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                         </div>
                         <div class="text-center" style="flex: 2;">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-database me-2 text-warning"></i>Evaluación SQL: {{ $problema->nombre }}</h6>
@@ -62,6 +62,9 @@
                         @if(isset($caso))
                             <input type="hidden" name="id_caso" value="{{ $caso->id }}">
                         @endif
+                        @if(isset($id_curso) && $id_curso)
+                            <input type="hidden" name="id_curso" value="{{ $id_curso }}">
+                        @endif
                         <div class="row mx-3 mt-3">
                             <div class="col-md-8">
                                 <div class="mb-3">
@@ -105,7 +108,7 @@
                                     <button type="button" class="btn btn-sm btn-outline-info mb-0" data-bs-toggle="modal" data-bs-target="#ejemplo_modal">
                                         <i class="fa fa-eye me-1"></i> Ver Ejemplos Detallados
                                     </button>
-                                    <a href="{{ route('problemas.index') }}" class="btn btn-sm btn-outline-secondary mb-0">
+                                    <a href="{{ $urlRetorno ?? ((isset($id_curso) && $id_curso) || request('id_curso') ? route('problemas.index', ['id_curso' => $id_curso ?? request('id_curso')]) : route('problemas.index')) }}" class="btn btn-sm btn-outline-secondary mb-0">
                                         <i class="fa fa-arrow-left me-1"></i> Volver a Problemas
                                     </a>
                                 </div>

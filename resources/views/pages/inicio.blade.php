@@ -211,7 +211,10 @@
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3" style="min-width: 220px;">Usuario</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center" style="min-width: 140px;">Rol</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center" style="min-width: 140px;">Dirección IP</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end pe-3" style="min-width: 150px;">Actividad</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center" style="min-width: 140px;">Actividad</th>
+                                        @can('editar usuario')
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center pe-3" style="min-width: 120px;">Acción</th>
+                                        @endcan
                                     </tr>
                                 </thead>
                                 <tbody id="tbodyUsuariosConectados">
@@ -265,7 +268,7 @@
                                                     <i class="fa fa-network-wired me-1"></i>{{ $uCon->ip }}
                                                 </span>
                                             </td>
-                                            <td class="text-end pe-3 py-2">
+                                            <td class="text-center py-2">
                                                 @if($esTu)
                                                     <span class="badge bg-success text-white text-xxs px-2 py-1">
                                                         <i class="fa fa-check-circle me-1"></i>Activo ahora
@@ -276,17 +279,31 @@
                                                     </span>
                                                 @endif
                                             </td>
+                                            @can('editar usuario')
+                                                <td class="text-center py-2 pe-3">
+                                                    @if(!$esTu)
+                                                        <form action="{{ route('usuarios.forzar_invalidacion', ['id' => $uCon->id]) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Desea apagar y cerrar la sesión de {{ $uCon->firstname }} {{ $uCon->lastname }}?');">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-xs btn-outline-danger mb-0 px-2 py-1" title="Apagar sesión de este usuario">
+                                                                <i class="fa fa-power-off me-1"></i> Desconectar
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <span class="badge bg-light text-secondary text-xxs py-1 px-2 border">Tu sesión</span>
+                                                    @endif
+                                                </td>
+                                            @endcan
                                         </tr>
                                     @empty
                                         <tr id="filaSinConectados">
-                                            <td colspan="4" class="text-center py-4 text-xs text-secondary">
+                                            <td colspan="{{ auth()->user()->can('editar usuario') ? 5 : 4 }}" class="text-center py-4 text-xs text-secondary">
                                                 <i class="fa fa-user-slash text-secondary fa-2x mb-2 d-block opacity-4"></i>
                                                 Sin usuarios conectados en este momento.
                                             </td>
                                         </tr>
                                     @endforelse
                                     <tr id="filaSinResultadosFiltro" style="display: none;">
-                                        <td colspan="4" class="text-center py-4 text-xs text-secondary">
+                                        <td colspan="{{ auth()->user()->can('editar usuario') ? 5 : 4 }}" class="text-center py-4 text-xs text-secondary">
                                             <i class="fa fa-search text-secondary fa-2x mb-2 d-block opacity-4"></i>
                                             No se encontraron usuarios conectados que coincidan con los filtros aplicados.
                                             <div class="mt-2">

@@ -17,9 +17,12 @@
                                 </div>
                             </div>
                         @endif
-                        {!! Str::markdown($problema->body_problema, [
+                        @php
+                            $bodyProblemaSanitized = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $problema->body_problema ?? '');
+                        @endphp
+                        {!! Str::markdown($bodyProblemaSanitized, [
                             'html_input' => 'strip',
-                            'allow_unsafe_links' => false,
+                            'allow_unsafe_links' => true,
                         ]) !!}
 
                         @php
