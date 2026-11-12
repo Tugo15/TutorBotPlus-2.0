@@ -158,13 +158,44 @@
                             <p class="text-xs text-secondary mb-2">
                                 Seleccione los problemas del banco general que desea incorporar a este curso:
                             </p>
-                            <div class="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">
-                                <div class="input-group input-group-sm" style="max-width: 320px;">
-                                    <span class="input-group-text"><i class="fa fa-search"></i></span>
-                                    <input type="text" class="form-control" id="buscadorProblemasDisponibles" placeholder="Buscar por nombre, código o categoría...">
+                            <div class="row g-2 align-items-center mb-2">
+                                <div class="col-12 col-md-5">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-white"><i class="fa fa-search text-xs"></i></span>
+                                        <input type="text" class="form-control" id="buscadorProblemasDisponibles" placeholder="Buscar nombre o código...">
+                                    </div>
                                 </div>
-                                <button type="button" class="btn btn-xs btn-outline-secondary mb-0" id="btnMarcarTodosProbDisponibles">
-                                    <i class="fa fa-check-double me-1"></i> Seleccionar todos los visibles
+                                <div class="col-6 col-md-3">
+                                    <select class="form-select form-select-sm text-xs" id="filtroCatProbDisponibles">
+                                        <option value="">Todas las categorías</option>
+                                        @if(isset($categorias_filtro))
+                                            @foreach($categorias_filtro as $cat)
+                                                <option value="{{ $cat->nombre }}">{{ $cat->nombre }}</option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <select class="form-select form-select-sm text-xs" id="filtroDifProbDisponibles">
+                                        <option value="">Dificultad (Todas)</option>
+                                        <option value="facil">Fácil</option>
+                                        <option value="medio">Medio</option>
+                                        <option value="dificil">Difícil</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-2 d-flex justify-content-end gap-1">
+                                    <button type="button" class="btn btn-xs btn-outline-secondary mb-0 w-100" id="btnLimpiarFiltrosProbDisp" title="Restablecer filtros">
+                                        <i class="fa fa-undo me-1"></i> Limpiar
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                                <small class="text-xxs text-secondary">
+                                    Mostrando <strong id="countVisiblesProb" class="text-dark">{{ isset($problemas_disponibles_para_asignar) ? $problemas_disponibles_para_asignar->count() : 0 }}</strong> de <strong>{{ isset($problemas_disponibles_para_asignar) ? $problemas_disponibles_para_asignar->count() : 0 }}</strong> problemas disponibles
+                                </small>
+                                <button type="button" class="btn btn-xs btn-outline-primary mb-0" id="btnMarcarTodosProbDisponibles">
+                                    <i class="fa fa-check-double me-1"></i> Seleccionar visibles
                                 </button>
                             </div>
 
@@ -177,7 +208,10 @@
                                 @else
                                     <div class="list-group list-group-flush" id="listaProblemasDisponibles">
                                         @foreach($problemas_disponibles_para_asignar as $probDisp)
-                                            <label class="list-group-item list-group-item-action d-flex align-items-center justify-content-between p-2 cursor-pointer item-problema-disp" data-nombre="{{ $probDisp->nombre }} {{ $probDisp->codigo }} {{ $probDisp->categorias->pluck('nombre')->implode(' ') }}">
+                                            <label class="list-group-item list-group-item-action d-flex align-items-center justify-content-between p-2 cursor-pointer item-problema-disp"
+                                                   data-nombre="{{ $probDisp->nombre }} {{ $probDisp->codigo }}"
+                                                   data-categorias="{{ mb_strtolower($probDisp->categorias->pluck('nombre')->implode(' ')) }}"
+                                                   data-dificultad="{{ mb_strtolower($probDisp->dificultad ?? '') }}">
                                                 <div class="d-flex align-items-center text-truncate me-2">
                                                     <input class="form-check-input me-3 check-prob-disp" type="checkbox" name="problemas[]" value="{{ $probDisp->id }}">
                                                     <div class="text-truncate">
@@ -193,8 +227,9 @@
                                                 </span>
                                             </label>
                                         @endforeach
-                                        <div id="sinResultadosProblemasDisponibles" class="text-xs text-secondary text-center py-3 d-none">
-                                            <i class="fa fa-info-circle me-1"></i> No se encontraron problemas que coincidan con la búsqueda.
+                                        <div id="sinResultadosProblemasDisponibles" class="text-xs text-secondary text-center py-4 d-none">
+                                            <i class="fa fa-search text-muted fa-2x mb-2 d-block"></i>
+                                            No se encontraron problemas que coincidan con los filtros aplicados.
                                         </div>
                                     </div>
                                 @endif
@@ -344,7 +379,7 @@
             });
         }
 
-        // Filtro y contador para modal de asignación de problemas
+        // Filtro multifuncional y contador para modal de asignación de problemas
         document.addEventListener('DOMContentLoaded', function() {
             function normalizarTexto(str) {
                 if (!str) return '';
@@ -356,29 +391,70 @@
             }
 
             const buscadorProb = document.getElementById('buscadorProblemasDisponibles');
+            const filtroCatProb = document.getElementById('filtroCatProbDisponibles');
+            const filtroDifProb = document.getElementById('filtroDifProbDisponibles');
+            const btnLimpiarFiltros = document.getElementById('btnLimpiarFiltrosProbDisp');
+            const countVisibles = document.getElementById('countVisiblesProb');
+
+            function aplicarFiltrosModal() {
+                const term = normalizarTexto(buscadorProb ? buscadorProb.value : '');
+                const cat = normalizarTexto(filtroCatProb ? filtroCatProb.value : '');
+                const dif = normalizarTexto(filtroDifProb ? filtroDifProb.value : '');
+
+                const items = document.querySelectorAll('#listaProblemasDisponibles .item-problema-disp');
+                let visibles = 0;
+
+                items.forEach(function(item) {
+                    const nombreText = normalizarTexto(item.getAttribute('data-nombre') || '');
+                    const catsText = normalizarTexto(item.getAttribute('data-categorias') || '');
+                    const difText = normalizarTexto(item.getAttribute('data-dificultad') || '');
+
+                    const coincideTexto = !term || nombreText.includes(term) || catsText.includes(term);
+                    const coincideCat = !cat || catsText.includes(cat);
+                    const coincideDif = !dif || difText.includes(dif);
+
+                    const coincide = coincideTexto && coincideCat && coincideDif;
+
+                    if (coincide) {
+                        item.classList.remove('d-none');
+                        item.style.removeProperty('display');
+                        visibles++;
+                    } else {
+                        item.classList.add('d-none');
+                        item.style.setProperty('display', 'none', 'important');
+                    }
+                });
+
+                if (countVisibles) {
+                    countVisibles.textContent = visibles.toString();
+                }
+
+                const sinRes = document.getElementById('sinResultadosProblemasDisponibles');
+                if (sinRes) {
+                    sinRes.classList.toggle('d-none', visibles > 0 || items.length === 0);
+                }
+            }
+
             if (buscadorProb) {
-                ['input', 'paste', 'keyup'].forEach(evento => {
-                    buscadorProb.addEventListener(evento, function() {
-                        const term = normalizarTexto(this.value);
-                        const items = document.querySelectorAll('#listaProblemasDisponibles .item-problema-disp');
-                        let visibles = 0;
+                ['input', 'paste', 'keyup', 'search'].forEach(evento => {
+                    buscadorProb.addEventListener(evento, aplicarFiltrosModal);
+                });
+            }
 
-                        items.forEach(function(item) {
-                            const dataText = normalizarTexto(item.getAttribute('data-nombre') || item.textContent);
-                            const coincide = !term || dataText.includes(term);
-                            if (coincide) {
-                                item.style.display = '';
-                                visibles++;
-                            } else {
-                                item.style.display = 'none';
-                            }
-                        });
+            if (filtroCatProb) {
+                filtroCatProb.addEventListener('change', aplicarFiltrosModal);
+            }
 
-                        const sinRes = document.getElementById('sinResultadosProblemasDisponibles');
-                        if (sinRes) {
-                            sinRes.classList.toggle('d-none', visibles > 0 || items.length === 0);
-                        }
-                    });
+            if (filtroDifProb) {
+                filtroDifProb.addEventListener('change', aplicarFiltrosModal);
+            }
+
+            if (btnLimpiarFiltros) {
+                btnLimpiarFiltros.addEventListener('click', function() {
+                    if (buscadorProb) buscadorProb.value = '';
+                    if (filtroCatProb) filtroCatProb.value = '';
+                    if (filtroDifProb) filtroDifProb.value = '';
+                    aplicarFiltrosModal();
                 });
             }
 
@@ -397,7 +473,7 @@
             document.getElementById('btnMarcarTodosProbDisponibles')?.addEventListener('click', function() {
                 const visibleItems = document.querySelectorAll('#listaProblemasDisponibles .item-problema-disp');
                 visibleItems.forEach(function(item) {
-                    if (item.style.display !== 'none') {
+                    if (!item.classList.contains('d-none') && item.style.display !== 'none') {
                         const ch = item.querySelector('.check-prob-disp');
                         if (ch) ch.checked = true;
                     }

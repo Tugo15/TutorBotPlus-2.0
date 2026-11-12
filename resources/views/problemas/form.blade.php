@@ -136,12 +136,18 @@
     <div class="col-12">
         <div class="card border shadow-xs mb-3">
             <div class="card-body p-3">
-                <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                     <div>
                         <h6 class="mb-0 text-sm font-weight-bold"><i class="fa fa-graduation-cap text-warning me-2"></i>Cursos Asignados*</h6>
                         <p class="text-xs text-secondary mb-0">Seleccione los cursos donde estará disponible este problema:</p>
                     </div>
-                    <div>
+                    <div class="d-flex align-items-center flex-wrap gap-1">
+                        @if(count($cursos) > 6)
+                            <div class="input-group input-group-sm me-1" style="max-width: 180px;">
+                                <span class="input-group-text bg-white py-0 px-2"><i class="fa fa-search text-xxs"></i></span>
+                                <input type="text" class="form-control text-xs py-1" placeholder="Filtrar cursos..." oninput="filtrarCardsSeleccion('prob-cursos-container', this.value)">
+                            </div>
+                        @endif
                         <button type="button" class="btn btn-xs btn-outline-secondary mb-0 me-1" onclick="toggleSelectionCards('prob-cursos-container', true)">Seleccionar Todos</button>
                         <button type="button" class="btn btn-xs btn-outline-secondary mb-0" onclick="toggleSelectionCards('prob-cursos-container', false)">Desmarcar Todos</button>
                     </div>
@@ -151,7 +157,7 @@
                         @php
                             $isChecked = (isset($problema) && $problema->cursos->pluck('id')->contains($curso->id)) || (old('cursos') && in_array($curso->id, old('cursos'))) || (isset($id_curso_preseleccionado) && $id_curso_preseleccionado == $curso->id);
                         @endphp
-                        <div class="col-md-4 col-sm-6">
+                        <div class="col-md-4 col-sm-6 card-item-filtro" data-filter="{{ mb_strtolower($curso->nombre . ' ' . $curso->codigo) }}">
                             <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif" for="prob_curso_{{ $curso->id }}">
                                 <input type="checkbox" id="prob_curso_{{ $curso->id }}" name="cursos[]" value="{{ $curso->id }}" @if($isChecked) checked @endif onchange="this.closest('.selection-card').classList.toggle('checked', this.checked)">
                                 <div class="selection-card-content">
@@ -170,12 +176,18 @@
 
         <div class="card border shadow-xs mb-3">
             <div class="card-body p-3">
-                <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                     <div>
                         <h6 class="mb-0 text-sm font-weight-bold"><i class="fa fa-tags text-primary me-2"></i>Categorías*</h6>
                         <p class="text-xs text-secondary mb-0">Seleccione las categorías a las que pertenece este problema:</p>
                     </div>
-                    <div>
+                    <div class="d-flex align-items-center flex-wrap gap-1">
+                        @if(count($categorias) > 8)
+                            <div class="input-group input-group-sm me-1" style="max-width: 180px;">
+                                <span class="input-group-text bg-white py-0 px-2"><i class="fa fa-search text-xxs"></i></span>
+                                <input type="text" class="form-control text-xs py-1" placeholder="Filtrar categorías..." oninput="filtrarCardsSeleccion('prob-categorias-container', this.value)">
+                            </div>
+                        @endif
                         <button type="button" class="btn btn-xs btn-outline-secondary mb-0 me-1" onclick="toggleSelectionCards('prob-categorias-container', true)">Seleccionar Todos</button>
                         <button type="button" class="btn btn-xs btn-outline-secondary mb-0" onclick="toggleSelectionCards('prob-categorias-container', false)">Desmarcar Todos</button>
                     </div>
@@ -185,7 +197,7 @@
                         @php
                             $isChecked = (isset($problema) && $problema->categorias->pluck('id')->contains($categoria->id)) || (old('categorias') && in_array($categoria->id, old('categorias')));
                         @endphp
-                        <div class="col-md-3 col-sm-6">
+                        <div class="col-md-3 col-sm-6 card-item-filtro" data-filter="{{ mb_strtolower($categoria->nombre) }}">
                             <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif" for="prob_cat_{{ $categoria->id }}">
                                 <input type="checkbox" id="prob_cat_{{ $categoria->id }}" name="categorias[]" value="{{ $categoria->id }}" @if($isChecked) checked @endif onchange="this.closest('.selection-card').classList.toggle('checked', this.checked)">
                                 <div class="selection-card-content">

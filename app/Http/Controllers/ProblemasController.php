@@ -64,16 +64,21 @@ class ProblemasController extends Controller
             return $item;
         });
 
-        return view('problemas.index', compact('problemas', 'cursos', 'id_curso_activo', 'curso_activo', 'problemas_disponibles_para_asignar'));
+        $categorias_filtro = Categoria_Problema::orderBy('nombre')->get();
+
+        return view('problemas.index', compact('problemas', 'cursos', 'id_curso_activo', 'curso_activo', 'problemas_disponibles_para_asignar', 'categorias_filtro'));
     }
 
     public function crear(Request $request)
     {
-        $categorias = Categoria_Problema::all();
+        $categorias = Categoria_Problema::orderBy('nombre')->get();
         if (auth()->user()->hasRole('administrador')) {
-            $cursos = Cursos::all();
+            $cursos = Cursos::orderBy('nombre')->get();
         } else {
-            $cursos = auth()->user()->cursos()->get();
+            $cursos = auth()->user()->cursos()->orderBy('nombre')->get();
+            if ($cursos->isEmpty()) {
+                $cursos = Cursos::orderBy('nombre')->get();
+            }
         }
 
         if ($cursos->isEmpty()) {
@@ -106,8 +111,18 @@ class ProblemasController extends Controller
         if($problema->memoria_limite==0){
             $problema->memoria_limite = null;
         }
-        $categorias = Categoria_Problema::all();
-        $cursos = auth()->user()->cursos()->get();
+        $categorias = Categoria_Problema::orderBy('nombre')->get();
+        if (auth()->user()->hasRole('administrador')) {
+            $cursos = Cursos::orderBy('nombre')->get();
+        } else {
+            $misCursos = auth()->user()->cursos()->orderBy('nombre')->get();
+            $cursos = $misCursos->merge($problema->cursos)->unique('id');
+            if ($cursos->isEmpty()) {
+                $cursos = Cursos::orderBy('nombre')->get();
+            } else {
+                $cursos = $cursos->sortBy('nombre', SORT_NATURAL | SORT_FLAG_CASE)->values();
+            }
+        }
         $lenguajes = LenguajesProgramaciones::where('abreviatura', 'NOT LIKE', '%sql%')->get();
         return view('problemas.editar', compact('problema', 'categorias', 'lenguajes', 'cursos', 'id_curso'))->with('accion', "editar");
     }

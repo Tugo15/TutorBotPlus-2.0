@@ -275,6 +275,24 @@
                 }
             });
         }
+
+        function filtrarCardsSeleccion(containerId, term) {
+            var container = document.getElementById(containerId);
+            if (!container) return;
+            var q = (term || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+            var items = container.querySelectorAll('.card-item-filtro');
+            items.forEach(function(item) {
+                var data = (item.getAttribute('data-filter') || item.textContent || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                var coincide = !q || data.indexOf(q) !== -1;
+                if (coincide) {
+                    item.classList.remove('d-none');
+                    item.style.removeProperty('display');
+                } else {
+                    item.classList.add('d-none');
+                    item.style.setProperty('display', 'none', 'important');
+                }
+            });
+        }
     </script>
     @include('components.toast_notifications')
 </body>

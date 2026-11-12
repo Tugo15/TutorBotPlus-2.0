@@ -185,6 +185,10 @@
                         <div class="tab-pane fade show active" id="tab-lista" role="tabpanel">
                             <form action="{{ route('cursos.estudiantes.agregar', ['id' => $curso->id]) }}" method="POST">
                                 @csrf
+                                <div class="alert alert-light border py-1 px-3 mb-2 text-xxs text-secondary d-flex align-items-center">
+                                    <i class="fa fa-info-circle text-primary me-2"></i>
+                                    <span>Mostrando usuarios registrados que <strong>aún no están inscritos</strong> en {{ $curso->nombre }}. Los ya inscritos aparecen en la tabla principal del curso.</span>
+                                </div>
                                 <div class="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">
                                     <div class="input-group input-group-sm" style="max-width: 320px;">
                                         <span class="input-group-text"><i class="fa fa-search"></i></span>
@@ -397,10 +401,12 @@
 
                         const coincide = !termTexto || nombreData.includes(termTexto) || (termRut && rutData.includes(termRut));
                         if (coincide) {
-                            fila.style.display = '';
+                            fila.classList.remove('d-none');
+                            fila.style.removeProperty('display');
                             visibles++;
                         } else {
-                            fila.style.display = 'none';
+                            fila.classList.add('d-none');
+                            fila.style.setProperty('display', 'none', 'important');
                         }
                     });
 
@@ -415,7 +421,7 @@
         // Filtro interactivo en el modal para lista de disponibles
         const buscadorDisp = document.getElementById('buscadorDisponibles');
         if (buscadorDisp) {
-            ['input', 'paste', 'keyup'].forEach(evento => {
+            ['input', 'paste', 'keyup', 'search'].forEach(evento => {
                 buscadorDisp.addEventListener(evento, function() {
                     const rawVal = this.value || '';
                     const termTexto = normalizarTexto(rawVal);
@@ -429,10 +435,12 @@
 
                         const coincide = !termTexto || nombreData.includes(termTexto) || (termRut && rutData.includes(termRut));
                         if (coincide) {
-                            item.style.display = '';
+                            item.classList.remove('d-none');
+                            item.style.removeProperty('display');
                             visibles++;
                         } else {
-                            item.style.display = 'none';
+                            item.classList.add('d-none');
+                            item.style.setProperty('display', 'none', 'important');
                         }
                     });
 
@@ -460,7 +468,7 @@
         document.getElementById('btnMarcarTodosDisponibles')?.addEventListener('click', function() {
             const visibleItems = document.querySelectorAll('#listaDisponibles .item-estudiante-disp');
             visibleItems.forEach(function(item) {
-                if (item.style.display !== 'none') {
+                if (!item.classList.contains('d-none') && item.style.display !== 'none') {
                     const ch = item.querySelector('.check-disp');
                     if (ch) ch.checked = true;
                 }
