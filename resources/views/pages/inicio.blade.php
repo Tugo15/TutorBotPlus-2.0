@@ -204,8 +204,8 @@
                         </div>
                     </div>
                     <div class="card-body p-0">
-                        <div class="table-responsive custom-scroll" style="max-height: 440px; overflow-y: auto;">
-                            <table class="table align-items-center mb-0 table-hover table-sticky-header" id="tablaUsuariosConectados">
+                        <div class="table-responsive">
+                            <table class="table align-items-center mb-0 table-hover" id="tablaUsuariosConectados">
                                 <thead>
                                     <tr>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3" style="min-width: 220px;">Usuario</th>
