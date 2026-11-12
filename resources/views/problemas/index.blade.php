@@ -158,45 +158,66 @@
                             <p class="text-xs text-secondary mb-2">
                                 Seleccione los problemas del banco general que desea incorporar a este curso:
                             </p>
-                            <div class="row g-2 align-items-center mb-2">
-                                <div class="col-12 col-md-5">
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text bg-white"><i class="fa fa-search text-xs"></i></span>
-                                        <input type="text" class="form-control" id="buscadorProblemasDisponibles" placeholder="Buscar nombre o código...">
+                            <div class="bg-gray-100 p-2.5 rounded-3 mb-2 border">
+                                <!-- Fila 1: Buscador general amplio -->
+                                <div class="row g-2 mb-2">
+                                    <div class="col-12">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-white border-end-0"><i class="fa fa-search text-xs text-secondary"></i></span>
+                                            <input type="text" class="form-control border-start-0 ps-0" id="buscadorProblemasDisponibles" placeholder="Buscar por nombre, código o categoría...">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary mb-0 border-start-0 d-none" id="btnLimpiarBuscadorTexto" title="Limpiar texto">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-6 col-md-3">
-                                    <select class="form-select form-select-sm text-xs" id="filtroCatProbDisponibles">
-                                        <option value="">Todas las categorías</option>
-                                        @if(isset($categorias_filtro))
-                                            @foreach($categorias_filtro as $cat)
-                                                <option value="{{ $cat->nombre }}">{{ $cat->nombre }}</option>
-                                            @endforeach
-                                        @endif
-                                    </select>
-                                </div>
-                                <div class="col-6 col-md-2">
-                                    <select class="form-select form-select-sm text-xs" id="filtroDifProbDisponibles">
-                                        <option value="">Dificultad (Todas)</option>
-                                        <option value="facil">Fácil</option>
-                                        <option value="medio">Medio</option>
-                                        <option value="dificil">Difícil</option>
-                                    </select>
-                                </div>
-                                <div class="col-12 col-md-2 d-flex justify-content-end gap-1">
-                                    <button type="button" class="btn btn-xs btn-outline-secondary mb-0 w-100" id="btnLimpiarFiltrosProbDisp" title="Restablecer filtros">
-                                        <i class="fa fa-undo me-1"></i> Limpiar
-                                    </button>
+                                <!-- Fila 2: Filtros desplegables y botón limpiar -->
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-12 col-sm-6 col-md-4">
+                                        <select class="form-select form-select-sm text-xs" id="filtroCatProbDisponibles" style="padding-right: 2rem;">
+                                            <option value="">Todas las categorías</option>
+                                            @if(isset($categorias_filtro))
+                                                @foreach($categorias_filtro as $cat)
+                                                    <option value="{{ $cat->nombre }}">{{ $cat->nombre }}</option>
+                                                @endforeach
+                                            @endif
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-sm-3 col-md-3">
+                                        <select class="form-select form-select-sm text-xs" id="filtroDifProbDisponibles" style="padding-right: 2rem;">
+                                            <option value="">Dificultad (Todas)</option>
+                                            <option value="facil">Fácil</option>
+                                            <option value="medio">Medio</option>
+                                            <option value="dificil">Difícil</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-sm-3 col-md-3">
+                                        <select class="form-select form-select-sm text-xs" id="filtroEstadoProbDisponibles" style="padding-right: 2rem;">
+                                            <option value="">Visibilidad (Todas)</option>
+                                            <option value="visible">Solo Visibles</option>
+                                            <option value="oculto">Solo Ocultos</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-sm-12 col-md-2">
+                                        <button type="button" class="btn btn-xs btn-outline-secondary mb-0 w-100" id="btnLimpiarFiltrosProbDisp" title="Restablecer todos los filtros">
+                                            <i class="fa fa-undo me-1"></i> Limpiar
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                            <div class="d-flex justify-content-between align-items-center mb-2 px-1 flex-wrap gap-2">
                                 <small class="text-xxs text-secondary">
                                     Mostrando <strong id="countVisiblesProb" class="text-dark">{{ isset($problemas_disponibles_para_asignar) ? $problemas_disponibles_para_asignar->count() : 0 }}</strong> de <strong>{{ isset($problemas_disponibles_para_asignar) ? $problemas_disponibles_para_asignar->count() : 0 }}</strong> problemas disponibles
                                 </small>
-                                <button type="button" class="btn btn-xs btn-outline-primary mb-0" id="btnMarcarTodosProbDisponibles">
-                                    <i class="fa fa-check-double me-1"></i> Seleccionar visibles
-                                </button>
+                                <div class="d-flex align-items-center gap-1">
+                                    <button type="button" class="btn btn-xxs btn-outline-secondary mb-0 py-1 px-2" id="btnDeseleccionarTodosProbDisponibles">
+                                        Deseleccionar todos
+                                    </button>
+                                    <button type="button" class="btn btn-xs btn-outline-primary mb-0" id="btnMarcarTodosProbDisponibles">
+                                        <i class="fa fa-check-double me-1"></i> Seleccionar visibles
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="border rounded p-2" style="max-height: 350px; overflow-y: auto;">
@@ -208,21 +229,41 @@
                                 @else
                                     <div class="list-group list-group-flush" id="listaProblemasDisponibles">
                                         @foreach($problemas_disponibles_para_asignar as $probDisp)
+                                            @php
+                                                $esVisibleProb = (bool)$probDisp->visible;
+                                                $difClass = $probDisp->dificultad == 'Fácil' ? 'bg-success' : ($probDisp->dificultad == 'Medio' ? 'bg-warning' : 'bg-danger');
+                                            @endphp
                                             <label class="list-group-item list-group-item-action d-flex align-items-center justify-content-between p-2 cursor-pointer item-problema-disp"
-                                                   data-nombre="{{ $probDisp->nombre }} {{ $probDisp->codigo }}"
+                                                   data-id="{{ $probDisp->id }}"
+                                                   data-nombre="{{ $probDisp->nombre }}"
+                                                   data-codigo="{{ $probDisp->codigo }}"
                                                    data-categorias="{{ mb_strtolower($probDisp->categorias->pluck('nombre')->implode(' ')) }}"
-                                                   data-dificultad="{{ mb_strtolower($probDisp->dificultad ?? '') }}">
+                                                   data-dificultad="{{ mb_strtolower($probDisp->dificultad ?? '') }}"
+                                                   data-visible="{{ $esVisibleProb ? 'visible' : 'oculto' }}">
                                                 <div class="d-flex align-items-center text-truncate me-2">
                                                     <input class="form-check-input me-3 check-prob-disp" type="checkbox" name="problemas[]" value="{{ $probDisp->id }}">
                                                     <div class="text-truncate">
-                                                        <strong class="text-xs text-dark d-block text-truncate">{{ $probDisp->nombre }}</strong>
-                                                        <span class="badge border border-primary text-primary bg-white text-xxs font-monospace">{{ $probDisp->codigo }}</span>
-                                                        @foreach($probDisp->categorias as $c)
-                                                            <span class="badge bg-light text-secondary text-xxs">{{ $c->nombre }}</span>
-                                                        @endforeach
+                                                        <div class="d-flex align-items-center gap-1 text-truncate">
+                                                            <strong class="text-xs text-dark text-truncate">{{ $probDisp->nombre }}</strong>
+                                                            @if($esVisibleProb)
+                                                                <span class="badge border border-success text-success bg-white text-xxs px-1 py-0 ms-1" title="Visible para estudiantes">
+                                                                    <i class="fa fa-eye me-0.5"></i> Visible
+                                                                </span>
+                                                            @else
+                                                                <span class="badge border border-secondary text-secondary bg-white text-xxs px-1 py-0 ms-1 opacity-8" title="Oculto para estudiantes">
+                                                                    <i class="fa fa-eye-slash me-0.5"></i> Oculto
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                        <div class="d-flex flex-wrap align-items-center gap-1 mt-0.5">
+                                                            <span class="badge border border-primary text-primary bg-white text-xxs font-monospace">{{ $probDisp->codigo }}</span>
+                                                            @foreach($probDisp->categorias as $c)
+                                                                <span class="badge bg-light text-secondary text-xxs border">{{ $c->nombre }}</span>
+                                                            @endforeach
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <span class="badge {{ $probDisp->dificultad == 'Fácil' ? 'bg-success' : ($probDisp->dificultad == 'Medio' ? 'bg-warning' : 'bg-danger') }} text-xxs">
+                                                <span class="badge {{ $difClass }} text-xxs ms-2">
                                                     {{ $probDisp->dificultad ?: 'Sin dificultad' }}
                                                 </span>
                                             </label>
@@ -391,29 +432,44 @@
             }
 
             const buscadorProb = document.getElementById('buscadorProblemasDisponibles');
+            const btnLimpiarBuscador = document.getElementById('btnLimpiarBuscadorTexto');
             const filtroCatProb = document.getElementById('filtroCatProbDisponibles');
             const filtroDifProb = document.getElementById('filtroDifProbDisponibles');
+            const filtroEstadoProb = document.getElementById('filtroEstadoProbDisponibles');
             const btnLimpiarFiltros = document.getElementById('btnLimpiarFiltrosProbDisp');
             const countVisibles = document.getElementById('countVisiblesProb');
 
             function aplicarFiltrosModal() {
-                const term = normalizarTexto(buscadorProb ? buscadorProb.value : '');
+                const termRaw = buscadorProb ? buscadorProb.value : '';
+                const term = normalizarTexto(termRaw);
                 const cat = normalizarTexto(filtroCatProb ? filtroCatProb.value : '');
                 const dif = normalizarTexto(filtroDifProb ? filtroDifProb.value : '');
+                const estado = normalizarTexto(filtroEstadoProb ? filtroEstadoProb.value : '');
 
+                if (btnLimpiarBuscador) {
+                    btnLimpiarBuscador.classList.toggle('d-none', !termRaw);
+                }
+
+                const terminos = term ? term.split(/\s+/).filter(Boolean) : [];
                 const items = document.querySelectorAll('#listaProblemasDisponibles .item-problema-disp');
                 let visibles = 0;
 
                 items.forEach(function(item) {
                     const nombreText = normalizarTexto(item.getAttribute('data-nombre') || '');
+                    const codigoText = normalizarTexto(item.getAttribute('data-codigo') || '');
                     const catsText = normalizarTexto(item.getAttribute('data-categorias') || '');
                     const difText = normalizarTexto(item.getAttribute('data-dificultad') || '');
+                    const visibleText = normalizarTexto(item.getAttribute('data-visible') || '');
 
-                    const coincideTexto = !term || nombreText.includes(term) || catsText.includes(term);
+                    // Búsqueda multi-palabra sobre nombre, código, categorías y dificultad
+                    const textoTotal = `${nombreText} ${codigoText} ${catsText} ${difText}`;
+                    const coincideTexto = terminos.length === 0 || terminos.every(t => textoTotal.includes(t));
+
                     const coincideCat = !cat || catsText.includes(cat);
                     const coincideDif = !dif || difText.includes(dif);
+                    const coincideEstado = !estado || visibleText === estado;
 
-                    const coincide = coincideTexto && coincideCat && coincideDif;
+                    const coincide = coincideTexto && coincideCat && coincideDif && coincideEstado;
 
                     if (coincide) {
                         item.classList.remove('d-none');
@@ -441,6 +497,16 @@
                 });
             }
 
+            if (btnLimpiarBuscador) {
+                btnLimpiarBuscador.addEventListener('click', function() {
+                    if (buscadorProb) {
+                        buscadorProb.value = '';
+                        buscadorProb.focus();
+                    }
+                    aplicarFiltrosModal();
+                });
+            }
+
             if (filtroCatProb) {
                 filtroCatProb.addEventListener('change', aplicarFiltrosModal);
             }
@@ -449,11 +515,16 @@
                 filtroDifProb.addEventListener('change', aplicarFiltrosModal);
             }
 
+            if (filtroEstadoProb) {
+                filtroEstadoProb.addEventListener('change', aplicarFiltrosModal);
+            }
+
             if (btnLimpiarFiltros) {
                 btnLimpiarFiltros.addEventListener('click', function() {
                     if (buscadorProb) buscadorProb.value = '';
                     if (filtroCatProb) filtroCatProb.value = '';
                     if (filtroDifProb) filtroDifProb.value = '';
+                    if (filtroEstadoProb) filtroEstadoProb.value = '';
                     aplicarFiltrosModal();
                 });
             }
@@ -477,6 +548,17 @@
                         const ch = item.querySelector('.check-prob-disp');
                         if (ch) ch.checked = true;
                     }
+                });
+                actualizarContadorProbDisp();
+            });
+
+            document.getElementById('btnDeseleccionarTodosProbDisponibles')?.addEventListener('click', function() {
+                const checks = document.querySelectorAll('.check-prob-disp');
+                checks.forEach(function(ch) {
+                    ch.checked = false;
+                });
+                actualizarContadorProbDisp();
+            });
                 });
                 actualizarContadorProbDisp();
             });

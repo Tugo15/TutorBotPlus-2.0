@@ -194,8 +194,9 @@
                                                             </button>
                                                         @endcan
                                                         @can('eliminar certamen')
-                                                            <form action="{{ route('certamen.eliminar', ['id' => $certamen->id]) }}" method="POST" onsubmit="event.preventDefault();submitFormEliminar('{{'el certamen '.$certamen->nombre}}', {{$certamen->id}})" id="eliminarForm_{{$certamen->id}}">
+                                                            <form action="{{ route('certamen.eliminar', ['id' => $certamen->id]) }}" method="POST" onsubmit="event.preventDefault();submitFormEliminar('el certamen {{ addslashes($certamen->nombre) }}', {{$certamen->id}})" id="eliminarForm_{{$certamen->id}}">
                                                                 @csrf
+                                                                <input type="hidden" name="id" value="{{ $certamen->id }}">
                                                                 <button type="submit" class="btn btn-xs btn-outline-danger mb-0" title="Eliminar Evaluación"><i class="fa fa-fw fa-trash me-1"></i> Eliminar</button>
                                                             </form>
                                                         @endcan

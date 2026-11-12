@@ -71,7 +71,8 @@
                     <option value="" disabled {{ !isset($id_curso_preseleccionado) && !isset($certamen) ? 'selected' : '' }}>Selecciona un curso</option>
                     @foreach ($cursos as $curso)
                         <option value="{{ $curso->id }}" @if (
-                            (isset($certamen) && $certamen->curso->id == $curso->id) ||
+                            (isset($certamen) && ($certamen->id_curso == $curso->id || (isset($certamen->curso) && $certamen->curso->id == $curso->id))) ||
+                            (isset($id_curso_preseleccionado) && $id_curso_preseleccionado == $curso->id) ||
                             (old('curso') == $curso->id)) selected @endif>
                             {{ $curso->nombre }} ({{ $curso->codigo }})</option>
                     @endforeach
@@ -359,6 +360,103 @@
         return cat ? cat.nombre : 'Categoría #' + catId;
     }
 
+    function generarCardsProblemasHtml(idx, banco, verTodas) {
+        var problemasFiltrados = todosProblemasData;
+        if (!verTodas && banco.id_categoria !== null && banco.id_categoria !== undefined) {
+            problemasFiltrados = todosProblemasData.filter(function(p) {
+                return p.categoria_ids.indexOf(banco.id_categoria) !== -1;
+            });
+        }
+
+        if (problemasFiltrados.length === 0) {
+            return `
+                <div class="col-12 text-center py-4 text-muted">
+                    <i class="fa fa-folder-open fa-2x mb-2 text-secondary opacity-5"></i>
+                    <p class="text-xs mb-1">No hay ejercicios disponibles para esta categoría en este curso.</p>
+                    <button type="button" class="btn btn-xxs btn-outline-primary" onclick="toggleVerTodasCategorias(${idx})">
+                        <i class="fa fa-list me-1"></i> Ver ejercicios de todas las categorías
+                    </button>
+                </div>
+            `;
+        }
+
+        var html = '';
+        problemasFiltrados.forEach(function(p) {
+            var isChecked = banco.problemas && banco.problemas.some(function(id) { return String(id) === String(p.id); });
+            var difClass = p.dificultad === 'Fácil' ? 'border-success text-success' : (p.dificultad === 'Difícil' ? 'border-danger text-danger' : 'border-warning text-warning');
+            var catBadges = p.categoria_nombres.map(function(cn) {
+                return `<span class="badge border border-secondary text-secondary bg-white text-xxs px-1 py-0.5 me-1">${cn}</span>`;
+            }).join('');
+
+            html += `
+                <div class="col-md-6 col-12 item-problema-drawer" data-id="${p.id}" data-nombre="${p.nombre.toLowerCase()}" data-codigo="${p.codigo.toLowerCase()}">
+                    <label class="selection-card w-100 mb-0 py-2 px-2.5 ${isChecked ? 'checked' : ''}" for="prob_q${idx}_${p.id}">
+                        <input type="checkbox" id="prob_q${idx}_${p.id}" value="${p.id}" ${isChecked ? 'checked' : ''} onchange="onProblemaToggle(${idx}, ${p.id}, this)">
+                        <div class="selection-card-content">
+                            <div class="d-flex justify-content-between align-items-center mb-0.5">
+                                <span class="selection-card-title text-xs mb-0">${p.nombre}</span>
+                                <span class="badge border ${difClass} bg-white text-xxs ms-1">${p.dificultad}</span>
+                            </div>
+                            <div class="selection-card-subtitle d-flex flex-wrap align-items-center gap-1 mt-0">
+                                <span class="text-xxs text-muted">Código: <span class="badge bg-secondary text-xxs px-1.5 py-0.2">${p.codigo}</span></span>
+                                ${catBadges}
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            `;
+        });
+        return html;
+    }
+
+    function refrescarDrawerPregunta(idx, forzarVerTodas) {
+        var banco = bancosData[idx];
+        if (!banco) return;
+        var drawer = document.getElementById('drawer_' + idx);
+        if (!drawer) return;
+
+        var contenedorLista = document.getElementById('lista_probs_' + idx);
+        if (!contenedorLista) return;
+
+        var verTodas = forzarVerTodas !== undefined ? forzarVerTodas : (drawer.getAttribute('data-ver-todas') === '1');
+        drawer.setAttribute('data-ver-todas', verTodas ? '1' : '0');
+
+        var btnToggle = document.getElementById('btn_toggle_cat_' + idx);
+        if (btnToggle) {
+            if (banco.id_categoria !== null && banco.id_categoria !== undefined) {
+                btnToggle.classList.remove('d-none');
+                if (verTodas) {
+                    btnToggle.innerHTML = `<i class="fa fa-filter me-1"></i> Ver solo de ${getNombreCategoria(banco.id_categoria)}`;
+                } else {
+                    btnToggle.innerHTML = `<i class="fa fa-globe me-1"></i> Mostrar todas las categorías`;
+                }
+            } else {
+                btnToggle.classList.add('d-none');
+            }
+        }
+
+        var infoCat = document.getElementById('info_categoria_drawer_' + idx);
+        if (infoCat) {
+            if (!verTodas && banco.id_categoria !== null && banco.id_categoria !== undefined) {
+                infoCat.innerHTML = `<span class="badge bg-light text-dark border text-xxs"><i class="fa fa-folder text-warning me-1"></i> Categoría: ${getNombreCategoria(banco.id_categoria)}</span>`;
+            } else {
+                infoCat.innerHTML = `<span class="badge bg-light text-secondary border text-xxs"><i class="fa fa-list me-1"></i> Mostrando todas las categorías</span>`;
+            }
+        }
+
+        contenedorLista.innerHTML = generarCardsProblemasHtml(idx, banco, verTodas);
+
+        var inputSearch = drawer.querySelector('.input-busqueda-drawer');
+        if (inputSearch) inputSearch.value = '';
+    }
+
+    function toggleVerTodasCategorias(idx) {
+        var drawer = document.getElementById('drawer_' + idx);
+        if (!drawer) return;
+        var actual = (drawer.getAttribute('data-ver-todas') === '1');
+        refrescarDrawerPregunta(idx, !actual);
+    }
+
     function renderPreguntas() {
         var container = document.getElementById('preguntas-dinamicas-container');
         if (!container) return;
@@ -383,34 +481,7 @@
             });
 
             var isCustom = (banco.id_categoria === null && probCount > 0);
-
-            // Generar cards de problemas para el drawer de esta pregunta
-            var cardsProbsHtml = '';
-            todosProblemasData.forEach(function(p) {
-                var isChecked = banco.problemas && banco.problemas.some(function(id) { return String(id) === String(p.id); });
-                var difClass = p.dificultad === 'Fácil' ? 'border-success text-success' : (p.dificultad === 'Difícil' ? 'border-danger text-danger' : 'border-warning text-warning');
-                var catBadges = p.categoria_nombres.map(function(cn) {
-                    return `<span class="badge border border-secondary text-secondary bg-white text-xxs px-1 py-0.5 me-1">${cn}</span>`;
-                }).join('');
-
-                cardsProbsHtml += `
-                    <div class="col-md-6 col-12 item-problema-drawer" data-id="${p.id}" data-nombre="${p.nombre.toLowerCase()}" data-codigo="${p.codigo.toLowerCase()}">
-                        <label class="selection-card w-100 mb-0 py-2 px-2.5 ${isChecked ? 'checked' : ''}" for="prob_q${idx}_${p.id}">
-                            <input type="checkbox" id="prob_q${idx}_${p.id}" value="${p.id}" ${isChecked ? 'checked' : ''} onchange="onProblemaToggle(${idx}, ${p.id}, this)">
-                            <div class="selection-card-content">
-                                <div class="d-flex justify-content-between align-items-center mb-0.5">
-                                    <span class="selection-card-title text-xs mb-0">${p.nombre}</span>
-                                    <span class="badge border ${difClass} bg-white text-xxs ms-1">${p.dificultad}</span>
-                                </div>
-                                <div class="selection-card-subtitle d-flex flex-wrap align-items-center gap-1 mt-0">
-                                    <span class="text-xxs text-muted">Código: <span class="badge bg-secondary text-xxs px-1.5 py-0.2">${p.codigo}</span></span>
-                                    ${catBadges}
-                                </div>
-                            </div>
-                        </label>
-                    </div>
-                `;
-            });
+            var cardsProbsHtml = generarCardsProblemasHtml(idx, banco, isCustom);
 
             var cardHtml = `
                 <div class="card border shadow-xs pregunta-card" id="card_pregunta_${idx}">
@@ -456,13 +527,21 @@
                         </div>
 
                         <!-- Drawer colapsable para ver/ajustar variantes -->
-                        <div class="drawer-ejercicios mt-3 pt-3 border-top" id="drawer_${idx}" style="display: none;">
+                        <div class="drawer-ejercicios mt-3 pt-3 border-top" id="drawer_${idx}" data-ver-todas="${isCustom ? '1' : '0'}" style="display: none;">
                             <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                                <div class="d-flex align-items-center gap-2">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
                                     <span class="text-xs font-weight-bold text-dark">Variantes disponibles para esta pregunta:</span>
                                     <span class="text-xxs text-muted">(Marque los ejercicios que entran al sorteo)</span>
+                                    <span id="info_categoria_drawer_${idx}">
+                                        ${(banco.id_categoria !== null && banco.id_categoria !== undefined)
+                                            ? `<span class="badge bg-light text-dark border text-xxs"><i class="fa fa-folder text-warning me-1"></i> Categoría: ${getNombreCategoria(banco.id_categoria)}</span>`
+                                            : `<span class="badge bg-light text-secondary border text-xxs"><i class="fa fa-list me-1"></i> Todas las categorías</span>`}
+                                    </span>
                                 </div>
                                 <div class="d-flex align-items-center gap-1">
+                                    <button type="button" id="btn_toggle_cat_${idx}" class="btn btn-xxs btn-outline-info mb-0 py-0.5 px-2 ${(banco.id_categoria !== null && banco.id_categoria !== undefined) ? '' : 'd-none'}" onclick="toggleVerTodasCategorias(${idx})" title="Alternar entre ver solo esta categoría o todas">
+                                        <i class="fa fa-globe me-1"></i> Mostrar todas las categorías
+                                    </button>
                                     <button type="button" class="btn btn-xxs btn-outline-secondary mb-0 py-0.5 px-2" onclick="marcarTodosPregunta(${idx}, true)">
                                         Marcar Todos
                                     </button>
@@ -474,7 +553,7 @@
 
                             <div class="input-group input-group-sm mb-2" style="max-width: 320px;">
                                 <span class="input-group-text"><i class="fa fa-search text-xs"></i></span>
-                                <input type="text" class="form-control form-control-sm" placeholder="Buscar por nombre o código..." oninput="filtrarProblemasDrawer(${idx}, this.value)" onkeyup="filtrarProblemasDrawer(${idx}, this.value)">
+                                <input type="text" class="form-control form-control-sm input-busqueda-drawer" placeholder="Buscar por nombre o código..." oninput="filtrarProblemasDrawer(${idx}, this.value)" onkeyup="filtrarProblemasDrawer(${idx}, this.value)">
                             </div>
 
                             <div class="row g-2 contenedor-lista-problemas" id="lista_probs_${idx}" style="max-height: 240px; overflow-y: auto;">
@@ -509,13 +588,15 @@
             banco.id_categoria = null;
             banco.nombre_banco = 'Sin banco asignado';
             banco.problemas = [];
+            refrescarDrawerPregunta(idx, false);
         } else if (val === 'custom') {
             banco.id_categoria = null;
             banco.nombre_banco = 'Selección Personalizada';
             var drawer = document.getElementById('drawer_' + idx);
             if (drawer) drawer.style.display = 'block';
+            refrescarDrawerPregunta(idx, true);
         } else {
-            var catId = parseInt(val);
+            var catId = parseInt(val, 10);
             banco.id_categoria = catId;
             banco.nombre_banco = getNombreCategoria(catId);
             var probIds = [];
@@ -525,6 +606,7 @@
                 }
             });
             banco.problemas = probIds;
+            refrescarDrawerPregunta(idx, false);
         }
 
         actualizarCardPregunta(idx);
@@ -559,12 +641,31 @@
         var drawer = document.getElementById('drawer_' + preguntaIdx);
         if (!drawer) return;
 
+        var checkboxes = drawer.querySelectorAll('.item-problema-drawer:not(.d-none) input[type="checkbox"]');
+
         if (marcar) {
-            var allIds = [];
-            todosProblemasData.forEach(function(p) { allIds.push(p.id); });
-            banco.problemas = allIds;
+            if (!Array.isArray(banco.problemas)) banco.problemas = [];
+            checkboxes.forEach(function(cb) {
+                var pId = parseInt(cb.value, 10);
+                if (!banco.problemas.some(function(id) { return String(id) === String(pId); })) {
+                    banco.problemas.push(pId);
+                }
+                cb.checked = true;
+                var card = cb.closest('.selection-card');
+                if (card) card.classList.add('checked');
+            });
         } else {
-            banco.problemas = [];
+            if (!Array.isArray(banco.problemas)) banco.problemas = [];
+            var idsToRemove = [];
+            checkboxes.forEach(function(cb) {
+                idsToRemove.push(String(cb.value));
+                cb.checked = false;
+                var card = cb.closest('.selection-card');
+                if (card) card.classList.remove('checked');
+            });
+            banco.problemas = banco.problemas.filter(function(id) {
+                return idsToRemove.indexOf(String(id)) === -1;
+            });
         }
 
         actualizarCardPregunta(preguntaIdx);
@@ -585,8 +686,10 @@
             var codigo = norm(item.getAttribute('data-codigo') || '');
             if (!q || nombre.indexOf(q) !== -1 || codigo.indexOf(q) !== -1) {
                 item.classList.remove('d-none');
+                item.style.setProperty('display', '', '');
             } else {
                 item.classList.add('d-none');
+                item.style.setProperty('display', 'none', 'important');
             }
         });
     }

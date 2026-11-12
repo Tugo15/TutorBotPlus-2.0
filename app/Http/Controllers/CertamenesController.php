@@ -55,7 +55,11 @@ class CertamenesController extends Controller
     }
 
     public function crear(Request $request){
-        $cursos = auth()->user()->cursos()->get();
+        if (auth()->user()->hasRole('administrador')) {
+            $cursos = Cursos::orderBy('nombre')->get();
+        } else {
+            $cursos = auth()->user()->cursos()->orderBy('nombre')->get();
+        }
         $id_curso_preseleccionado = old('curso', $request->input('id_curso', $request->input('curso')));
 
         if (!$id_curso_preseleccionado && $cursos->isNotEmpty()) {
@@ -103,11 +107,20 @@ class CertamenesController extends Controller
         return view('certamen.crear', compact('cursos', 'todos_problemas', 'id_curso_preseleccionado', 'categorias_existentes', 'bancos_preguntas'));
     }
     public function editar(Request $request){
-        $cursos = auth()->user()->cursos()->get();
         $certamen = Certamenes::find($request->id);
         if (!$certamen) {
             return redirect()->route('certamen.index')->with('error', 'La evaluación no existe.');
         }
+
+        if (auth()->user()->hasRole('administrador')) {
+            $cursos = Cursos::orderBy('nombre')->get();
+        } else {
+            $cursos = auth()->user()->cursos()->orderBy('nombre')->get();
+            if ($certamen->curso && !$cursos->contains('id', $certamen->curso->id)) {
+                $cursos->push($certamen->curso);
+            }
+        }
+
         $certamen->fecha_inicio = Carbon::parse($certamen->fecha_inicio);
         $certamen->fecha_termino = Carbon::parse($certamen->fecha_termino);
         $todos_problemas = $certamen->curso ? $certamen->curso->problemas()->with('categorias')->get() : collect();
@@ -271,14 +284,15 @@ class CertamenesController extends Controller
             DB::rollBack();
             return back()->withInput()->with("error", $e->getMessage());
         }
-        return redirect()->route('certamen.index')->with('success', 'La evaluación "'.$certamen->nombre.'" ha sido creada de manera correcta.');
+        return redirect()->route('certamen.index', ['id_curso' => $certamen->id_curso])->with('success', 'La evaluación "'.$certamen->nombre.'" ha sido creada de manera correcta.');
     }
 
     public function update(Request $request){
         $validated = $request->validate(Certamenes::$rules);
         try{
             DB::beginTransaction();
-            $certamen = Certamenes::find($request->id);
+            $idCertamen = $request->input('id', $request->query('id', $request->id));
+            $certamen = Certamenes::findOrFail($idCertamen);
             $certamen->nombre = $request->input("nombre");
             $certamen->descripcion = ProblemasController::almacenarImagenesBase64($request->input("descripcion"));
             $certamen->fecha_inicio = Carbon::parse($request->input("fecha_inicio"));
@@ -293,9 +307,10 @@ class CertamenesController extends Controller
             $certamen->restriccion_red = $request->boolean("restriccion_red", false);
             $certamen->ips_autorizadas = $request->input("ips_autorizadas");
             $certamen->password = $request->filled("password") ? $request->input("password") : null;
-            if($certamen->curso->id != $request->input('curso')){
-                $certamen->curso()->dissociate();
-                $certamen->curso()->associate(Cursos::find($request->input("curso")));
+            
+            $nuevoCursoId = (int)$request->input('curso');
+            if($nuevoCursoId && $certamen->id_curso != $nuevoCursoId){
+                $certamen->id_curso = $nuevoCursoId;
             }
 
             // Procesar estructura de bancos por pregunta
@@ -363,7 +378,17 @@ class CertamenesController extends Controller
             $certamen->problemas_seleccionados = !empty($todosProblemasIds) ? $todosProblemasIds : null;
             $certamen->save();
 
+            // Asegurar que los problemas seleccionados estén disponibles en el curso
             if (!empty($todosProblemasIds)) {
+                $cursoActual = Cursos::find($certamen->id_curso);
+                if ($cursoActual) {
+                    foreach ($todosProblemasIds as $probId) {
+                        if (!$cursoActual->problemas()->where('problemas.id', $probId)->exists()) {
+                            $cursoActual->problemas()->attach($probId, ['visible' => false]);
+                        }
+                    }
+                }
+
                 $catsFromProbs = DB::table('pertenece')->whereIn('id_problema', $todosProblemasIds)->pluck('id_categoria')->toArray();
                 $todasCategoriasIds = array_unique(array_merge($todasCategoriasIds, $catsFromProbs));
                 $certamen->categorias()->sync($todasCategoriasIds);
@@ -375,21 +400,30 @@ class CertamenesController extends Controller
         }catch(\PDOException $e){
             DB::rollBack();
             return back()->withInput()->with("error", $e->getMessage());
+        }catch(\Exception $e){
+            DB::rollBack();
+            return back()->withInput()->with("error", "Error al actualizar la evaluación: " . $e->getMessage());
         }
-        return redirect()->route('certamen.index')->with('success', "La evaluación ha sido actualizada correctamente.");
+        return redirect()->route('certamen.index', ['id_curso' => $certamen->id_curso])->with('success', "La evaluación ha sido actualizada correctamente.");
     }
 
     public function eliminar(Request $request){
         try{
             DB::beginTransaction();
-            $certamen = Certamenes::find($request->id);
+            $idCertamen = $request->input('id', $request->query('id', $request->id));
+            $certamen = Certamenes::findOrFail($idCertamen);
+            $idCurso = $certamen->id_curso;
             $certamen->delete();
             DB::commit();
         }catch(\PDOException $e){
             DB::rollBack();
             return back()->with("error", $e->getMessage());
+        }catch(\Exception $e){
+            DB::rollBack();
+            return back()->with("error", "Error al eliminar la evaluación: " . $e->getMessage());
         }
-        return redirect()->route('certamen.index')->with('success', 'La evaluación "'.$certamen->nombre.'" ha sido eliminado.');
+        return redirect()->route('certamen.index', ['id_curso' => $idCurso])->with('success', 'La evaluación "'.$certamen->nombre.'" ha sido eliminada.');
+    }
     }
 
     public function duplicar(Request $request){

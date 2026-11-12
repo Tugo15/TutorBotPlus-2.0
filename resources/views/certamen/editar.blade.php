@@ -7,13 +7,14 @@
     </div>
     <div class="container-fluid py-4">
         <form role="form" method="POST" action="{{ route('certamen.update', ['id' => $certamen->id]) }}"
-            enctype="multipart/form-data" onsubmit="event.preventDefault();submitFormEditar('{{'el certamen '.$certamen->nombre}}')" id="editarForm">
+            enctype="multipart/form-data" onsubmit="event.preventDefault();submitFormEditar('{{ addslashes($certamen->nombre) }}')" id="editarForm">
             @csrf
+            <input type="hidden" name="id" value="{{ $certamen->id }}">
             <div class="card shadow-xs border">
                 <div class="card-header pb-0 border-bottom mb-0">
                     <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
                         <div class="d-none d-lg-block" style="flex: 1;">
-                            <a href="{{ route('certamen.index') }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                            <a href="{{ route('certamen.index', ['id_curso' => $certamen->id_curso]) }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                         </div>
                         <div class="text-center" style="flex: 2;">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-calendar-check me-2 text-warning"></i>Editar Evaluación: {{ $certamen->nombre }}</h6>
@@ -115,6 +116,18 @@
         document.querySelector('#editarForm').addEventListener('submit', e => {
             document.querySelector('#descripcion').value = editor.getMarkdown();
         });
+
+        // Asegurar que antes de confirmar en el modal de SweetAlert, la descripción esté copiada
+        if (typeof window.submitFormEditar === 'function') {
+            const origSubmitAlert = window.submitFormEditar;
+            window.submitFormEditar = function(item) {
+                var desc = document.querySelector('#descripcion');
+                if (desc && typeof editor !== 'undefined') {
+                    desc.value = editor.getMarkdown();
+                }
+                origSubmitAlert(item);
+            };
+        }
 
 
 
