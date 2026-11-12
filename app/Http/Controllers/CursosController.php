@@ -106,28 +106,16 @@ class CursosController extends Controller
             ->orderBy('firstname')
             ->get();
 
-        // Estudiantes disponibles para enrolar (que no estén ya en el curso)
+        // Estudiantes disponibles para enrolar (que no estén ya en el curso y no sean administradores)
         $estudiantes_disponibles = User::whereDoesntHave('cursos', function ($q) use ($id) {
                 $q->where('cursos.id', $id);
             })
-            ->whereHas('roles', function ($q) {
-                $q->where('name', 'estudiante');
+            ->whereDoesntHave('roles', function ($q) {
+                $q->where('name', 'administrador');
             })
             ->orderBy('lastname')
             ->orderBy('firstname')
             ->get();
-
-        if ($estudiantes_disponibles->isEmpty()) {
-            $estudiantes_disponibles = User::whereDoesntHave('cursos', function ($q) use ($id) {
-                    $q->where('cursos.id', $id);
-                })
-                ->whereDoesntHave('roles', function ($q) {
-                    $q->where('name', 'administrador');
-                })
-                ->orderBy('lastname')
-                ->orderBy('firstname')
-                ->get();
-        }
 
         // Otros cursos para la opción de copiar estudiantes
         $otros_cursos = auth()->user()->hasRole('administrador')

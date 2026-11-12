@@ -474,7 +474,7 @@
 
                             <div class="input-group input-group-sm mb-2" style="max-width: 320px;">
                                 <span class="input-group-text"><i class="fa fa-search text-xs"></i></span>
-                                <input type="text" class="form-control form-control-sm" placeholder="Buscar por nombre o código..." onkeyup="filtrarProblemasDrawer(${idx}, this.value)">
+                                <input type="text" class="form-control form-control-sm" placeholder="Buscar por nombre o código..." oninput="filtrarProblemasDrawer(${idx}, this.value)" onkeyup="filtrarProblemasDrawer(${idx}, this.value)">
                             </div>
 
                             <div class="row g-2 contenedor-lista-problemas" id="lista_probs_${idx}" style="max-height: 240px; overflow-y: auto;">
@@ -572,15 +572,18 @@
     }
 
     function filtrarProblemasDrawer(idx, query) {
-        var q = (query || '').toLowerCase().trim();
+        function norm(s) {
+            return (s || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+        }
+        var q = norm(query);
         var drawer = document.getElementById('drawer_' + idx);
         if (!drawer) return;
 
         var items = drawer.querySelectorAll('.item-problema-drawer');
         items.forEach(function(item) {
-            var nombre = item.getAttribute('data-nombre') || '';
-            var codigo = item.getAttribute('data-codigo') || '';
-            if (nombre.indexOf(q) !== -1 || codigo.indexOf(q) !== -1) {
+            var nombre = norm(item.getAttribute('data-nombre') || '');
+            var codigo = norm(item.getAttribute('data-codigo') || '');
+            if (!q || nombre.indexOf(q) !== -1 || codigo.indexOf(q) !== -1) {
                 item.classList.remove('d-none');
             } else {
                 item.classList.add('d-none');

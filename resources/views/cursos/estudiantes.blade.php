@@ -20,7 +20,11 @@
                                 Código: <strong>{{ $curso->codigo }}</strong> | Total Matriculados: <span class="badge bg-primary text-xxs">{{ $estudiantes->count() }}</span>
                             </p>
                         </div>
-                        <div class="col-12 col-lg d-flex justify-content-center justify-content-lg-end gap-2 flex-wrap">
+                        <div class="col-12 col-lg d-flex justify-content-center justify-content-lg-end align-items-center gap-2 flex-wrap">
+                            <div class="input-group input-group-sm" style="max-width: 250px;">
+                                <span class="input-group-text"><i class="fa fa-search text-xs"></i></span>
+                                <input type="text" class="form-control" id="buscadorEstudiantesCurso" placeholder="Filtrar matriculados...">
+                            </div>
                             <button type="button" class="btn btn-sm btn-dark mb-0" data-bs-toggle="modal" data-bs-target="#modalInscribirEstudiantes">
                                 <i class="fa fa-user-plus me-1"></i> Inscribir Estudiantes
                             </button>
@@ -75,7 +79,7 @@
                                 </thead>
                                 <tbody>
                                     @forelse ($estudiantes as $estudiante)
-                                        <tr>
+                                        <tr class="fila-estudiante-curso" data-nombre="{{ $estudiante->lastname }} {{ $estudiante->firstname }} {{ $estudiante->username }} {{ $estudiante->email }}" data-rut="{{ preg_replace('/[^0-9kK]/', '', $estudiante->rut ?? '') }}">
                                             <td class="text-center align-middle">
                                                 <input type="checkbox" name="user_ids[]" value="{{ $estudiante->id }}" class="check-estudiante" onchange="actualizarBotonSacar()">
                                             </td>
@@ -130,6 +134,12 @@
                                             </td>
                                         </tr>
                                     @endforelse
+                                    <tr id="filaSinResultadosMatriculados" class="d-none">
+                                        <td colspan="6" class="text-center py-4 text-xs text-secondary">
+                                            <i class="fa fa-search text-muted fa-2x mb-2 d-block"></i>
+                                            No se encontraron estudiantes matriculados que coincidan con la búsqueda.
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -193,7 +203,7 @@
                                     @else
                                         <div class="list-group list-group-flush" id="listaDisponibles">
                                             @foreach($estudiantes_disponibles as $disp)
-                                                <label class="list-group-item list-group-item-action d-flex align-items-center justify-content-between p-2 cursor-pointer item-estudiante-disp">
+                                                <label class="list-group-item list-group-item-action d-flex align-items-center justify-content-between p-2 cursor-pointer item-estudiante-disp" data-nombre="{{ $disp->lastname }} {{ $disp->firstname }} {{ $disp->email }}" data-rut="{{ preg_replace('/[^0-9kK]/', '', $disp->rut ?? '') }}">
                                                     <div class="d-flex align-items-center">
                                                         <input class="form-check-input me-3 check-disp" type="checkbox" name="estudiantes[]" value="{{ $disp->id }}">
                                                         <div>
@@ -204,6 +214,9 @@
                                                     <span class="badge border border-secondary text-secondary bg-white text-xxs font-monospace">{{ $disp->rut ?: '-' }}</span>
                                                 </label>
                                             @endforeach
+                                            <div id="sinResultadosDisponibles" class="text-xs text-secondary text-center py-3 d-none">
+                                                <i class="fa fa-info-circle me-1"></i> No se encontraron estudiantes que coincidan con la búsqueda.
+                                            </div>
                                         </div>
                                     @endif
                                 </div>
@@ -352,15 +365,84 @@
             });
         }
 
-        // Filtro interactivo en el modal para lista de disponibles
-        document.getElementById('buscadorDisponibles')?.addEventListener('keyup', function() {
-            const term = this.value.toLowerCase().trim();
-            const items = document.querySelectorAll('#listaDisponibles .item-estudiante-disp');
-            items.forEach(function(item) {
-                const text = item.textContent.toLowerCase();
-                item.style.display = text.includes(term) ? '' : 'none';
+        // Helpers de normalización para búsquedas insensibles a tildes y formatos de RUT
+        function normalizarTexto(str) {
+            if (!str) return '';
+            return str.toString()
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim();
+        }
+
+        function normalizarRut(str) {
+            if (!str) return '';
+            return str.toString().toLowerCase().replace(/[^0-9k]/g, '');
+        }
+
+        // Filtro en tabla principal de estudiantes matriculados
+        const inputBuscarCurso = document.getElementById('buscadorEstudiantesCurso');
+        if (inputBuscarCurso) {
+            ['input', 'paste', 'keyup'].forEach(evento => {
+                inputBuscarCurso.addEventListener(evento, function() {
+                    const rawVal = this.value || '';
+                    const termTexto = normalizarTexto(rawVal);
+                    const termRut = normalizarRut(rawVal);
+                    const filas = document.querySelectorAll('.fila-estudiante-curso');
+                    let visibles = 0;
+
+                    filas.forEach(function(fila) {
+                        const nombreData = normalizarTexto(fila.getAttribute('data-nombre') || fila.textContent);
+                        const rutData = normalizarRut(fila.getAttribute('data-rut') || '');
+
+                        const coincide = !termTexto || nombreData.includes(termTexto) || (termRut && rutData.includes(termRut));
+                        if (coincide) {
+                            fila.style.display = '';
+                            visibles++;
+                        } else {
+                            fila.style.display = 'none';
+                        }
+                    });
+
+                    const filaSinRes = document.getElementById('filaSinResultadosMatriculados');
+                    if (filaSinRes) {
+                        filaSinRes.classList.toggle('d-none', visibles > 0 || filas.length === 0);
+                    }
+                });
             });
-        });
+        }
+
+        // Filtro interactivo en el modal para lista de disponibles
+        const buscadorDisp = document.getElementById('buscadorDisponibles');
+        if (buscadorDisp) {
+            ['input', 'paste', 'keyup'].forEach(evento => {
+                buscadorDisp.addEventListener(evento, function() {
+                    const rawVal = this.value || '';
+                    const termTexto = normalizarTexto(rawVal);
+                    const termRut = normalizarRut(rawVal);
+                    const items = document.querySelectorAll('#listaDisponibles .item-estudiante-disp');
+                    let visibles = 0;
+
+                    items.forEach(function(item) {
+                        const nombreData = normalizarTexto(item.getAttribute('data-nombre') || item.textContent);
+                        const rutData = normalizarRut(item.getAttribute('data-rut') || '');
+
+                        const coincide = !termTexto || nombreData.includes(termTexto) || (termRut && rutData.includes(termRut));
+                        if (coincide) {
+                            item.style.display = '';
+                            visibles++;
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+
+                    const sinRes = document.getElementById('sinResultadosDisponibles');
+                    if (sinRes) {
+                        sinRes.classList.toggle('d-none', visibles > 0 || items.length === 0);
+                    }
+                });
+            });
+        }
 
         // Contar seleccionados en modal pestaña 1
         document.querySelectorAll('.check-disp').forEach(function(ch) {

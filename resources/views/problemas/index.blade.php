@@ -177,7 +177,7 @@
                                 @else
                                     <div class="list-group list-group-flush" id="listaProblemasDisponibles">
                                         @foreach($problemas_disponibles_para_asignar as $probDisp)
-                                            <label class="list-group-item list-group-item-action d-flex align-items-center justify-content-between p-2 cursor-pointer item-problema-disp">
+                                            <label class="list-group-item list-group-item-action d-flex align-items-center justify-content-between p-2 cursor-pointer item-problema-disp" data-nombre="{{ $probDisp->nombre }} {{ $probDisp->codigo }} {{ $probDisp->categorias->pluck('nombre')->implode(' ') }}">
                                                 <div class="d-flex align-items-center text-truncate me-2">
                                                     <input class="form-check-input me-3 check-prob-disp" type="checkbox" name="problemas[]" value="{{ $probDisp->id }}">
                                                     <div class="text-truncate">
@@ -193,6 +193,9 @@
                                                 </span>
                                             </label>
                                         @endforeach
+                                        <div id="sinResultadosProblemasDisponibles" class="text-xs text-secondary text-center py-3 d-none">
+                                            <i class="fa fa-info-circle me-1"></i> No se encontraron problemas que coincidan con la búsqueda.
+                                        </div>
                                     </div>
                                 @endif
                             </div>
@@ -343,14 +346,38 @@
 
         // Filtro y contador para modal de asignación de problemas
         document.addEventListener('DOMContentLoaded', function() {
+            function normalizarTexto(str) {
+                if (!str) return '';
+                return str.toString()
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .trim();
+            }
+
             const buscadorProb = document.getElementById('buscadorProblemasDisponibles');
             if (buscadorProb) {
-                buscadorProb.addEventListener('keyup', function() {
-                    const term = this.value.toLowerCase().trim();
-                    const items = document.querySelectorAll('#listaProblemasDisponibles .item-problema-disp');
-                    items.forEach(function(item) {
-                        const text = item.textContent.toLowerCase();
-                        item.style.display = text.includes(term) ? '' : 'none';
+                ['input', 'paste', 'keyup'].forEach(evento => {
+                    buscadorProb.addEventListener(evento, function() {
+                        const term = normalizarTexto(this.value);
+                        const items = document.querySelectorAll('#listaProblemasDisponibles .item-problema-disp');
+                        let visibles = 0;
+
+                        items.forEach(function(item) {
+                            const dataText = normalizarTexto(item.getAttribute('data-nombre') || item.textContent);
+                            const coincide = !term || dataText.includes(term);
+                            if (coincide) {
+                                item.style.display = '';
+                                visibles++;
+                            } else {
+                                item.style.display = 'none';
+                            }
+                        });
+
+                        const sinRes = document.getElementById('sinResultadosProblemasDisponibles');
+                        if (sinRes) {
+                            sinRes.classList.toggle('d-none', visibles > 0 || items.length === 0);
+                        }
                     });
                 });
             }
