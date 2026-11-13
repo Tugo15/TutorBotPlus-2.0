@@ -15,7 +15,13 @@ if (firstRow && firstRow.cells && firstRow.cells.length >= 2) {
 var espaniol = {
     "aria": {
         "sortAscending": ": orden ascendente",
-        "sortDescending": ": orden descendente"
+        "sortDescending": ": orden descendente",
+        "paginate": {
+            "first": "Primera",
+            "previous": "Anterior",
+            "next": "Siguiente",
+            "last": "Última"
+        }
     },
     "autoFill": {
         "cancel": "Cancelar",
@@ -262,25 +268,155 @@ var responsiveDomLayout = "<'row mx-0 px-2 px-md-4 pb-2 pt-1 align-items-center 
     "<'row mx-0'<'col-12 px-0 table-responsive'tr>>" +
     "<'row mx-0 px-2 px-md-4 pt-3 pb-4 align-items-center gy-2'<'col-12 col-md-5 text-center text-md-start'i><'col-12 col-md-7 d-flex justify-content-center justify-content-md-end'p>>";
 
+window.getTutorBotFilterKey = function (scope) {
+    try {
+        var params = new URLSearchParams(window.location.search);
+        var idCurso = params.get('id_curso');
+        return 'tb_state_' + scope + '_' + window.location.pathname + (idCurso ? '_c' + idCurso : '');
+    } catch (e) {
+        return 'tb_state_' + scope + '_' + window.location.pathname;
+    }
+};
+
+window.tutorBotStateCallbacks = function (scope) {
+    return {
+        stateDuration: 60 * 60 * 24 * 30,
+        stateSaveCallback: function (settings, data) {
+            try {
+                localStorage.setItem(window.getTutorBotFilterKey('dt_' + (settings.sTableId || scope)), JSON.stringify(data));
+            } catch (e) {}
+        },
+        stateLoadCallback: function (settings) {
+            try {
+                var raw = localStorage.getItem(window.getTutorBotFilterKey('dt_' + (settings.sTableId || scope)));
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) {
+                return null;
+            }
+        }
+    };
+};
+
+if (typeof jQuery !== 'undefined' && jQuery.fn && jQuery.fn.dataTable) {
+    jQuery('table thead th').each(function() {
+        var txt = (jQuery(this).text() || '').trim().toLowerCase();
+        if (txt === 'acción' || txt === 'acciones' || txt === 'accion' || txt === 'opciones') {
+            jQuery(this).addClass('no-sort');
+        }
+    });
+    if (typeof DataTable !== 'undefined' && DataTable.defaults) {
+        DataTable.defaults.columnDefs = DataTable.defaults.columnDefs || [];
+        DataTable.defaults.columnDefs.push({ orderable: false, targets: 'no-sort' });
+        DataTable.defaults.searchDelay = 200;
+    }
+    jQuery(document).on('draw.dt init.dt', function(e, settings) {
+        var wrapper = settings && settings.nTableWrapper ? settings.nTableWrapper : document;
+        var map = { 'First': 'Primera', 'Previous': 'Anterior', 'Next': 'Siguiente', 'Last': 'Última' };
+        jQuery(wrapper).find('.dt-paging-button[aria-label], .paginate_button[aria-label]').each(function() {
+            var lbl = this.getAttribute('aria-label');
+            if (map[lbl]) {
+                this.setAttribute('aria-label', map[lbl]);
+                if (!this.getAttribute('title')) this.setAttribute('title', map[lbl]);
+            }
+        });
+
+        // Evitar IDs duplicados (dt-length-0 / dt-search-0) o atributos id="" cuando hay múltiples DataTables en una misma vista
+        if (wrapper && wrapper !== document) {
+            jQuery(wrapper).find('[id=""]').removeAttr('id');
+            var tableId = settings && settings.nTable && settings.nTable.id ? settings.nTable.id : '';
+            if (tableId) {
+                var lenSelect = wrapper.querySelector('select[id^="dt-length-"]');
+                if (lenSelect && lenSelect.id !== 'dt-length-' + tableId) {
+                    var oldLenId = lenSelect.id;
+                    var newLenId = 'dt-length-' + tableId;
+                    lenSelect.id = newLenId;
+                    var lenLbl = wrapper.querySelector('label[for="' + oldLenId + '"]');
+                    if (lenLbl) lenLbl.setAttribute('for', newLenId);
+                }
+                var searchInput = wrapper.querySelector('input[id^="dt-search-"]');
+                if (searchInput && searchInput.id !== 'dt-search-' + tableId) {
+                    var oldSearchId = searchInput.id;
+                    var newSearchId = 'dt-search-' + tableId;
+                    searchInput.id = newSearchId;
+                    var searchLbl = wrapper.querySelector('label[for="' + oldSearchId + '"]');
+                    if (searchLbl) searchLbl.setAttribute('for', newSearchId);
+                }
+            }
+        }
+    });
+}
+
 if ($('#table').length > 0) {
-    new DataTable('#table', {
+    var dtMain = new DataTable('#table', Object.assign({
         language : espaniol,
         responsive: true,
+        autoWidth: false,
+        stateSave: true,
         columnDefs: [
-            { defaultContent: "-", targets: "_all" }
+            { defaultContent: "-", targets: "_all" },
+            { orderable: false, targets: "no-sort" }
         ],
         order: [[indexLastColumn, 'desc']],
-        dom: responsiveDomLayout
+        dom: responsiveDomLayout,
+        initComplete: function() {
+            var api = this.api();
+            setTimeout(function() {
+                api.columns.adjust();
+                if (api.responsive && typeof api.responsive.recalc === 'function') {
+                    api.responsive.recalc();
+                }
+            }, 120);
+        }
+    }, window.tutorBotStateCallbacks('table')));
+    $(window).on('load', function() {
+        if (dtMain && dtMain.columns) {
+            dtMain.columns.adjust();
+            if (dtMain.responsive && typeof dtMain.responsive.recalc === 'function') {
+                dtMain.responsive.recalc();
+            }
+        }
+    });
+    $('#table').on('page.dt', function() {
+        var wrapper = document.getElementById('table_wrapper') || document.getElementById('table');
+        if (wrapper) {
+            wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     });
 }
 
 if ($('#table_evaluaciones').length > 0) {
-    new DataTable('#table_evaluaciones', {
+    var dtEval = new DataTable('#table_evaluaciones', Object.assign({
         language : espaniol,
         responsive: true,
+        autoWidth: false,
+        stateSave: true,
         columnDefs: [
-            { defaultContent: "-", targets: "_all" }
+            { defaultContent: "-", targets: "_all" },
+            { orderable: false, targets: "no-sort" }
         ],
-        dom: responsiveDomLayout
+        dom: responsiveDomLayout,
+        initComplete: function() {
+            var api = this.api();
+            setTimeout(function() {
+                api.columns.adjust();
+                if (api.responsive && typeof api.responsive.recalc === 'function') {
+                    api.responsive.recalc();
+                }
+            }, 120);
+        }
+    }, window.tutorBotStateCallbacks('table_evaluaciones')));
+    $(window).on('load', function() {
+        if (dtEval && dtEval.columns) {
+            dtEval.columns.adjust();
+            if (dtEval.responsive && typeof dtEval.responsive.recalc === 'function') {
+                dtEval.responsive.recalc();
+            }
+        }
+    });
+    $('#table_evaluaciones').on('page.dt', function() {
+        var wrapper = document.getElementById('table_evaluaciones_wrapper') || document.getElementById('table_evaluaciones');
+        if (wrapper) {
+            wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     });
 }

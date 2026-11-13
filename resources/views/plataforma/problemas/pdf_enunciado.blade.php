@@ -168,7 +168,7 @@
                     <h5>Lenguajes</h5>
                 </td>
                 <td>
-                    <p>{{ implode(', ', $problema->lenguajes()->get()->pluck('abreviatura')->toArray()) }}</p>
+                    <p>{{ implode(', ', $problema->lenguajes()->get()->pluck('abreviatura')->map(fn($a) => strtoupper($a))->unique()->toArray()) }}</p>
                 </td>
             </tr>
         </table>
@@ -188,7 +188,7 @@
     {!! $renderedHtml !!}
 
     @php
-        $casos_ejemplo = $problema->casos_de_prueba()->where('ejemplo', true)->get();
+        $casos_ejemplo = $problema->casos_de_prueba()->where('ejemplo', true)->orderBy('id', 'asc')->get();
     @endphp
 
     @if($casos_ejemplo->count() > 0)

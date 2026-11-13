@@ -10,14 +10,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="{{ asset('img/favicon.ico') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/v4-shims.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link href="{{ asset('assets/css/fontawesome/all.min.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/fontawesome/v4-shims.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('assets/css/fontawesome/v5-font-face.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('assets/css/plataforma.css') }}?v={{ @filemtime(public_path('assets/css/plataforma.css')) ?: '1.0' }}">
     <link rel="stylesheet" href="{{ asset('assets/css/datatables_argon_fix.css') }}?v={{ @filemtime(public_path('assets/css/datatables_argon_fix.css')) ?: '1.0' }}">
-    <script src="{{ asset('assets/js/disable_devtools.js') }}"></script>
     <script src="{{ mix('js/plataforma.js') }}" defer></script>
     <link rel="stylesheet" href="{{ mix('css/plataforma.css') }}">
     <style>
@@ -98,14 +94,14 @@
 <body style="background-color: #f2f2f2;">
     @include('layout_plataforma.navbar')
     <div class="container-fluid mt-3">
-        <div class="d-flex justify-content-between align-items-center px-5">
-            <h3>{{ $title ? $title : 'No Definido' }}</h3>
-            @if(!isset($res_certamen))
+        <div class="d-flex justify-content-between align-items-center px-3 px-md-5 flex-wrap gap-2">
+            <h3 class="mb-0">{{ $title ? $title : 'No Definido' }}</h3>
+            @if(!isset($res_certamen) || ($show_breadcrumbs ?? false))
             <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
+                <ol class="breadcrumb flex-wrap mb-0">
                     <li class="breadcrumb-item"><a href="{{url('/')}}">Inicio</a></li>
                     @foreach($breadcrumbs as $key=>$item)
-                    <li class="breadcrumb-item @if($key == sizeof($breadcrumbs)) active @endif" aria-current="page"> @if(isset($item["route"]))<a href="{{$item["route"]}}">{{$item["nombre"]}}</a> @else {{$item["nombre"]}} @endif </li>
+                    <li class="breadcrumb-item @if($loop->last) active @endif" aria-current="page"> @if(isset($item["route"]))<a href="{{$item["route"]}}">{{$item["nombre"]}}</a> @else {{$item["nombre"]}} @endif </li>
                     @endforeach
                 </ol>
             </nav>
@@ -116,6 +112,16 @@
         @yield('content')
     </main>
     @include('components.toast_notifications')
+    <script>
+        window.addEventListener('pageshow', function(event) {
+            document.querySelectorAll('form button[type="submit"][disabled]').forEach(function(btn) {
+                btn.disabled = false;
+            });
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+    </script>
     @stack('js')
 </body>
 

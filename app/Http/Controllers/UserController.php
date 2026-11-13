@@ -44,7 +44,9 @@ class UserController extends Controller
     }
     public function bulk_insertion_example(Request $request)
     {
-        dd(Storage::exists('public/examples/ejemplo_bulk_usuarios.csv'));
+        if (!Storage::exists('public/examples/ejemplo_bulk_usuarios.csv')) {
+            return back()->with('error', 'El archivo de ejemplo no se encuentra disponible.');
+        }
         return Storage::download("public/examples/ejemplo_bulk_usuarios.csv");
     }
     
@@ -55,27 +57,30 @@ class UserController extends Controller
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore(auth()->user()->id)],
             'firstname' => ['required', 'string', 'max:100'],
             'lastname' => ['required', 'string', 'max:100'],
-            'password_actual' => ['nullable','required_with:password,password_confirmation', 'min:8'],
+            'password_actual' => ['nullable','required_with:password,password_confirmation', 'string'],
             'password' => ['nullable','min:8', 'required_with:password_confirmation,password_actual', 'same:password_confirmation'],
             'password_confirmation' => ['nullable','min:8'],
         ]);
         try{
-        $user = User::find(auth()->user()->id);
-        if(isset($request->password_actual,$request->password) && !Hash::check($request->password_actual, $user->password)){
-            return back()->withInput()->with("error", "Contraseña actual incorrecta");
-        }else if(isset($request->password_actual,$request->password)){
-            $user->password = $request->password;
-        }
-        $user->username = $request->input("username");
-        $user->firstname = $request->input("firstname");
-        $user->lastname = $request->input("lastname");
-        $user->email = $request->input("email");
-        $user->rut = $request->input("rut");
-        $user->save();
+            $user = User::find(auth()->user()->id);
+            if ($request->filled('password') || $request->filled('password_actual')) {
+                if (!Hash::check($request->password_actual ?? '', $user->password)) {
+                    return back()->withInput()->with("error", "Contraseña actual incorrecta");
+                }
+                if ($request->filled('password')) {
+                    $user->password = $request->password;
+                }
+            }
+            $user->username = $request->input("username");
+            $user->firstname = $request->input("firstname");
+            $user->lastname = $request->input("lastname");
+            $user->email = $request->input("email");
+            $user->rut = $request->input("rut");
+            $user->save();
         }catch(\PDOException $e){
             return back()->withInput()->with("error", $e->getMessage());
         }
-        return redirect()->route("ver.perfil")->with("succes", "Se ha modificado tu perfil de manera correcta.");
+        return redirect()->route("ver.perfil")->with("success", "Se ha modificado tu perfil de manera correcta.");
     }
 
     public function bulk_insertion(Request $request)
@@ -92,32 +97,43 @@ class UserController extends Controller
         $users = [];
         try {
             DB::beginTransaction();
-            foreach ($string_arrays as $key=>$string_info) {
-                if(trim($string_info) == ""){
+            foreach ($string_arrays as $key => $string_info) {
+                $linea = trim($string_info);
+                if ($linea === "") {
                     continue;
                 }
-                if(str_contains($string_info,';')){
-                    $usuario_data = array_filter(explode(";", $string_info));
-                }else{
-                    $usuario_data = array_filter(explode(",", $string_info));
+                if (str_contains($linea, ';')) {
+                    $usuario_data = array_map('trim', str_getcsv($linea, ';'));
+                } else {
+                    // Soporta delimitador coma respetando comillas y corchetes [INF-101,INF-102]
+                    $protegido = preg_replace_callback('/\[[^\]]*\]/', function ($m) {
+                        return '"' . trim($m[0]) . '"';
+                    }, $linea);
+                    $usuario_data = array_map('trim', str_getcsv($protegido, ','));
                 }
-                if(sizeof($usuario_data)<7){
-                    throw new \Exception("Faltan datos en el usuario de la columna ".($key+1).": [".$string_info."]. Ingrese nuevamente el archivo corregido y asegúrese de que todos los datos requeridos estén presentes.");
+
+                // Saltar fila de encabezado si viene en el CSV
+                if (isset($usuario_data[0]) && in_array(strtolower($usuario_data[0]), ['username', 'usuario', 'nombre de usuario'])) {
+                    continue;
                 }
-                $usuario_data = array_combine($keys_array, $usuario_data);
-                $usuario_data["cursos"] = array_filter(explode(",",str_replace(["[","]"], "", $usuario_data["cursos"])));
-                $usuario_data["roles"] = array_filter(explode(",",str_replace(["[","]"], "", strtolower($usuario_data["roles"]))));
+
+                if (sizeof($usuario_data) < 7) {
+                    throw new \Exception("Faltan columnas en la fila " . ($key + 1) . ": [" . $string_info . "]. Se requieren 7 columnas (username;firstname;lastname;email;rut;[cursos];[roles]).");
+                }
+                $usuario_data = array_combine($keys_array, array_slice($usuario_data, 0, 7));
+                $usuario_data["cursos"] = array_values(array_filter(array_map('trim', explode(",", str_replace(["[", "]"], "", $usuario_data["cursos"])))));
+                $usuario_data["roles"] = array_values(array_filter(array_map('trim', explode(",", str_replace(["[", "]"], "", strtolower($usuario_data["roles"]))))));
                 $validator = Validator::make($usuario_data, [
                     'username' => ['required', 'string', 'max:255'],
                     'rut' => ['required', 'string', 'unique:users,rut','regex:/^[1-9]\d*\-(\d|k|K)$/'],
                     'email' => ['required', 'email', 'unique:users,email'],
                     'firstname' => ['required', 'string', 'max:100'],
                     'lastname' => ['required', 'string', 'max:100'],
-                    'cursos'=> ['array', 'min:1'],
-                    'roles' =>  ['array', 'min:1'],
+                    'cursos'=> ['required', 'array', 'min:1'],
+                    'roles' =>  ['required', 'array', 'min:1'],
                 ]);
                 if ($validator->fails()) {
-                    throw new \Exception("Error en la validación del usuario de la columna ".($key+1).":\n[".$string_info."].\n ".implode(",",$validator->messages()->all()));
+                    throw new \Exception("Error en la validación del usuario de la fila " . ($key + 1) . ":\n[" . $string_info . "].\n " . implode(", ", $validator->messages()->all()));
                 }
                 $usuario_nuevo = new User;
                 $usuario_nuevo->username = $usuario_data["username"];
@@ -130,10 +146,10 @@ class UserController extends Controller
                 $cursos_modelos = Cursos::whereIn("codigo", $usuario_data["cursos"])->get();
                 $roles_modelos = Role::whereIn("name", $usuario_data["roles"])->get();
                 if(sizeof($cursos_modelos)==0){
-                    throw new \Exception("Error: Los cursos del usuario de la columna ".($key+1)." no existen:\n[".$string_info."].\n Asegúrese de que los cursos que se asignan existan en la plataforma.");
+                    throw new \Exception("Error: Los cursos del usuario de la fila " . ($key + 1) . " no existen:\n[" . $string_info . "].\n Asegúrese de que los códigos de curso existan en la plataforma.");
                 }
                 if(sizeof($roles_modelos)==0){
-                    throw new \Exception("Error: Los roles del usuario de la columna ".($key+1)." no existen:\n[".$string_info."].\n Asegúrese de que los roles que se asigna existan en la plataforma.");
+                    throw new \Exception("Error: Los roles del usuario de la fila " . ($key + 1) . " no existen:\n[" . $string_info . "].\n Asegúrese de que los roles existan en la plataforma.");
                 }
                 $usuario_nuevo->cursos()->sync($cursos_modelos);
                 $usuario_nuevo->roles()->sync($roles_modelos);
@@ -161,10 +177,11 @@ class UserController extends Controller
     }
     public function editar(Request $request)
     {
-        $request->validate([
-            'id' => 'required|integer|exists:users,id',
-        ]);
-        $user = User::find($request->id);
+        $id = $request->input('id') ?? $request->id;
+        $user = $id ? User::find($id) : null;
+        if (!$user) {
+            return redirect()->route('usuarios.index')->with('error', 'El usuario solicitado no fue encontrado.');
+        }
         $cursos = Cursos::all();
         $roles = Role::all();
         return view('usuarios.editar', compact('user', 'roles', 'cursos'))->with('accion', "editar");
@@ -231,23 +248,27 @@ class UserController extends Controller
             $usuario->lastname = $request->input('lastname');
             $usuario->fecha_nacimiento = $request->input('fecha_nacimiento');
             $usuario->save();
-            $usuario->cursos()->sync($request->input('cursos'));
+            $usuario->cursos()->sync($request->input('cursos', []));
             $user = auth()->user();
-            if($user->id == $request->id && $user->getRoleNames()->contains("administrador")){
+            if($user->id == $request->id && $user->getRoleNames()->contains("administrador") && !in_array("administrador", $roles)){
                 array_push($roles, "administrador");
             }
             $usuario->syncRoles($roles);
             DB::commit();
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()->route('usuarios.index')->with('error', $e->getMessage());
         }
-        return redirect()->route('usuarios.index')->with('success', 'El usuario "'.$usuario->username.'"ha sido modificado');
+        return redirect()->route('usuarios.index')->with('success', 'El usuario "' . $usuario->username . '" ha sido modificado');
     }
     public function eliminar(Request $request)
     {
         $request->validate([
             'id' => 'required|integer|exists:users,id',
         ]);
+        if ((int) $request->id === (int) auth()->id()) {
+            return redirect()->route('usuarios.index')->with('error', 'No puedes eliminar tu propia cuenta activa.');
+        }
         try {
             DB::beginTransaction();
             $user = User::find($request->id);

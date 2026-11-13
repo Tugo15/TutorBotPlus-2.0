@@ -23,7 +23,11 @@ class CategoriaProblemaController extends Controller
     }
 
     public function editar(Request $request){
-        $categoria = Categoria_Problema::find($request->id);
+        $id = $request->input('id') ?? $request->id;
+        $categoria = $id ? Categoria_Problema::find($id) : null;
+        if (!$categoria) {
+            return redirect()->route('categorias.index')->with('error', 'La categoría solicitada no fue encontrada.');
+        }
         return view('categoria_problemas.editar', compact('categoria'));
     }
 
@@ -40,33 +44,43 @@ class CategoriaProblemaController extends Controller
             DB::rollback();
             return redirect()->route('categorias.index')->with('error', $e->getMessage());
         }
-        return redirect()->route('categorias.index')->with('success','La categoria "'.$categoria->nombre.'"ha sido creado');
+        return redirect()->route('categorias.index')->with('success', 'La categoría "' . $categoria->nombre . '" ha sido creada');
     }
 
     public function update(Request $request){
+        $id = $request->input('id') ?? $request->id;
+        $categoria = $id ? Categoria_Problema::find($id) : null;
+        if (!$categoria) {
+            return redirect()->route('categorias.index')->with('error', 'La categoría solicitada no fue encontrada.');
+        }
+
         $validated = $request->validate(Categoria_Problema::$rules);
         try{
             DB::beginTransaction();
-            $categoria = Categoria_Problema::find($request->id);
             $categoria->nombre = $request->input('nombre');
             $categoria->save();
             DB::commit();
         }catch(\Exception $e){
+            DB::rollBack();
             return redirect()->route('categorias.index')->with('error', $e->getMessage());
         }
-        return redirect()->route('categorias.index')->with('success','La categoria ha sido modificado');
+        return redirect()->route('categorias.index')->with('success', 'La categoría ha sido modificada');
     }
     public function eliminar(Request $request)
     {
+        $id = $request->input('id') ?? $request->id;
+        $categoria = $id ? Categoria_Problema::find($id) : null;
+        if (!$categoria) {
+            return redirect()->route('categorias.index')->with('error', 'La categoría solicitada no fue encontrada.');
+        }
         try{
             DB::beginTransaction();
-            $categoria = Categoria_Problema::find($request->id);
             $categoria->delete();
             DB::commit();
         }catch(\PDOException $e){
             DB::rollBack();
             return redirect()->route('categorias.index')->with('error', $e->getMessage());
         } 
-        return redirect()->route('categorias.index')->with('success', 'La categoria "'.$categoria->nombre.'" ha sido eliminado');
+        return redirect()->route('categorias.index')->with('success', 'La categoría "' . $categoria->nombre . '" ha sido eliminada');
     }
 }

@@ -52,8 +52,8 @@
                         <div class="d-flex align-items-center">
                             <label class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Rol:</label>
                             <div class="dropdown">
-                                <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
-                                    Seleccionar...
+                                <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside" style="height: 32px; min-width: 120px;">
+                                    <span class="lbl-rol-selected">Seleccionar...</span>
                                 </button>
                                 <ul class="dropdown-menu px-2" style="max-height: 200px; overflow-y: auto;">
                                     @foreach($roles_disponibles as $r)
@@ -71,8 +71,8 @@
                         <div class="d-flex align-items-center">
                             <label class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Curso:</label>
                             <div class="dropdown">
-                                <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
-                                    Seleccionar...
+                                <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside" style="height: 32px; min-width: 120px;">
+                                    <span class="lbl-curso-selected">Seleccionar...</span>
                                 </button>
                                 <ul class="dropdown-menu px-2" style="max-height: 200px; overflow-y: auto;">
                                     @foreach($cursos_disponibles as $c)
@@ -122,6 +122,7 @@
                                             @elseif ($rolesUsuario->count() == 1)
                                                 <span class="badge border border-info text-info text-xxs px-2 py-1 bg-white">{{ $rolesUsuario->first() }}</span>
                                             @else
+                                                <span class="d-none">{{ $rolesUsuario->implode(' ') }}</span>
                                                 <button type="button" class="btn btn-xs btn-outline-info mb-0 d-inline-flex align-items-center"
                                                         onclick="verEtiquetasModal('Roles de {{ addslashes($user->firstname . ' ' . $user->lastname) }}', {{ json_encode($rolesUsuario) }}, 'info', 'fa-shield-alt')"
                                                         title="Ver roles asignados">
@@ -138,6 +139,7 @@
                                             @elseif ($cursosUsuario->count() == 1)
                                                 <span class="badge border border-primary text-primary text-xxs px-2 py-1 bg-white" title="{{ $cursosUsuario->first()->nombre }}">{{ $cursosUsuario->first()->codigo }}</span>
                                             @else
+                                                <span class="d-none">{{ $cursosUsuario->pluck('codigo')->implode(' ') }}</span>
                                                 <button type="button" class="btn btn-xs btn-outline-primary mb-0 d-inline-flex align-items-center"
                                                         onclick="verCursosModal('Cursos de {{ addslashes($user->firstname . ' ' . $user->lastname) }}', {{ json_encode($cursosUsuario->map(fn($c) => ['codigo' => $c->codigo, 'nombre' => $c->nombre])) }})"
                                                         title="Ver todos los cursos asignados">
@@ -152,7 +154,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="align-middle text-center text-sm">
+                                        <td class="align-middle text-center text-sm" data-order="{{ $user->created_at ? \Carbon\Carbon::parse($user->created_at)->timestamp : 0 }}">
                                             <p class="text-xs text-secondary font-weight-bold mb-0">
                                                 {{ $user->fecha ? $user->fecha : 'Desconocido' }}</p>
                                         </td>
@@ -163,7 +165,7 @@
                                                          <a class="btn btn-xs btn-outline-info mb-0" title="Editar Usuario"
                                                              href="{{ route('usuarios.editar', ['id' => $user->id]) }}"><i class="fa fa-pencil me-1"></i> Editar</a>
                                                          <form action="{{ route('usuarios.forzar_invalidacion', ['id' => $user->id]) }}"
-                                                             method="POST" class="d-inline" onsubmit="return confirm('¿Desea finalizar remotamente todas las sesiones activas de {{ $user->username }}?');">
+                                                             method="POST" class="d-inline" onsubmit="return confirmarAccionForm(event, this, '¿Cerrar sesión remota?', 'Se finalizarán todas las sesiones activas de {{ addslashes($user->username) }}.', 'Sí, desconectar', true);">
                                                              @csrf
                                                              <button type="submit" class="btn btn-xs btn-outline-dark mb-0" title="Cerrar Sesión Remota"><i class="fa fa-power-off me-1"></i> Sesión</button>
                                                          </form>
@@ -204,17 +206,69 @@
                 
                 $('#custom-filters-src').children().appendTo('.custom-filters-container');
                 $('#custom-filters-src').remove();
-                
-                $('.filter-rol-chk').on('change', function() {
+
+                var storageKeyUsuarios = typeof window.getTutorBotFilterKey === 'function'
+                    ? window.getTutorBotFilterKey('usuarios_filters')
+                    : 'tb_filters_usuarios';
+
+                function saveUsuariosFilters(roles, cursos) {
+                    try {
+                        localStorage.setItem(storageKeyUsuarios, JSON.stringify({ roles: roles, cursos: cursos }));
+                    } catch (e) {}
+                }
+
+                function updateUsuariosLabels(roles, cursos) {
+                    var $lblRol = $('.lbl-rol-selected');
+                    if ($lblRol.length) {
+                        if (roles.length === 0) $lblRol.html('Seleccionar...');
+                        else if (roles.length === 1) $lblRol.html(roles[0] + ' <span class="badge bg-primary text-xxs ms-1">1</span>');
+                        else $lblRol.html(roles.length + ' selec. <span class="badge bg-primary text-xxs ms-1">' + roles.length + '</span>');
+                    }
+                    var $lblCur = $('.lbl-curso-selected');
+                    if ($lblCur.length) {
+                        if (cursos.length === 0) $lblCur.html('Seleccionar...');
+                        else if (cursos.length === 1) $lblCur.html(cursos[0] + ' <span class="badge bg-primary text-xxs ms-1">1</span>');
+                        else $lblCur.html(cursos.length + ' selec. <span class="badge bg-primary text-xxs ms-1">' + cursos.length + '</span>');
+                    }
+                }
+
+                function applyUsuariosFilters(redrawFull) {
                     var roles = $('.filter-rol-chk:checked').map(function() { return this.value; }).get();
-                    var regex = roles.length > 0 ? '(' + roles.join('|') + ')' : '';
-                    table.column(1).search(regex, true, false).draw();
-                });
-                
-                $('.filter-curso-chk').on('change', function() {
                     var cursos = $('.filter-curso-chk:checked').map(function() { return this.value; }).get();
-                    var regex = cursos.length > 0 ? '(' + cursos.join('|') + ')' : '';
-                    table.column(2).search(regex, true, false).draw();
+                    var rolesRegex = roles.length > 0 ? '(' + roles.map(function(v) { return $.fn.dataTable.util.escapeRegex(v); }).join('|') + ')' : '';
+                    var cursosRegex = cursos.length > 0 ? '(' + cursos.map(function(v) { return $.fn.dataTable.util.escapeRegex(v); }).join('|') + ')' : '';
+
+                    table.column(1).search(rolesRegex, true, false);
+                    table.column(2).search(cursosRegex, true, false);
+                    if (redrawFull) {
+                        table.draw();
+                    } else {
+                        table.draw(false);
+                    }
+                    updateUsuariosLabels(roles, cursos);
+                    saveUsuariosFilters(roles, cursos);
+                }
+
+                try {
+                    var savedRaw = localStorage.getItem(storageKeyUsuarios);
+                    if (savedRaw) {
+                        var saved = JSON.parse(savedRaw);
+                        if (saved && Array.isArray(saved.roles)) {
+                            $('.filter-rol-chk').each(function() {
+                                $(this).prop('checked', saved.roles.indexOf(this.value) !== -1);
+                            });
+                        }
+                        if (saved && Array.isArray(saved.cursos)) {
+                            $('.filter-curso-chk').each(function() {
+                                $(this).prop('checked', saved.cursos.indexOf(this.value) !== -1);
+                            });
+                        }
+                    }
+                } catch (e) {}
+                applyUsuariosFilters(false);
+                
+                $('.filter-rol-chk, .filter-curso-chk').on('change', function() {
+                    applyUsuariosFilters(true);
                 });
             }
         }, 500);

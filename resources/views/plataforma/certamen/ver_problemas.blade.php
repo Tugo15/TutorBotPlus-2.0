@@ -2,7 +2,10 @@
     $certamenObj = (isset($res_certamen) && $res_certamen->certamen) ? $res_certamen->certamen : null;
     $certamenNombre = $certamenObj ? $certamenObj->nombre : 'Evaluación';
     $certamenId = $certamenObj ? $certamenObj->id : null;
-    $certamenFechaTermino = $certamenObj ? $certamenObj->fecha_termino : null;
+    $fechaTerminoEfectivaObj = (isset($res_certamen) && $res_certamen->fecha_termino_efectiva) 
+        ? $res_certamen->fecha_termino_efectiva 
+        : ($certamenObj ? \Carbon\Carbon::parse($certamenObj->fecha_termino) : null);
+    $certamenFechaTermino = $fechaTerminoEfectivaObj ? $fechaTerminoEfectivaObj->format('Y-m-d H:i:s') : null;
 @endphp
 @extends('layout_plataforma.app', ['title_html' => $certamenNombre, 'title' => 'Certamen - ' . $certamenNombre, 'breadcrumbs' => [['nombre' => 'Cursos', 'route' => route('cursos.listado')], ['nombre' => $certamenNombre, 'route' => $certamenId ? route('certamenes.ver', ['id_certamen' => $certamenId]) : route('cursos.listado')], ['nombre' => 'Resolución']]])
 
@@ -45,7 +48,7 @@
                             ]) !!}
 
                             @php
-                                $casos_ejemplo_0 = isset($problemas[0]->casos_de_prueba) ? $problemas[0]->casos_de_prueba : $problemas[0]->casos_de_prueba()->where('ejemplo', true)->get();
+                                $casos_ejemplo_0 = isset($problemas[0]->casos_de_prueba) ? $problemas[0]->casos_de_prueba : $problemas[0]->casos_de_prueba()->where('ejemplo', true)->orderBy('id', 'asc')->get();
                             @endphp
 
                             @if(count($casos_ejemplo_0) > 0)
@@ -99,9 +102,11 @@
                     <h5 class="text-center my-3">Tiempo Restante: <strong id="timer">--:--:--</strong></h5>
                     <div class="d-flex justify-content-center">
                         <form action="{{ route('certamen.finalizar', ['token' => $res_certamen->token]) }}" method="POST"
-                            id="finalizar_form" onsubmit="event.preventDefault();advertencia_finalizar()">
+                            id="finalizar_form">
                             @csrf
-                            <button class="btn btn-secondary btn-large align-self-center text-wrap" type="submit">Finalizar</button>
+                            <button class="btn btn-danger btn-large align-self-center text-wrap px-4 py-2 font-weight-bold shadow-sm" type="button" id="btnFinalizarCertamen" onclick="confirmarFinalizarCertamen()">
+                                <i class="fa fa-flag-checkered me-1"></i> Finalizar Evaluación
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -142,8 +147,16 @@
 @endsection
 
 @push('js')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
     <script>
+        // Protección contra caché del navegador al presionar "Atrás" (BFCache)
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted || (window.performance && window.performance.navigation && window.performance.navigation.type === 2) || (window.performance && window.performance.getEntriesByType && window.performance.getEntriesByType("navigation")[0]?.type === "back_forward")) {
+                window.location.reload();
+            }
+        });
+
         const fecha_termino = new Date(@json($certamenFechaTermino));
         var problemas = @json($problemas);
         var id_problema_activo = 0;
@@ -170,18 +183,44 @@
         }
         style_table()
 
-        function advertencia_finalizar() {
-            Swal.fire({
-                title: "¿Estás seguro de que quieres finalizar la evaluación?",
-                icon: "warning",
-                showDenyButton: true,
-                confirmButtonText: "Si",
-                denyButtonText: `No`
-            }).then((result) => {
-                if (result.isConfirmed) {
+        function confirmarFinalizarCertamen() {
+            const titulo = "¿Estás seguro de que deseas finalizar la evaluación?";
+            const textoHtml = "<p class='text-secondary text-sm mb-0'>Una vez finalizada, se guardará tu progreso y se registrarán tus soluciones y puntajes actuales.<br><br><strong class='text-danger'><i class='fa fa-exclamation-triangle me-1'></i> Atención: No podrás volver a ingresar a resolver problemas ni modificar tus respuestas.</strong></p>";
+
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                Swal.fire({
+                    title: titulo,
+                    html: textoHtml,
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#dc3545",
+                    cancelButtonColor: "#6c757d",
+                    confirmButtonText: "<i class='fa fa-check me-1'></i> Sí, finalizar evaluación",
+                    cancelButtonText: "<i class='fa fa-times me-1'></i> Cancelar y seguir resolviendo",
+                    reverseButtons: true,
+                    focusCancel: true,
+                    allowOutsideClick: false
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: 'Finalizando evaluación...',
+                            text: 'Por favor espera mientras se procesa el cierre de tu intento.',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+                        document.getElementById('finalizar_form').submit();
+                    }
+                });
+            } else {
+                if (window.confirm(titulo + "\n\nUna vez finalizada, se registrarán tus soluciones y puntajes actuales. No podrás volver a ingresar ni modificar tus respuestas.")) {
                     document.getElementById('finalizar_form').submit();
                 }
-            });
+            }
+        }
+        function advertencia_finalizar() {
+            confirmarFinalizarCertamen();
         }
 
         function escapeHtml(text) {
@@ -288,8 +327,11 @@
 
                         if (result[i]["resuelto"] == true) {
                             button_problema.classList.add('btn-success');
-                            if (i == id_problema_activo && !boton_resolver.contains('disabled')) {
-                                boton_resolver.classList.toggle('disabled');
+                            if (i == id_problema_activo) {
+                                let boton_resolver = document.getElementById("boton_resolver");
+                                if (boton_resolver) {
+                                    boton_resolver.innerHTML = '<i class="fa fa-redo me-1"></i> Volver a Resolver';
+                                }
                             }
                         } else if (result[i]["resuelto"] == false) {
                             button_problema.classList.add('btn-danger');

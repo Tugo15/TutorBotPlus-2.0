@@ -154,10 +154,10 @@
                                                 </td>
                                                 <td class="text-xs font-weight-bold">{{ $c->puntos }}</td>
                                                 <td class="text-center">
-                                                    <form action="{{ route('casos_pruebas.destroy') }}" method="POST" class="d-inline" onsubmit="return confirm('¿Seguro que desea eliminar este caso?');">
+                                                    <form action="{{ route('casos_pruebas.eliminar', ['id' => $c->id]) }}" method="POST" class="d-inline" onsubmit="return confirmarAccionForm(event, this, '¿Eliminar caso SQL?', 'Se eliminará este caso de prueba SQL.', 'Sí, eliminar', true);">
                                                         @csrf
                                                         <input type="hidden" name="id" value="{{ $c->id }}">
-                                                        <button type="submit" class="btn btn-xs btn-outline-danger mb-0 py-1 px-2">
+                                                        <button type="submit" class="btn btn-xs btn-outline-danger mb-0 py-1 px-2" title="Eliminar Caso SQL">
                                                             <i class="fa fa-trash"></i>
                                                         </button>
                                                     </form>
@@ -180,4 +180,5 @@
     <link href="{{ asset('assets/js/DataTables/datatables.min.css') }}" rel="stylesheet">
     <script src="{{ asset('assets/js/DataTables/datatables.min.js') }}"></script>
     <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}"></script>
+    <script src="{{ asset('assets/js/alertas_administracion.js') }}?v={{ @filemtime(public_path('assets/js/alertas_administracion.js')) ?: '1.0' }}"></script>
 @endpush

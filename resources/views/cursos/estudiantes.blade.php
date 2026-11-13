@@ -13,11 +13,18 @@
                             </a>
                         </div>
                         <div class="col-12 col-lg-auto text-center">
+                            @php
+                                $staffCount = $estudiantes->filter(fn($u) => $u->hasAnyRole(['administrador', 'profesor', 'docente', 'ayudante']))->count();
+                                $studentOnlyCount = $estudiantes->count() - $staffCount;
+                            @endphp
                             <h6 class="mb-0 font-weight-bold text-dark">
-                                <i class="fa fa-users me-2 text-primary"></i>Estudiantes del Curso: <span class="text-primary">{{ $curso->nombre }}</span>
+                                <i class="fa fa-users me-2 text-primary"></i>Participantes del Curso: <span class="text-primary">{{ $curso->nombre }}</span>
                             </h6>
                             <p class="text-xs text-secondary mb-0">
-                                Código: <strong>{{ $curso->codigo }}</strong> | Total Matriculados: <span class="badge bg-primary text-xxs">{{ $estudiantes->count() }}</span>
+                                Código: <strong>{{ $curso->codigo }}</strong>
+                                | Estudiantes: <span class="badge bg-info text-xxs">{{ $studentOnlyCount }}</span>
+                                | Docentes/Staff: <span class="badge bg-primary text-xxs">{{ $staffCount }}</span>
+                                | Total: <span class="badge bg-dark text-xxs">{{ $estudiantes->count() }}</span>
                             </p>
                         </div>
                         <div class="col-12 col-lg d-flex justify-content-center justify-content-lg-end align-items-center gap-2 flex-wrap">
@@ -101,16 +108,31 @@
                                                 <span class="text-xs text-secondary">{{ $estudiante->email }}</span>
                                             </td>
                                             <td class="align-middle text-center py-2">
-                                                @if($estudiante->roles->count() <= 1)
-                                                    <span class="badge {{ optional($estudiante->roles->first())->name == 'profesor' ? 'bg-primary' : 'bg-light text-dark' }} text-xxs">
-                                                        {{ ucfirst(optional($estudiante->roles->first())->name ?? 'Estudiante') }}
+                                                @php
+                                                    $roleNames = $estudiante->roles->pluck('name');
+                                                    $isStaff = $estudiante->hasAnyRole(['administrador', 'profesor', 'docente', 'ayudante']);
+                                                @endphp
+                                                @if($roleNames->count() <= 1)
+                                                    @php
+                                                        $rName = optional($estudiante->roles->first())->name ?? 'estudiante';
+                                                        $rLower = strtolower($rName);
+                                                        $badgeCls = $rLower === 'administrador' ? 'bg-danger text-white' : ($rLower === 'profesor' || $rLower === 'docente' ? 'bg-primary text-white' : ($rLower === 'ayudante' ? 'bg-info text-white' : 'bg-light text-dark border'));
+                                                    @endphp
+                                                    <span class="badge {{ $badgeCls }} text-xxs">
+                                                        @if($isStaff)<i class="fa fa-user-tie me-1"></i>@else<i class="fa fa-user-graduate me-1"></i>@endif
+                                                        {{ ucfirst($rName) }}
                                                     </span>
                                                 @else
-                                                    <button type="button" class="btn btn-xs btn-outline-info mb-0 d-inline-flex align-items-center"
-                                                            onclick="verEtiquetasModal('Roles de {{ addslashes($estudiante->firstname . ' ' . $estudiante->lastname) }}', {{ json_encode($estudiante->roles->pluck('name')) }}, 'info', 'fa-shield-alt')"
-                                                            title="Ver roles asignados">
-                                                        <i class="fa fa-shield-alt me-1"></i> Ver ({{ $estudiante->roles->count() }})
-                                                    </button>
+                                                    <div class="d-inline-flex align-items-center gap-1 flex-wrap justify-content-center">
+                                                        <span class="badge {{ $isStaff ? 'bg-primary text-white' : 'bg-light text-dark border' }} text-xxs">
+                                                            {{ $isStaff ? 'Staff' : 'Estudiante' }}
+                                                        </span>
+                                                        <button type="button" class="btn btn-xs btn-outline-info mb-0 d-inline-flex align-items-center"
+                                                                onclick="verEtiquetasModal('Roles de {{ addslashes($estudiante->firstname . ' ' . $estudiante->lastname) }}', {{ json_encode($roleNames) }}, 'info', 'fa-shield-alt')"
+                                                                title="Ver roles asignados">
+                                                            <i class="fa fa-shield-alt me-1"></i> Ver ({{ $roleNames->count() }})
+                                                        </button>
+                                                    </div>
                                                 @endif
                                             </td>
                                             <td class="align-middle text-center py-2">
@@ -310,10 +332,15 @@
     <script src="{{ asset('assets/js/alertas_administracion.js') }}?v={{ @filemtime(public_path('assets/js/alertas_administracion.js')) ?: '1.0' }}"></script>
 
     <script>
-        // Check all en la tabla principal
+        // Check all en la tabla principal (solo filas visibles)
         document.getElementById('checkAllEstudiantes')?.addEventListener('change', function() {
             const checks = document.querySelectorAll('.check-estudiante');
-            checks.forEach(c => c.checked = this.checked);
+            checks.forEach(c => {
+                const fila = c.closest('.fila-estudiante-curso');
+                if (!this.checked || !fila || (!fila.classList.contains('d-none') && fila.style.display !== 'none')) {
+                    c.checked = this.checked;
+                }
+            });
             actualizarBotonSacar();
         });
 
@@ -384,71 +411,103 @@
             return str.toString().toLowerCase().replace(/[^0-9k]/g, '');
         }
 
-        // Filtro en tabla principal de estudiantes matriculados
+        // Filtro en tabla principal de estudiantes matriculados (con memoria en localStorage)
         const inputBuscarCurso = document.getElementById('buscadorEstudiantesCurso');
+        const keyBuscarCurso = 'tb_filter_est_curso_{{ $curso->id }}';
+        function filtrarMatriculados() {
+            if (!inputBuscarCurso) return;
+            const rawVal = inputBuscarCurso.value || '';
+            try { localStorage.setItem(keyBuscarCurso, rawVal); } catch (e) {}
+            const termTexto = normalizarTexto(rawVal);
+            const termRut = normalizarRut(rawVal);
+            const filas = document.querySelectorAll('.fila-estudiante-curso');
+            let visibles = 0;
+
+            filas.forEach(function(fila) {
+                const nombreData = normalizarTexto(fila.getAttribute('data-nombre') || fila.textContent);
+                const rutData = normalizarRut(fila.getAttribute('data-rut') || '');
+
+                const coincide = !termTexto || nombreData.includes(termTexto) || (termRut && rutData.includes(termRut));
+                if (coincide) {
+                    fila.classList.remove('d-none');
+                    fila.style.removeProperty('display');
+                    visibles++;
+                } else {
+                    fila.classList.add('d-none');
+                    fila.style.setProperty('display', 'none', 'important');
+                }
+            });
+
+            const filaSinRes = document.getElementById('filaSinResultadosMatriculados');
+            if (filaSinRes) {
+                filaSinRes.classList.toggle('d-none', visibles > 0 || filas.length === 0);
+            }
+        }
         if (inputBuscarCurso) {
-            ['input', 'paste', 'keyup'].forEach(evento => {
-                inputBuscarCurso.addEventListener(evento, function() {
-                    const rawVal = this.value || '';
-                    const termTexto = normalizarTexto(rawVal);
-                    const termRut = normalizarRut(rawVal);
-                    const filas = document.querySelectorAll('.fila-estudiante-curso');
-                    let visibles = 0;
-
-                    filas.forEach(function(fila) {
-                        const nombreData = normalizarTexto(fila.getAttribute('data-nombre') || fila.textContent);
-                        const rutData = normalizarRut(fila.getAttribute('data-rut') || '');
-
-                        const coincide = !termTexto || nombreData.includes(termTexto) || (termRut && rutData.includes(termRut));
-                        if (coincide) {
-                            fila.classList.remove('d-none');
-                            fila.style.removeProperty('display');
-                            visibles++;
-                        } else {
-                            fila.classList.add('d-none');
-                            fila.style.setProperty('display', 'none', 'important');
-                        }
-                    });
-
-                    const filaSinRes = document.getElementById('filaSinResultadosMatriculados');
-                    if (filaSinRes) {
-                        filaSinRes.classList.toggle('d-none', visibles > 0 || filas.length === 0);
-                    }
-                });
+            try {
+                const savedCursoFilter = localStorage.getItem(keyBuscarCurso);
+                if (savedCursoFilter !== null && savedCursoFilter !== '') {
+                    inputBuscarCurso.value = savedCursoFilter;
+                    filtrarMatriculados();
+                }
+            } catch (e) {}
+            let debounceEstCurso;
+            inputBuscarCurso.addEventListener('input', function() {
+                clearTimeout(debounceEstCurso);
+                debounceEstCurso = setTimeout(filtrarMatriculados, 160);
+            });
+            ['paste', 'search'].forEach(evento => {
+                inputBuscarCurso.addEventListener(evento, filtrarMatriculados);
             });
         }
 
-        // Filtro interactivo en el modal para lista de disponibles
+        // Filtro interactivo en el modal para lista de disponibles (con memoria en localStorage)
         const buscadorDisp = document.getElementById('buscadorDisponibles');
+        const keyBuscarDisp = 'tb_filter_est_disp_{{ $curso->id }}';
+        function filtrarDisponiblesModal() {
+            if (!buscadorDisp) return;
+            const rawVal = buscadorDisp.value || '';
+            try { localStorage.setItem(keyBuscarDisp, rawVal); } catch (e) {}
+            const termTexto = normalizarTexto(rawVal);
+            const termRut = normalizarRut(rawVal);
+            const items = document.querySelectorAll('#listaDisponibles .item-estudiante-disp');
+            let visibles = 0;
+
+            items.forEach(function(item) {
+                const nombreData = normalizarTexto(item.getAttribute('data-nombre') || item.textContent);
+                const rutData = normalizarRut(item.getAttribute('data-rut') || '');
+
+                const coincide = !termTexto || nombreData.includes(termTexto) || (termRut && rutData.includes(termRut));
+                if (coincide) {
+                    item.classList.remove('d-none');
+                    item.style.removeProperty('display');
+                    visibles++;
+                } else {
+                    item.classList.add('d-none');
+                    item.style.setProperty('display', 'none', 'important');
+                }
+            });
+
+            const sinRes = document.getElementById('sinResultadosDisponibles');
+            if (sinRes) {
+                sinRes.classList.toggle('d-none', visibles > 0 || items.length === 0);
+            }
+        }
         if (buscadorDisp) {
-            ['input', 'paste', 'keyup', 'search'].forEach(evento => {
-                buscadorDisp.addEventListener(evento, function() {
-                    const rawVal = this.value || '';
-                    const termTexto = normalizarTexto(rawVal);
-                    const termRut = normalizarRut(rawVal);
-                    const items = document.querySelectorAll('#listaDisponibles .item-estudiante-disp');
-                    let visibles = 0;
-
-                    items.forEach(function(item) {
-                        const nombreData = normalizarTexto(item.getAttribute('data-nombre') || item.textContent);
-                        const rutData = normalizarRut(item.getAttribute('data-rut') || '');
-
-                        const coincide = !termTexto || nombreData.includes(termTexto) || (termRut && rutData.includes(termRut));
-                        if (coincide) {
-                            item.classList.remove('d-none');
-                            item.style.removeProperty('display');
-                            visibles++;
-                        } else {
-                            item.classList.add('d-none');
-                            item.style.setProperty('display', 'none', 'important');
-                        }
-                    });
-
-                    const sinRes = document.getElementById('sinResultadosDisponibles');
-                    if (sinRes) {
-                        sinRes.classList.toggle('d-none', visibles > 0 || items.length === 0);
-                    }
-                });
+            try {
+                const savedDispFilter = localStorage.getItem(keyBuscarDisp);
+                if (savedDispFilter !== null && savedDispFilter !== '') {
+                    buscadorDisp.value = savedDispFilter;
+                    filtrarDisponiblesModal();
+                }
+            } catch (e) {}
+            let debounceEstDisp;
+            buscadorDisp.addEventListener('input', function() {
+                clearTimeout(debounceEstDisp);
+                debounceEstDisp = setTimeout(filtrarDisponiblesModal, 160);
+            });
+            ['paste', 'search'].forEach(evento => {
+                buscadorDisp.addEventListener(evento, filtrarDisponiblesModal);
             });
         }
 

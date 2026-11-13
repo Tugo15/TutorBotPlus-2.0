@@ -9,7 +9,7 @@
     <div class="col-12">
         <div class="form-group has-danger mb-3">
             <label for="nombre" class="form-control-label font-weight-bold text-sm @error('nombre') is-invalid @enderror">Nombre de la Evaluación*</label>
-            <input class="form-control" type="text" id="nombre" name="nombre" placeholder="Ej. Certamen #1 - Algoritmos y Estructuras"
+            <input class="form-control" type="text" id="nombre" name="nombre" placeholder="Ej. Certamen #1 - Algoritmos y Estructuras" required
                 value="{{ isset($certamen) ? old('nombre', $certamen->nombre) : old('nombre') }}">
             @error('nombre')
                 <p class="text-danger text-xs pt-1 mb-0"> {{ $message }} </p>
@@ -19,7 +19,7 @@
     <div class="col-md-6">
         <div class="form-group has-danger mb-3">
             <label for="fecha_inicio" class="form-control-label font-weight-bold text-sm @error('fecha_inicio') is-invalid @enderror">Fecha de Inicio*</label>
-            <input class="form-control" type="datetime-local" name="fecha_inicio" id="fecha_inicio" value="{{isset($certamen)? old('fecha_inicio', $certamen->fecha_inicio) : old('fecha_inicio')}}">
+            <input class="form-control bg-white" type="text" name="fecha_inicio" id="fecha_inicio" placeholder="Seleccionar fecha y hora..." required value="{{isset($certamen)? old('fecha_inicio', $certamen->fecha_inicio) : old('fecha_inicio')}}">
             @error('fecha_inicio')
                 <p class="text-danger text-xs pt-1 mb-0"> {{ $message }} </p>
             @enderror
@@ -28,7 +28,7 @@
     <div class="col-md-6">
         <div class="form-group has-danger mb-3">
             <label for="fecha_termino" class="form-control-label font-weight-bold text-sm @error('fecha_termino') is-invalid @enderror">Fecha de Término*</label>
-            <input class="form-control" type="datetime-local" name="fecha_termino" id="fecha_termino" value="{{isset($certamen)? old('fecha_termino', $certamen->fecha_termino) : old('fecha_termino')}}">
+            <input class="form-control bg-white" type="text" name="fecha_termino" id="fecha_termino" placeholder="Seleccionar fecha y hora..." required value="{{isset($certamen)? old('fecha_termino', $certamen->fecha_termino) : old('fecha_termino')}}">
             @error('fecha_termino')
                 <p class="text-danger text-xs pt-1 mb-0"> {{ $message }} </p>
             @enderror
@@ -39,7 +39,7 @@
     <div class="col-12 mb-3">
         <div class="form-group" style="position: relative; z-index: 9999;">
             <label for="descripcion" class="form-control-label font-weight-bold text-sm">Descripción del Certamen*</label>
-            <input type="hidden" id="descripcion" name="descripcion"
+            <input type="hidden" id="descripcion" name="descripcion" data-required-label="Descripción de la Evaluación"
                 value="{{ isset($certamen) ? old('descripcion', $certamen->descripcion) : old('descripcion') }}">
             <div class="flex flex-col space-y-2">
                 <div id="editor" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" style="position: relative; z-index: 9999;"></div>
@@ -87,7 +87,7 @@
         <div class="form-group has-danger">
             <label for="penalizacion_error" class="form-control-label font-weight-bold text-sm @error('penalizacion_error') is-invalid @enderror">Penalización por Error</label>
             <input class="form-control" type="number" id="penalizacion_error" name="penalizacion_error" placeholder="Ej. 0.5" min="0" step="0.01"
-                value="{{ isset($certamen) ? old('penalizacion_error', $certamen->penalizacion_error) : old('penalizacion_error', 0) }}">
+                value="{{ isset($certamen) ? old('penalizacion_error', round((float) $certamen->penalizacion_error, 2)) : old('penalizacion_error', 0) }}">
             @error('penalizacion_error')
                 <p class="text-danger text-xs pt-1 mb-0"> {{ $message }} </p>
             @enderror
@@ -364,7 +364,7 @@
         var problemasFiltrados = todosProblemasData;
         if (!verTodas && banco.id_categoria !== null && banco.id_categoria !== undefined) {
             problemasFiltrados = todosProblemasData.filter(function(p) {
-                return p.categoria_ids.indexOf(banco.id_categoria) !== -1;
+                return p.categoria_ids && p.categoria_ids.some(function(cid) { return String(cid) === String(banco.id_categoria); });
             });
         }
 
@@ -601,7 +601,7 @@
             banco.nombre_banco = getNombreCategoria(catId);
             var probIds = [];
             todosProblemasData.forEach(function(p) {
-                if (p.categoria_ids.indexOf(catId) !== -1) {
+                if (p.categoria_ids && p.categoria_ids.some(function(cid) { return String(cid) === String(catId); })) {
                     probIds.push(p.id);
                 }
             });

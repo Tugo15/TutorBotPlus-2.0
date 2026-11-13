@@ -69,7 +69,7 @@
                                                 </button>
                                             @endif
                                         </td>
-                                        <td class="align-middle text-center text-sm">
+                                        <td class="align-middle text-center text-sm" data-order="{{ $rol->created_at ? \Carbon\Carbon::parse($rol->created_at)->timestamp : 0 }}">
                                             <p class="text-xs text-secondary font-weight-bold mb-0">
                                                 {{ $rol->fecha ? $rol->fecha : 'Desconocido' }}</p>
                                         </td>

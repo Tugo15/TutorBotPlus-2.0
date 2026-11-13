@@ -1,4 +1,4 @@
-@extends('layout_plataforma.app', ['title_html' => 'Envios', 'title'=>'Mis envios', "breadcrumbs"=>[["nombre"=>"Envios"]]])
+@extends('layout_plataforma.app', ['title_html' => 'Envíos', 'title'=>'Mis Envíos', "breadcrumbs"=>[["nombre"=>"Envíos"]]])
 @section('content')
     <div class="container-fluid py-3 px-4">
         <div class="card border-danger">
@@ -16,8 +16,8 @@
                                 <th>Casos Resueltos</th>
                                 <th>Puntaje</th>
                                 <th>Inicio</th>
-                                <th>Termino</th>
-                                <th>Accion</th>
+                                <th>Término</th>
+                                <th class="no-sort">Acción</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -27,7 +27,17 @@
                                     <td><a href="{{route('problemas.ver', ['codigo'=>$envio->codigo_problema, 'id_curso'=>$envio->id_curso])}}">{{$envio->nombre_problema}}</a></td>
                                     <td>{{$envio->nombre_lenguaje}}</td>
                                     <td><a href="{{route('problemas.listado', ["id"=>$envio->id_curso])}}">{{$envio->nombre_curso}}</a></td>
-                                    <td><span class="badge @if($envio->solucionado==true) text-bg-success @elseif($envio->estado == "Error" || $envio->estado == "Rechazado") text-bg-danger @else text-bg-warning @endif">{{$envio->solucionado == true ? (!empty($envio->variacion_formato) ? 'Aceptado (Variación de Formato)' : 'Accepted') : ($envio->estado=="Rechazado" || $envio->estado=="Error"? $envio->resultado : "In Process")}}</span></td>
+                                    <td>
+                                        @if($envio->solucionado == true)
+                                            <span class="badge text-bg-success">{{ !empty($envio->variacion_formato) ? 'Aceptado (Variación de Formato)' : 'Accepted' }}</span>
+                                        @elseif($envio->estado == "Error" || $envio->estado == "Rechazado")
+                                            <span class="badge text-bg-danger">{{ $envio->resultado ?? $envio->estado }}</span>
+                                        @elseif($envio->estado == "En Proceso")
+                                            <span class="badge text-bg-warning">In Process</span>
+                                        @else
+                                            <span class="badge text-bg-secondary">Sin Evaluación</span>
+                                        @endif
+                                    </td>
                                     <td>
                                         @if(isset($envio->restricciones) && trim($envio->restricciones) !== '')
                                             @if($envio->cumple_restricciones === 1 || $envio->cumple_restricciones === true)
@@ -43,14 +53,15 @@
                                     </td>
                                     <td>{{$envio->cant_casos_resuelto}} de {{$envio->total_casos}}</td>
                                     <td>{{$envio->puntaje}}</td>
-                                    <td>{{$envio->inicio}}</td>
-                                    <td>{{$envio->termino}}</td>
-                                    <td><a href="{{route('envios.ver', ['token'=>$envio->token])}}">Ver</a></td>
+                                    <td data-order="{{ $envio->inicio_ts ?? \App\Support\DateHelper::timestamp($envio->inicio ?? null) }}">{{$envio->inicio}}</td>
+                                    <td data-order="{{ $envio->termino_ts ?? \App\Support\DateHelper::timestamp($envio->termino ?? null) }}">{{$envio->termino}}</td>
+                                    <td><a href="{{route('envios.ver', ['token'=>$envio->token, 'from'=>'envios'])}}">Ver</a></td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
+            </div>
         </div>
     </div>
 @endsection
@@ -59,5 +70,5 @@
 
     <script src="{{ asset('assets/js/DataTables/datatables.min.js') }}"></script>
 
-    <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}"></script>
+    <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}?v={{ @filemtime(public_path('assets/js/DataTables/gestion_initialize_es_cl.js')) ?: '1.0' }}"></script>
 @endpush

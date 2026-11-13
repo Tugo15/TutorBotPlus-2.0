@@ -1,4 +1,11 @@
-@extends('layout_plataforma.app', ['title_html' => $certamen->nombre, 'title' => 'Certamen - ' . $certamen->nombre, 'breadcrumbs' => [['nombre' => 'Cursos', 'route' => route('cursos.listado')], ['nombre' => $certamen->nombre]]])
+@php
+    $breadcrumbsCertamen = [['nombre' => 'Cursos', 'route' => route('cursos.listado')]];
+    if ($certamen->curso) {
+        $breadcrumbsCertamen[] = ['nombre' => $certamen->curso->nombre, 'route' => route('problemas.listado', ['id' => $certamen->curso->id])];
+    }
+    $breadcrumbsCertamen[] = ['nombre' => $certamen->nombre];
+@endphp
+@extends('layout_plataforma.app', ['title_html' => $certamen->nombre, 'title' => 'Evaluación - ' . $certamen->nombre, 'breadcrumbs' => $breadcrumbsCertamen, 'show_breadcrumbs' => true])
 
 @section('content')
     <div class="container-fluid py-3 px-4">
@@ -20,9 +27,26 @@
             <div class="col-sm-4 col-xs-12">
                 <div class="card border-danger" style="height:40rem">
                     <div class="card-body px-3">
+                        @if (isset($res_certamen) && !$res_certamen->finalizado)
+                            @if ($certamen->disponibilidad)
+                                <div class="alert alert-success border-success text-white py-2 px-3 mb-3 text-center" role="alert">
+                                    <i class="fa fa-unlock-alt me-1"></i>
+                                    <small class="font-weight-bold">
+                                        Tienes esta evaluación en curso. Presiona "Volver a la Evaluación" para continuar.
+                                    </small>
+                                </div>
+                            @else
+                                <div class="alert alert-secondary text-white py-2 px-3 mb-3 text-center" role="alert">
+                                    <i class="fa fa-clock-o me-1"></i>
+                                    <small class="font-weight-bold">
+                                        El plazo para esta evaluación ha finalizado.
+                                    </small>
+                                </div>
+                            @endif
+                        @endif
                         <div class="row px-5">
                             @if (isset($res_certamen))
-                                <a class="btn btn-primary text-nowrap btn-block {{ $res_certamen->finalizado == true ? 'disabled' : '' }}"
+                                <a class="btn btn-primary text-nowrap btn-block {{ ($res_certamen->finalizado == true || !$certamen->disponibilidad) ? 'disabled' : '' }}"
                                     href="{{ route('certamenes.resolucion', ['token' => $res_certamen->token]) }}"
                                     role="button">{{ $res_certamen->finalizado == true ? 'Has finalizado la evaluación' : 'Volver a la Evaluación' }}</a>
                             @else
@@ -61,12 +85,21 @@
                                 </li>
                             @endif
                             @if (isset($certamen->fecha_termino))
-                                <li class="list-group-item"><strong>Fecha de Termino:</strong>
+                                <li class="list-group-item"><strong>Fecha de Término:</strong>
                                     {{ $certamen->fecha_termino }}</li>
                             @endif
                             @if (isset($res_certamen) && $res_certamen->finalizado == true)
                                 <li class="list-group-item"><strong>Finalizado:</strong>
-                                    {{ $certamen->fecha_termino }}</li>
+                                    {{ $res_certamen->fecha_finalizado ? \Carbon\Carbon::parse($res_certamen->fecha_finalizado)->locale('es_ES')->isoFormat('lll') : $certamen->fecha_termino }}</li>
+                            @elseif (isset($res_certamen) && $res_certamen->finalizado == false)
+                                <li class="list-group-item text-success font-weight-bold">
+                                    <i class="fa fa-spinner fa-spin me-1"></i> <strong>Estado:</strong> En Curso (Abierto)
+                                </li>
+                                @if(isset($res_certamen->fecha_termino_efectiva))
+                                    <li class="list-group-item text-dark">
+                                        <strong>Tu plazo límite:</strong> {{ $res_certamen->fecha_termino_efectiva->locale('es_ES')->isoFormat('lll') }}
+                                    </li>
+                                @endif
                             @endif
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <strong>Acceso:</strong>
@@ -109,7 +142,7 @@
                                                 <td>{{ $item->nombre }}</td>
                                                 <td>{{ $item->max_casos_resueltos . ' / ' . $item->total_casos }}</td>
                                                 <td>{{ $item->maximo_puntaje . ' / ' . $item->puntos_total }}</td>
-                                                <td>{{ $item->resuelto ? (!empty($item->variacion_formato) ? 'Si - Aceptado (Variación de Formato)' : 'Si') : 'No' }}</td>
+                                                <td>{{ $item->resuelto ? (!empty($item->variacion_formato) ? 'Sí - Aceptado (Variación de Formato)' : 'Sí') : 'No' }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>

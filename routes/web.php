@@ -40,10 +40,6 @@ use App\Models\JuecesVirtuales;
 //     \URL::forceScheme('https');
 // }
 //Autenticación
-Route::get('/home', function () {
-	return redirect()->route('login');
-})->middleware('guest');
-Route::get('/', function () {return redirect()->route('home');})->middleware('auth');
 //Route::get('/register', [RegisterController::class, 'create'])->middleware('guest')->name('register');
 //Route::post('/register', [RegisterController::class, 'store'])->middleware('guest')->name('register.perform');
 Route::get('/login', [LoginController::class, 'show'])->middleware('guest')->name('login');
@@ -70,13 +66,13 @@ Route::group(['middleware'=>['auth', 'certamen_en_resolucion']], function(){
 	Route::get('/problema/{id_curso?}/{codigo}/resolver', [ProblemasController::class, 'resolver_problema'])->name('problemas.resolver');
 	Route::get('/pdf/problema/{id_problema}', [ProblemasController::class, 'pdf_enunciado'])->name('problemas.pdf_enunciado')->withoutMiddleware('certamen_en_resolucion');
 
-	Route::post('/problema/enviar', [EnvioSolucionProblemaController::class, 'enviar_solucion'])->name('problemas.enviar')->withoutMiddleware('certamen_en_resolucion');
+	Route::post('/problema/enviar', [EnvioSolucionProblemaController::class, 'enviar_solucion'])->name('problemas.enviar')->withoutMiddleware('certamen_en_resolucion')->middleware('throttle:15,1');
 	Route::get('/envios/{id_problema?}', [EnvioSolucionProblemaController::class, 'ver_envios'])->name('envios.listado');
 	Route::get('/envio/{token}', [EvaluacionSolucionController::class, 'ver_evaluacion'])->name('envios.ver')->withoutMiddleware('certamen_en_resolucion');
 
 	Route::get('/envio/{token}/retroalimentacion', [LlmController::class, 'ver_retroalimentacion'])->name('envios.retroalimentacion');
 	Route::get('/envio/{token}/get_update', [EvaluacionSolucionController::class, 'obtener_status_evaluaciones'])->name('envio.get_update')->withoutMiddleware('certamen_en_resolucion');
-	Route::get('/retroalimentacion/generar', [LlmController::class, 'generar_retroalimentacion'])->name('envios.generar_retroalimentacion');
+	Route::get('/retroalimentacion/generar', [LlmController::class, 'generar_retroalimentacion'])->name('envios.generar_retroalimentacion')->middleware('throttle:10,1');
 	Route::get('/envio/{token}/verificar-restricciones', [LlmController::class, 'verificar_restricciones'])->name('envios.verificar_restricciones')->withoutMiddleware('certamen_en_resolucion');
 
 	Route::get('/perfil', [UserController::class, "ver_mi_perfil"])->name('ver.perfil');
@@ -88,7 +84,7 @@ Route::group(['middleware'=>['auth', 'certamen_en_resolucion']], function(){
 
 	Route::get('/evaluaciones/{token}/resolucion', [CertamenesController::class, "resolver_certamen"])->name('certamenes.resolucion')->withoutMiddleware('certamen_en_resolucion')->middleware(['chequear_fecha_certamen', 'red_institucional']);
 	Route::get('/evaluaciones/{token_certamen}/problema/{codigo}', [ProblemasController::class, "resolver_problema"])->name('certamenes.resolver_problema')->withoutMiddleware('certamen_en_resolucion')->middleware(['chequear_fecha_certamen', 'red_institucional']);
-	Route::post('/evaluacion/problema/enviar', [EnvioSolucionProblemaController::class, 'enviar_solucion'])->name('certamenes.enviar_problema')->withoutMiddleware('certamen_en_resolucion')->middleware(['chequear_fecha_certamen', 'red_institucional']);
+	Route::post('/evaluacion/problema/enviar', [EnvioSolucionProblemaController::class, 'enviar_solucion'])->name('certamenes.enviar_problema')->withoutMiddleware('certamen_en_resolucion')->middleware(['chequear_fecha_certamen', 'red_institucional', 'throttle:15,1']);
 	Route::post('/evaluaciones/guardar_codigo', [CertamenesController::class, "guardar_codigo_certamen"])->name('certamenes.guardar_codigo')->withoutMiddleware('certamen_en_resolucion');
 	Route::get('/evaluaciones/{token}/data/update', [CertamenesController::class, "obtener_ultimos_envios_json"])->name('certamenes.update_data')->withoutMiddleware('certamen_en_resolucion');
 	Route::post('/evaluaciones/{token}/finalizar', [CertamenesController::class, "finalizar_certamen"])->name('certamen.finalizar')->withoutMiddleware('certamen_en_resolucion');
@@ -162,6 +158,7 @@ Route::group(['middleware' => 'auth'], function () {
 		Route::post('/store', [CertamenesController::class, 'store'])->name('certamen.store')->middleware('can:crear certamen'); 
 		Route::post('/update', [CertamenesController::class, 'update'])->name('certamen.update')->middleware('can:editar certamen'); 
 		Route::post('/duplicar', [CertamenesController::class, 'duplicar'])->name('certamen.duplicar')->middleware('can:crear certamen'); 
+		Route::post('/reabrir/{id_res_certamen}', [CertamenesController::class, 'reabrir_resolucion'])->name('certamen.reabrir_resolucion')->middleware('can:editar certamen'); 
 
 		Route::get('/banco_problemas/{id_certamen}', [BancoProblemasCertamenesController::class, 'index'])->name('certamen.banco_problemas')->middleware('can:editar certamen'); 
 		Route::post('/banco_problemas/delete', [BancoProblemasCertamenesController::class, 'delete'])->name('certamen.eliminar_categoria')->middleware('can:editar certamen'); 
@@ -204,6 +201,7 @@ Route::group(['middleware' => 'auth'], function () {
 		Route::get('/curso/{id_curso}/envios/{id_usuario?}', [InformeController::class, 'ver_envios_curso'])->name('informe.envios.curso')->middleware('can:ver informe del curso'); 
 
 		Route::get('/evaluacion/{id_certamen}', [InformeController::class, 'ver_informe_certamen'])->name('informe.certamen')->middleware('can:ver informe del certamen'); 
+		Route::get('/evaluacion/{id_certamen}/exportar', [InformeController::class, 'exportar_informe_certamen'])->name('informe.certamen.exportar')->middleware('can:ver informe del certamen'); 
 		Route::get('/evaluacion/{id_certamen}/detalle/{id_res_certamen}', [InformeController::class, 'ver_envios_certamen'])->name('informe.certamen.detalle')->middleware('can:ver informe del certamen'); 
 
 

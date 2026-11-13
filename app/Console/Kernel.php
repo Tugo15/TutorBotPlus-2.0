@@ -15,6 +15,7 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         $schedule->command('app:evaluar-envios')->everyTenSeconds()->withoutOverlapping();
+        $schedule->command('app:finalizar-certamenes-expirados')->everyMinute()->withoutOverlapping();
     }
 
     /**

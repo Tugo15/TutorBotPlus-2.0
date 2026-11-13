@@ -42,18 +42,28 @@
     <script type="module">
         const set_fecha_inicio = @json($fecha_inicio);
         const set_fecha_termino = @json($fecha_termino);
-        const fecha_inicio = flatpickr("#fecha_inicio", {enableTime: true,
-            dateFormat: "d-m-Y H:i", minDate: new Date(),}); // flatpickr
-        const fecha_termino = flatpickr("#fecha_termino", {enableTime: true,
-            dateFormat: "d-m-Y H:i", minDate: new Date(),}); // flatpickr
-            fecha_inicio.setDate(set_fecha_inicio)
-            fecha_termino.setDate(set_fecha_termino)
+        const fecha_inicio = flatpickr("#fecha_inicio", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            altInput: true,
+            altFormat: "d-m-Y H:i",
+            defaultDate: set_fecha_inicio ? set_fecha_inicio : null,
+            minDate: new Date()
+        });
+        const fecha_termino = flatpickr("#fecha_termino", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            altInput: true,
+            altFormat: "d-m-Y H:i",
+            defaultDate: set_fecha_termino ? set_fecha_termino : null,
+            minDate: new Date()
+        });
         const editor = new Editor({
             el: document.querySelector('#editor'),
             height: '600px',
             initialEditType: 'wysiwyg',
             previewStyle: 'vertical',
-            placeholder: 'Ingrese el enunciado del problema',
+            placeholder: 'Ingrese la descripción o instrucciones de la evaluación',
             initialValue: @json(old('descripcion', $certamen->descripcion ?? '')),
             extendedAutolinks: true,
             hooks: {
@@ -106,6 +116,13 @@
         if (typeof window.attachImageUploadToEditor === 'function') {
             window.attachImageUploadToEditor(editor, '#editor', '{{ route('problemas.upload_imagen') }}', '{{ csrf_token() }}');
         }
+
+        window.syncAdminEditors = function() {
+            const desc = document.querySelector('#descripcion');
+            if (desc && typeof editor !== 'undefined') {
+                desc.value = editor.getMarkdown();
+            }
+        };
 
         editor.on('change', () => {
             document.querySelector('#descripcion').value = editor.getMarkdown();

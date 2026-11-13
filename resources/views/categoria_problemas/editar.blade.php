@@ -6,8 +6,9 @@
         @include('components.alert')
     </div>
     <div class="container-fluid py-4">
-        <form role="form" method="POST" action="{{ route('categorias.update', ['id'=>$categoria->id]) }}" onsubmit="event.preventDefault();submitFormEditar('{{'la categoria '.$categoria->nombre}}')" id="editarForm">
+        <form role="form" method="POST" action="{{ route('categorias.update', ['id'=>$categoria->id]) }}" onsubmit="event.preventDefault();submitFormEditar('{{'la categoría '.addslashes($categoria->nombre)}}')" id="editarForm">
             @csrf
+            <input type="hidden" name="id" value="{{ $categoria->id }}">
             <div class="card shadow-xs border mb-4">
                 <div class="card-header pb-0 border-bottom mb-0">
                     <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">

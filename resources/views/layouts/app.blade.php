@@ -15,14 +15,10 @@
     <!-- Nucleo Icons -->
     <link href="{{asset('assets/css/nucleo-icons.css')}}" rel="stylesheet" />
     <link href="{{asset('assets/css/nucleo-svg.css')}}" rel="stylesheet" />
-    <!-- Font Awesome Icons (CDN confiable + fallback local para íconos/emojis garantizados) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/v4-shims.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Font Awesome Icons (locales para carga inmediata y sin dependencias CDN externas) -->
     <link href="{{asset('assets/css/fontawesome/all.min.css')}}" rel="stylesheet">
     <link href="{{asset('assets/css/fontawesome/v4-shims.min.css')}}" rel="stylesheet">
-    <link href="{{asset('assets/css/fontawesome/v5-font-face.min.css')}}" rel="stylesheet">
     <!-- CSS Files -->
-    <script src="{{ asset('assets/js/disable_devtools.js') }}"></script>
     <script src="{{ asset('js/app.js') }}" defer></script>
     <link rel="stylesheet" href="{{ asset('assets/css/argon-dashboard.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/datatables_argon_fix.css') }}?v={{ @filemtime(public_path('assets/css/datatables_argon_fix.css')) ?: '1.0' }}">
@@ -51,7 +47,7 @@
             @if (!in_array(request()->route()?->getName(), ['profile', 'profile-static']))
                 <div class="min-height-300 bg-primary position-absolute w-100"></div>
             @elseif (in_array(request()->route()->getName(), ['profile-static', 'profile']))
-                <div class="position-absolute w-100 min-height-300 top-0" style="background-image: url('https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/profile-layout-header.jpg'); background-position-y: 50%;">
+                <div class="position-absolute w-100 min-height-300 top-0" style="background: linear-gradient(135deg, #b81d1a 0%, #5e1312 100%);">
                     <span class="mask bg-primary opacity-6"></span>
                 </div>
             @endif
@@ -76,8 +72,7 @@
             Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
         }
     </script>
-    <!-- Github buttons -->
-    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!-- Argon Dashboard control center & SweetAlert2 -->
     <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
     @stack('js')
     <style>
@@ -225,32 +220,16 @@
         }
 
         /* DataTables Header Sorting Arrows Fix */
+        table.dataTable thead th.dt-orderable-asc,
+        table.dataTable thead th.dt-orderable-desc,
         table.dataTable thead th.sorting,
         table.dataTable thead th.sorting_asc,
         table.dataTable thead th.sorting_desc {
             cursor: pointer !important;
-            padding-right: 10px !important; /* Normal padding, no huge gap */
+            padding-right: 28px !important;
         }
-
-        table.dataTable thead th.sorting:before,
-        table.dataTable thead th.sorting:after,
-        table.dataTable thead th.sorting_asc:before,
-        table.dataTable thead th.sorting_asc:after,
-        table.dataTable thead th.sorting_desc:before,
-        table.dataTable thead th.sorting_desc:after {
-            position: static !important;
-            display: inline-block !important;
-            right: auto !important;
-            top: auto !important;
-            transform: none !important;
-            margin-left: 3px !important;
-            opacity: 0.3 !important;
-        }
-
-        table.dataTable thead th.sorting_asc:before,
-        table.dataTable thead th.sorting_desc:after {
-            opacity: 1 !important;
-            color: #5e72e4 !important;
+        table.dataTable thead th span.dt-column-order {
+            right: 8px !important;
         }
 
         /* Fix ToastUI Editor Toolbar conflict with Bootstrap .table class */
@@ -293,8 +272,92 @@
                 }
             });
         }
+        window.addEventListener('pageshow', function(event) {
+            document.querySelectorAll('form button[type="submit"][disabled]').forEach(function(btn) {
+                btn.disabled = false;
+            });
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
     </script>
     @include('components.toast_notifications')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile sidebar toggle (authoritative capture-phase handler to prevent double-toggle with argon-dashboard.js)
+            var iconNavbarSidenav = document.getElementById('iconNavbarSidenav');
+            var iconSidenav = document.getElementById('iconSidenav');
+            var sidenav = document.getElementById('sidenav-main');
+            var body = document.body;
+            var className = 'g-sidenav-pinned';
+
+            function toggleSidenav(e) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                }
+                if (!body || !sidenav) return;
+                if (body.classList.contains(className)) {
+                    body.classList.remove(className);
+                    sidenav.classList.remove('bg-transparent');
+                } else {
+                    body.classList.add(className);
+                    sidenav.classList.add('bg-white');
+                    sidenav.classList.remove('bg-transparent');
+                    if (iconSidenav) iconSidenav.classList.remove('d-none');
+                }
+            }
+
+            if (iconNavbarSidenav) {
+                iconNavbarSidenav.addEventListener('click', toggleSidenav, true);
+            }
+            if (iconSidenav) {
+                iconSidenav.addEventListener('click', toggleSidenav, true);
+            }
+            document.addEventListener('click', function(e) {
+                if (window.innerWidth < 1200 && body.classList.contains(className) && sidenav && !sidenav.contains(e.target) && (!iconNavbarSidenav || !iconNavbarSidenav.contains(e.target))) {
+                    e.stopPropagation();
+                    toggleSidenav();
+                }
+            }, true);
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && body.classList.contains(className)) {
+                    toggleSidenav();
+                }
+            });
+        });
+
+        if (typeof window.confirmarAccionForm !== 'function') {
+            window.confirmarAccionForm = function(event, form, titulo, texto, confirmText, isDanger) {
+                if (event) event.preventDefault();
+                if (window.adminFormSubmitting) return false;
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: titulo || '¿Estás seguro?',
+                        text: texto || '',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: confirmText || 'Sí, continuar',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: isDanger === false ? '#344767' : '#d33',
+                        cancelButtonColor: '#6c757d',
+                        reverseButtons: true
+                    }).then(function(result) {
+                        if (result.isConfirmed && form) {
+                            window.adminFormSubmitting = true;
+                            var btn = form.querySelector('button[type="submit"]');
+                            if (btn) btn.disabled = true;
+                            form.submit();
+                        }
+                    });
+                } else if (confirm(titulo || '¿Estás seguro?')) {
+                    form.submit();
+                }
+                return false;
+            };
+        }
+    </script>
 </body>
 
 </html>

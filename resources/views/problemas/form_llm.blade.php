@@ -14,7 +14,7 @@
             <div class="input-group mb-3">
                 <input type="text" class="form-control @error('limite_llm') is-invalid @enderror"
                     name="limite_llm" id="limite_llm" placeholder="Ej. 3" min="0" value="{{isset($problema)? old('limite_llm', $problema->limite_llm):old('limite_llm')}}">
-                <span class="input-group-text" id="basic-addon1">Usos</span>
+                <span class="input-group-text" id="addon-llm-usos">Usos</span>
             </div>
             @error('limite_llm')
                 <p class="text-danger text-xs pt-1"> {{ $message }} </p>
@@ -26,7 +26,7 @@
     <div class="col">
         <div class="form-group">
             <label for="body_problema_resumido">Enunciado del Problema Resumido</label>
-            <p class="opacity-25"><small>Esté es un resumen del problema que se utilizara en la Large Languge Model
+            <p class="opacity-25"><small>Este es un resumen del problema que se utilizará en el Large Language Model
                     para la retroalimentación.</small></p>
             <textarea class="form-control @error('body_problema_resumido') is-invalid @enderror" id="body_problema_resumido"
                 name="body_problema_resumido" rows="4" placeholder="Ej. El código debe entregar una suma de dos numeros">{{ isset($problema) ? old('body_problema_resumido', $problema->body_problema_resumido) : old('body_problema_resumido') }}</textarea>

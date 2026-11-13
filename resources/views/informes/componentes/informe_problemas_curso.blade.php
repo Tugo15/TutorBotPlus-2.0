@@ -74,10 +74,10 @@
             }
         };
 
-        var barChart = new Chart(grafica_problemas, {
+        var barChart = grafica_problemas ? new Chart(grafica_problemas, {
             type: 'bar',
             data: problemasData,
             options: chartOptions
-        });
+        }) : null;
     </script>
 @endpush

@@ -52,9 +52,19 @@ class HomeController extends Controller
         $currentUserId = $user->id;
 
         // 1. Usuarios Conectados Ahora (pertenecientes a mis cursos)
-        $candidatosQuery = User::with(['roles', 'cursos' => function ($q) use ($cursos_ids) {
-            $q->whereIn('cursos.id', $cursos_ids);
-        }])->whereNotNull('current_session_id');
+        $candidatosQuery = User::select([
+            'users.id',
+            'users.firstname',
+            'users.lastname',
+            'users.rut',
+            'users.current_session_id',
+            'users.last_login_ip',
+        ])->with([
+            'roles:id,name',
+            'cursos' => function ($q) use ($cursos_ids) {
+                $q->select('cursos.id')->whereIn('cursos.id', $cursos_ids);
+            },
+        ])->whereNotNull('current_session_id');
 
         if (!$esAdmin || !empty($cursos_ids)) {
             $candidatosQuery->where(function ($q) use ($cursos_ids, $currentUserId) {
@@ -65,38 +75,39 @@ class HomeController extends Controller
         }
 
         $candidatos = $candidatosQuery->get();
+        $reqIp = request()->ip();
+        $nowTs = now()->timestamp;
 
-        $usuarios_conectados = $candidatos->filter(function ($u) use ($cutoffTimestamp, $currentUserId) {
-            if ($u->id === $currentUserId) {
-                return true;
-            }
+        $usuarios_conectados = $candidatos->map(function ($u) use ($cutoffTimestamp, $currentUserId, $reqIp, $nowTs) {
+            $isSelf = ($u->id === $currentUserId);
             $lastSeen = Cache::get('user_last_seen_' . $u->id);
-            if ($lastSeen && $lastSeen >= $cutoffTimestamp) {
-                return true;
-            }
-            $sessionFile = storage_path('framework/sessions/' . $u->current_session_id);
-            if (is_file($sessionFile)) {
-                $mtime = @filemtime($sessionFile);
-                if ($mtime && $mtime >= $cutoffTimestamp) {
-                    return true;
-                }
-            }
-            return Cache::has('user_active_session_' . $u->id);
-        })->map(function ($u) use ($currentUserId) {
-            $lastSeen = Cache::get('user_last_seen_' . $u->id);
-            $lastIp = Cache::get('user_last_ip_' . $u->id) ?: $u->last_login_ip;
-            if ($u->id === $currentUserId && (!$lastIp || $lastIp === '127.0.0.1')) {
-                $lastIp = request()->ip() ?: $lastIp;
-            }
+            $isActive = $isSelf || ($lastSeen && $lastSeen >= $cutoffTimestamp);
+
             if (!$lastSeen && $u->current_session_id) {
                 $sessionFile = storage_path('framework/sessions/' . $u->current_session_id);
                 if (is_file($sessionFile)) {
-                    $lastSeen = @filemtime($sessionFile);
+                    $mtime = @filemtime($sessionFile);
+                    if ($mtime) {
+                        $lastSeen = $mtime;
+                        if ($mtime >= $cutoffTimestamp) {
+                            $isActive = true;
+                        }
+                    }
                 }
             }
-            if ($u->id === $currentUserId) {
+
+            if (!$isActive && !Cache::has('user_active_session_' . $u->id)) {
+                return null;
+            }
+
+            $lastIp = Cache::get('user_last_ip_' . $u->id) ?: $u->last_login_ip;
+            if ($isSelf && (!$lastIp || $lastIp === '127.0.0.1')) {
+                $lastIp = $reqIp ?: $lastIp;
+            }
+
+            if ($isSelf) {
                 $u->ultima_actividad = 'Activo ahora (Tú)';
-                $u->ultimo_ts = now()->timestamp;
+                $u->ultimo_ts = $nowTs;
             } elseif ($lastSeen) {
                 $u->ultima_actividad = Carbon::createFromTimestamp($lastSeen)->locale('es_ES')->diffForHumans();
                 $u->ultimo_ts = $lastSeen;
@@ -107,7 +118,7 @@ class HomeController extends Controller
             $u->roles_str = $u->getRoleNames()->map(fn($r) => ucfirst($r))->implode(', ') ?: 'Estudiante';
             $u->ip = $lastIp ?: '127.0.0.1';
             return $u;
-        })->sortByDesc('ultimo_ts')->values();
+        })->filter()->sortByDesc('ultimo_ts')->values();
 
         $cantidad_conectados = $usuarios_conectados->count();
         $total_usuarios = User::whereHas('cursos', function ($q) use ($cursos_ids) {
@@ -115,34 +126,24 @@ class HomeController extends Controller
         })->count();
 
         // 2. Métricas de Envíos en Mis Cursos: Correctos vs Incorrectos
-        $enviosBaseQuery = DB::table('envio_solucion_problemas')
+        $envioStatsGlobal = DB::table('envio_solucion_problemas')
             ->join('cursa', 'cursa.id', '=', 'envio_solucion_problemas.id_cursa')
             ->whereIn('cursa.id_curso', $cursos_ids)
-            ->whereNotNull('envio_solucion_problemas.termino');
+            ->whereNotNull('envio_solucion_problemas.termino')
+            ->selectRaw('COUNT(*) as total_envios, COALESCE(SUM(CASE WHEN envio_solucion_problemas.solucionado = 1 THEN 1 ELSE 0 END), 0) as envios_correctos')
+            ->first();
 
-        $total_envios = (clone $enviosBaseQuery)->count();
-        $envios_correctos = (clone $enviosBaseQuery)->where('envio_solucion_problemas.solucionado', true)->count();
+        $total_envios = (int) ($envioStatsGlobal->total_envios ?? 0);
+        $envios_correctos = (int) ($envioStatsGlobal->envios_correctos ?? 0);
         $envios_incorrectos = max(0, $total_envios - $envios_correctos);
-
-        $envios_variacion_formato = (clone $enviosBaseQuery)
-            ->join('evaluacion_solucions', 'evaluacion_solucions.id_envio', '=', 'envio_solucion_problemas.id')
-            ->where('envio_solucion_problemas.solucionado', true)
-            ->where('evaluacion_solucions.resultado', 'Aceptado (Variación de Formato)')
-            ->distinct('envio_solucion_problemas.id')
-            ->count('envio_solucion_problemas.id');
-
-        $envios_aceptados_exactos = max(0, $envios_correctos - $envios_variacion_formato);
         $tasa_exito_global = $total_envios > 0 ? round(($envios_correctos / $total_envios) * 100, 1) : 0;
 
         // 3. Resumen de Recursos en Mis Cursos
-        $total_cursos = count($cursos_ids);
-        $problemasIdsEnCursos = DB::table('disponible')
+        $total_problemas = DB::table('disponible')
             ->whereIn('id_curso', $cursos_ids)
-            ->distinct()
-            ->pluck('id_problema')
-            ->toArray();
+            ->distinct('id_problema')
+            ->count('id_problema');
 
-        $total_problemas = count($problemasIdsEnCursos);
         $problemas_visibles = DB::table('problemas')
             ->join('disponible', 'disponible.id_problema', '=', 'problemas.id')
             ->whereIn('disponible.id_curso', $cursos_ids)
@@ -151,28 +152,39 @@ class HomeController extends Controller
             ->distinct('problemas.id')
             ->count('problemas.id');
 
-        $total_casos_prueba = Casos_Pruebas::whereIn('id_problema', $problemasIdsEnCursos)->count();
-        $total_certamenes = Certamenes::whereIn('id_curso', $cursos_ids)->count();
+        // 4. Resumen funcional por cada uno de Mis Cursos
+        $problemasPorCursoSub = DB::table('disponible')
+            ->whereIn('id_curso', $cursos_ids)
+            ->select('id_curso', DB::raw('COUNT(DISTINCT id_problema) as cantidad_problemas'))
+            ->groupBy('id_curso');
 
-        $total_retroalimentaciones = DB::table('solicitud_ra_llms')
-            ->join('envio_solucion_problemas', 'envio_solucion_problemas.id', '=', 'solicitud_ra_llms.id_envio')
+        $enviosPorCursoSub = DB::table('envio_solucion_problemas')
             ->join('cursa', 'cursa.id', '=', 'envio_solucion_problemas.id_cursa')
             ->whereIn('cursa.id_curso', $cursos_ids)
-            ->count();
+            ->whereNotNull('envio_solucion_problemas.termino')
+            ->select(
+                'cursa.id_curso',
+                DB::raw('COUNT(envio_solucion_problemas.id) as cantidad_intentos'),
+                DB::raw('COALESCE(SUM(CASE WHEN envio_solucion_problemas.solucionado = 1 THEN 1 ELSE 0 END), 0) as cantidad_resueltos')
+            )
+            ->groupBy('cursa.id_curso');
 
-        // 4. Resumen funcional por cada uno de Mis Cursos
         $resumen_cursos = DB::table('cursos')
-            ->leftJoin('disponible', 'disponible.id_curso', '=', 'cursos.id')
+            ->leftJoinSub($problemasPorCursoSub, 'pc', function ($join) {
+                $join->on('pc.id_curso', '=', 'cursos.id');
+            })
+            ->leftJoinSub($enviosPorCursoSub, 'ec', function ($join) {
+                $join->on('ec.id_curso', '=', 'cursos.id');
+            })
             ->whereIn('cursos.id', $cursos_ids)
             ->select(
                 'cursos.id',
                 'cursos.codigo',
                 'cursos.nombre',
-                DB::raw('COUNT(DISTINCT disponible.id_problema) as cantidad_problemas'),
-                DB::raw('COALESCE(SUM(disponible.cantidad_intentos), 0) as cantidad_intentos'),
-                DB::raw('COALESCE(SUM(disponible.cantidad_resueltos), 0) as cantidad_resueltos')
+                DB::raw('COALESCE(pc.cantidad_problemas, 0) as cantidad_problemas'),
+                DB::raw('COALESCE(ec.cantidad_intentos, 0) as cantidad_intentos'),
+                DB::raw('COALESCE(ec.cantidad_resueltos, 0) as cantidad_resueltos')
             )
-            ->groupBy('cursos.id', 'cursos.codigo', 'cursos.nombre')
             ->orderBy('cursos.nombre')
             ->get();
 

@@ -34,7 +34,7 @@
             <h6 class="text-center mt-3 font-weight-bold text-xs text-uppercase text-secondary">Lenguaje de Programación</h6>
             <select class="form-select mb-3 text-xs" id="lenguaje" name="lenguaje"
                 onchange="change_language(this)" required>
-                    <option value="">Selecciona un Lenguaje</option>
+                    <option value="" disabled>Selecciona un Lenguaje</option>
                 @foreach ($lenguajes as $item)
                     <option value="{{ $item->codigo }}" id="{{$item->id}}" @if($last_envio->ProblemaLenguaje->lenguaje->id == $item->id) selected @endif>
                         {{ $item->nombre }}</option>
@@ -49,11 +49,5 @@
             </select>
             <input type="hidden" id="codigo" name="codigo" value="">
         </form>
-        @if(isset($problema->restricciones) && trim($problema->restricciones) !== '')
-            <div class="alert alert-warning border-warning p-2 mb-2 mt-3" style="font-size: 0.8rem;">
-                <i class="fa fa-exclamation-triangle text-warning me-1"></i> <strong>Restricción:</strong><br>
-                <span>{{ $problema->restricciones }}</span>
-            </div>
-        @endif
     </div>
 </div>

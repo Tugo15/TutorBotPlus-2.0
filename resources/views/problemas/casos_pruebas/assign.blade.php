@@ -62,6 +62,7 @@
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Entradas</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Salidas</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Puntos</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Orden Enunciado</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ejemplo</th>
                                     @canany(['editar problemas'])
                                         <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Acción</th>
@@ -70,6 +71,9 @@
                             </thead>
                             <tbody>
                                 @foreach ($casos as $item)
+                                    @php
+                                        $numeroEnunciado = $ordenEjemplo[$item->id] ?? null;
+                                    @endphp
                                     <tr>
                                         <td>
                                             <h6 class="mb-0 text-sm ps-3">{{ $item->id }}</h6>
@@ -83,7 +87,14 @@
                                         <td>
                                             <h6 class="mb-0 text-sm">{{ $item->puntos }}</h6>
                                         </td>
-                                        <td>
+                                        <td data-order="{{ $numeroEnunciado ?? 999999 }}">
+                                            @if($numeroEnunciado)
+                                                <span class="badge bg-gradient-info text-xs" title="Se muestra como Ejemplo #{{ $numeroEnunciado }} en el enunciado">#{{ $numeroEnunciado }}</span>
+                                            @else
+                                                <span class="text-xs text-secondary">—</span>
+                                            @endif
+                                        </td>
+                                        <td data-order="{{ $item->ejemplo ? (100000 - ($numeroEnunciado ?? 99999)) : 0 }}">
                                             <span class="badge {{ $item->ejemplo ? 'bg-gradient-success' : 'bg-gradient-secondary' }} text-xs">
                                                 {{ $item->ejemplo ? 'Sí' : 'No' }}
                                             </span>
@@ -97,7 +108,7 @@
                                                     </button>
 
                                                     <form action="{{ route('casos_pruebas.eliminar', ['id' => $item->id]) }}"
-                                                        method="POST" onsubmit="deshabilitar_boton()" class="mb-0">
+                                                        method="POST" onsubmit="return confirmarAccionForm(event, this, '¿Eliminar caso de prueba?', 'Esta acción eliminará el caso de prueba {{ $item->ejemplo && $numeroEnunciado ? '#' . $numeroEnunciado : '' }} y actualizará el puntaje del problema.', 'Sí, eliminar', true)" class="mb-0">
                                                         @csrf
                                                         @if(isset($id_curso) && $id_curso)
                                                             <input type="hidden" name="id_curso" value="{{ $id_curso }}">
@@ -265,4 +276,5 @@
             }
         }
     </script>
+    <script src="{{ asset('assets/js/alertas_administracion.js') }}?v={{ @filemtime(public_path('assets/js/alertas_administracion.js')) ?: '1.0' }}"></script>
 @endpush

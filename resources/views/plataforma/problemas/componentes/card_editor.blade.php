@@ -1,6 +1,9 @@
 <div class="card border-danger" style="height:100%">
-    <div class="card-header">
-        Editor de Código
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span>Editor de Código</span>
+        <span id="autosave-status" class="badge text-bg-light border text-secondary fw-normal" style="font-size: 0.72rem; display: none;">
+            <i class="fa fa-check-circle text-success me-1"></i>Borrador guardado
+        </span>
     </div>
     <div class="card-body">
         @if(isset($problema->restricciones) && trim($problema->restricciones) !== '')

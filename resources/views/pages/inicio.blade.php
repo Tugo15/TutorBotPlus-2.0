@@ -564,14 +564,19 @@
             inputBuscar.addEventListener('click', function(e) {
                 e.stopPropagation();
             });
-            inputBuscar.addEventListener('keyup', function(e) {
+            let debounceDropCurso;
+            inputBuscar.addEventListener('input', function(e) {
                 e.stopPropagation();
-                const term = this.value.toLowerCase().trim();
-                const items = document.querySelectorAll('#menuFiltroCursos .item-curso-li');
-                items.forEach(function(item) {
-                    const text = item.textContent.toLowerCase();
-                    item.style.display = text.includes(term) ? '' : 'none';
-                });
+                clearTimeout(debounceDropCurso);
+                const val = this.value;
+                debounceDropCurso = setTimeout(function() {
+                    const term = val.toLowerCase().trim();
+                    const items = document.querySelectorAll('#menuFiltroCursos .item-curso-li');
+                    items.forEach(function(item) {
+                        const text = item.textContent.toLowerCase();
+                        item.style.display = text.includes(term) ? '' : 'none';
+                    });
+                }, 150);
             });
         }
 
@@ -590,7 +595,38 @@
 
             if (!filas.length) return;
 
+            const storageKeyConectados = 'tb_filters_inicio_conectados_{{ auth()->id() }}_' + window.location.pathname + window.location.search;
             let paginaActual = 1;
+
+            try {
+                const rawState = localStorage.getItem(storageKeyConectados);
+                if (rawState) {
+                    const saved = JSON.parse(rawState);
+                    if (inputBuscar && typeof saved.buscar === 'string') {
+                        inputBuscar.value = saved.buscar;
+                    }
+                    if (selectRol && typeof saved.rol === 'string' && Array.from(selectRol.options).some(opt => opt.value === saved.rol)) {
+                        selectRol.value = saved.rol;
+                    }
+                    if (selectPaginacion && typeof saved.paginacion === 'string' && Array.from(selectPaginacion.options).some(opt => opt.value === saved.paginacion)) {
+                        selectPaginacion.value = saved.paginacion;
+                    }
+                    if (saved.pagina && Number.isInteger(saved.pagina) && saved.pagina >= 1) {
+                        paginaActual = saved.pagina;
+                    }
+                }
+            } catch (e) {}
+
+            function guardarEstadoConectados() {
+                try {
+                    localStorage.setItem(storageKeyConectados, JSON.stringify({
+                        buscar: inputBuscar ? inputBuscar.value : '',
+                        rol: selectRol ? selectRol.value : '',
+                        paginacion: selectPaginacion ? selectPaginacion.value : '10',
+                        pagina: paginaActual
+                    }));
+                } catch (e) {}
+            }
 
             function aplicarFiltros() {
                 const termino = (inputBuscar ? inputBuscar.value : '').toLowerCase().trim();
@@ -656,6 +692,7 @@
                 }
 
                 renderPaginacion(totalPaginas, totalFiltrados, porPagina);
+                guardarEstadoConectados();
             }
 
             function renderPaginacion(totalPaginas, totalFiltrados, porPagina) {
@@ -717,9 +754,19 @@
             }
 
             if (inputBuscar) {
-                inputBuscar.addEventListener('keyup', function() {
-                    paginaActual = 1;
-                    aplicarFiltros();
+                let debounceConectados;
+                inputBuscar.addEventListener('input', function() {
+                    clearTimeout(debounceConectados);
+                    debounceConectados = setTimeout(function() {
+                        paginaActual = 1;
+                        aplicarFiltros();
+                    }, 160);
+                });
+                ['search', 'paste'].forEach(function(evt) {
+                    inputBuscar.addEventListener(evt, function() {
+                        paginaActual = 1;
+                        aplicarFiltros();
+                    });
                 });
             }
 

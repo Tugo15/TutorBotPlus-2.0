@@ -14,7 +14,7 @@
             <div class="card-body p-3 d-flex flex-column justify-content-between">
                 <p class="text-xs mb-2 text-uppercase font-weight-bold text-secondary">Evaluaciones Aceptadas</p>
                 <h5 class="font-weight-bolder text-dark mb-0">
-                    {{ ($estadistica_estados["Accepted"] ?? 0) + ($estadistica_estados["Aceptado (Variación de Formato)"] ?? 0) }}
+                    {{ $problema_estadistica->cantidad_resueltos ?? 0 }}
                 </h5>
             </div>
         </div>

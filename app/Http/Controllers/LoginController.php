@@ -24,16 +24,20 @@ class LoginController extends Controller
      */
     public function show()
     {
-        return view('auth.login');
+        return response()
+            ->view('auth.login')
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
     }
 
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
+            'email' => ['required', 'string', 'email', 'max:255'],
+            'password' => ['required', 'string', 'max:255'],
         ]);
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
             // Register current session as the only active session for this user
@@ -48,7 +52,7 @@ class LoginController extends Controller
             return redirect()->intended(url('/cursos'));
         }
 
-        return back()->withErrors([
+        return back()->withInput($request->only('email', 'remember'))->withErrors([
             'email' => 'Las credenciales proporcionadas no coinciden con nuestros registros.',
         ]);
     }

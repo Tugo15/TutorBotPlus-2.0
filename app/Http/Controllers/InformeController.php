@@ -115,7 +115,25 @@ class InformeController extends Controller
         }
 
         $estadistica_estados = EvaluacionSolucion::join('envio_solucion_problemas', 'envio_solucion_problemas.id', '=', 'evaluacion_solucions.id_envio')->join('resolver','resolver.id', '=', 'envio_solucion_problemas.id_resolver')->join('cursa','cursa.id', '=', 'envio_solucion_problemas.id_cursa')->select('resultado')->where('resolver.id_problema', '=', $request->id_problema)->whereIn('cursa.id_curso', $cursos_ids)->get()->countBy('resultado')->toArray();
-        $cantidad_solucionados = EnvioSolucionProblema::join('resolver','resolver.id', '=', 'envio_solucion_problemas.id_resolver')->join('cursa','cursa.id', '=', 'envio_solucion_problemas.id_cursa')->where("id_problema", "=", $request->id_problema)->whereIn('id_curso', $cursos_ids)->where('solucionado', '=', true)->count();
+        if (empty($estadistica_estados)) {
+            $estadistica_estados = EnvioSolucionProblema::join('resolver', 'resolver.id', '=', 'envio_solucion_problemas.id_resolver')
+                ->join('cursa', 'cursa.id', '=', 'envio_solucion_problemas.id_cursa')
+                ->where('resolver.id_problema', '=', $request->id_problema)
+                ->whereIn('cursa.id_curso', $cursos_ids)
+                ->whereNotNull('envio_solucion_problemas.termino')
+                ->get()
+                ->map(fn($env) => $env->solucionado ? 'Aceptado' : 'Rechazado')
+                ->countBy()
+                ->toArray();
+        }
+        $cantidad_solucionados = EnvioSolucionProblema::join('resolver','resolver.id', '=', 'envio_solucion_problemas.id_resolver')
+            ->join('cursa','cursa.id', '=', 'envio_solucion_problemas.id_cursa')
+            ->where("id_problema", "=", $request->id_problema)
+            ->whereIn('id_curso', $cursos_ids)
+            ->whereNull('envio_solucion_problemas.id_certamen')
+            ->whereNotNull('envio_solucion_problemas.termino')
+            ->where('solucionado', '=', true)
+            ->count();
         $info_usuarios_envios = DB::table('envio_solucion_problemas')
         ->join('resolver','resolver.id', '=', 'envio_solucion_problemas.id_resolver')->join('cursa','cursa.id', '=', 'envio_solucion_problemas.id_cursa')
         ->select(DB::raw('max(envio_solucion_problemas.cant_casos_resuelto) as max_casos_resueltos'), DB::raw('max(envio_solucion_problemas.puntaje) as max_puntaje'), 'cursa.id_usuario', DB::raw('max(envio_solucion_problemas.solucionado) as solucionado'), DB::raw('count(envio_solucion_problemas.id) as cant_intentos'), DB::raw('count(solicitud_ra_llms.id) as cant_retroalimentacion'), DB::raw('max(envio_solucion_problemas.created_at) as fecha_maxima'))
@@ -169,14 +187,44 @@ class InformeController extends Controller
         ->whereNotNull('envio_solucion_problemas.termino')
         ->get()->countBy('nombre')->toArray();
 
-        $problema_estadistica = DB::table('disponible')
-        ->join('problemas', 'problemas.id', '=', 'disponible.id_problema')
-        ->leftJoin('casos__pruebas', 'problemas.id', '=', 'casos__pruebas.id_problema')
-        ->select('problemas.nombre', DB::raw('COALESCE(sum(disponible.cantidad_resueltos), 0) as cantidad_resueltos'), DB::raw('COALESCE(sum(disponible.cantidad_intentos), 0) as cantidad_intentos'), DB::raw('COALESCE(sum(disponible.tiempo_total), 0) as tiempo_total'), DB::raw('COALESCE(sum(cant_retroalimentacion_solicitada), 0) as cant_retroalimentacion_solicitada'), DB::raw('count(casos__pruebas.id) as total_casos'), DB::raw('COALESCE(sum(casos__pruebas.puntos), 0) as puntaje_total'))
-        ->where('disponible.id_problema','=', $request->id_problema)
-        ->whereIn('disponible.id_curso', $cursos_ids)
-        ->groupBy('problemas.nombre')
-        ->first();
+        $probBase = Problemas::withCount('casos_de_prueba')->find($request->id_problema);
+        $envioStatsProb = DB::table('envio_solucion_problemas')
+            ->join('resolver', 'resolver.id', '=', 'envio_solucion_problemas.id_resolver')
+            ->join('cursa', 'cursa.id', '=', 'envio_solucion_problemas.id_cursa')
+            ->where('resolver.id_problema', '=', $request->id_problema)
+            ->whereIn('cursa.id_curso', $cursos_ids)
+            ->whereNull('envio_solucion_problemas.id_certamen')
+            ->whereNotNull('envio_solucion_problemas.termino')
+            ->select(
+                DB::raw('COUNT(envio_solucion_problemas.id) as cantidad_intentos'),
+                DB::raw('COALESCE(SUM(CASE WHEN envio_solucion_problemas.solucionado = 1 THEN 1 ELSE 0 END), 0) as cantidad_resueltos'),
+                DB::raw('COALESCE(SUM(GREATEST(TIMESTAMPDIFF(SECOND, envio_solucion_problemas.inicio, envio_solucion_problemas.termino), 0)), 0) as tiempo_total')
+            )
+            ->first();
+
+        $raCountProb = DB::table('solicitud_ra_llms')
+            ->join('envio_solucion_problemas', 'envio_solucion_problemas.id', '=', 'solicitud_ra_llms.id_envio')
+            ->join('resolver', 'resolver.id', '=', 'envio_solucion_problemas.id_resolver')
+            ->join('cursa', 'cursa.id', '=', 'envio_solucion_problemas.id_cursa')
+            ->where('resolver.id_problema', '=', $request->id_problema)
+            ->whereIn('cursa.id_curso', $cursos_ids)
+            ->whereNull('envio_solucion_problemas.id_certamen')
+            ->count();
+
+        $problema_estadistica = (object)[
+            'nombre' => $probBase ? $probBase->nombre : ($problema->nombre ?? ''),
+            'cantidad_resueltos' => (int)($envioStatsProb->cantidad_resueltos ?? 0),
+            'cantidad_intentos' => (int)($envioStatsProb->cantidad_intentos ?? 0),
+            'tiempo_total' => (int)($envioStatsProb->tiempo_total ?? 0),
+            'cant_retroalimentacion_solicitada' => (int)$raCountProb,
+            'total_casos' => $probBase ? (int)$probBase->casos_de_prueba_count : 0,
+            'puntaje_total' => $probBase ? (int)$probBase->casos_de_prueba()->sum('puntos') : 0,
+            'tiempo_promedio' => '00:00:00',
+        ];
+        if ($problema_estadistica->cantidad_intentos > 0 && $problema_estadistica->tiempo_total > 0) {
+            $divisorTiempo = $problema_estadistica->cantidad_resueltos > 0 ? $problema_estadistica->cantidad_resueltos : $problema_estadistica->cantidad_intentos;
+            $problema_estadistica->tiempo_promedio = gmdate('H:i:s', (int)($problema_estadistica->tiempo_total / $divisorTiempo));
+        }
 
         $ultima_evaluacion_sub = DB::table('evaluacion_solucions')
         ->select(
@@ -206,27 +254,6 @@ class InformeController extends Controller
         ->orderBy("envio_solucion_problemas.created_at", "DESC")
         ->get();
 
-        if(!$problema_estadistica){
-            $prob = Problemas::withCount('casos_pruebas')->find($request->id_problema);
-            $problema_estadistica = (object)[
-                'nombre' => $prob ? $prob->nombre : '',
-                'cantidad_resueltos' => 0,
-                'cantidad_intentos' => 0,
-                'tiempo_total' => 0,
-                'cant_retroalimentacion_solicitada' => 0,
-                'total_casos' => $prob ? $prob->casos_pruebas_count : 0,
-                'puntaje_total' => $prob ? $prob->casos_pruebas()->sum('puntos') : 0,
-                'tiempo_promedio' => '00:00:00',
-            ];
-        } else {
-            if($cantidad_solucionados != 0 && !empty($problema_estadistica->tiempo_total)){
-                $tiempo_prom = $problema_estadistica->tiempo_total / $cantidad_solucionados;
-            }else{
-                $tiempo_prom = 0;
-            }
-            $problema_estadistica->tiempo_promedio = gmdate('H:i:s', (int)$tiempo_prom);
-        }
-
         if ($is_todos && $problema) {
             $problema_estadistica->nombre = $problema->nombre . ' (Todos los Cursos Juntos)';
         }
@@ -248,6 +275,15 @@ class InformeController extends Controller
         ->select('resultado')
         ->where('cursa.id_curso', '=', $request->id_curso)
         ->get()->countBy('resultado')->toArray();
+        if (empty($estadistica_estados)) {
+            $estadistica_estados = EnvioSolucionProblema::join('cursa', 'envio_solucion_problemas.id_cursa', '=', 'cursa.id')
+                ->where('cursa.id_curso', '=', $request->id_curso)
+                ->whereNotNull('envio_solucion_problemas.termino')
+                ->get()
+                ->map(fn($env) => $env->solucionado ? 'Aceptado' : 'Rechazado')
+                ->countBy()
+                ->toArray();
+        }
         //Consulta estadistica de los lenguajes utilizados en el curso
         $lenguajes_estadistica = DB::table('lenguajes_programaciones')
         ->join('resolver', 'resolver.id_lenguaje', '=', 'lenguajes_programaciones.id')
@@ -257,38 +293,74 @@ class InformeController extends Controller
         ->where('cursa.id_curso', '=', $request->id_curso)
         ->whereNotNull('envio_solucion_problemas.termino')
         ->get()->countBy('nombre')->toArray();
-        //Consulta estadistica sobre la cantidad de resueltos y de intentos en todos los problemas del curso, cantidad de solicitud de retroalimentación y el tiempo total de desarrollo de todos los problemas
-        $curso_estadistica = DB::table('cursos')
-        ->leftJoin('disponible', 'disponible.id_curso', '=', 'cursos.id')
-        ->select('cursos.id', 'cursos.nombre',DB::raw('coalesce(sum(disponible.cantidad_resueltos), 0) as sum_cantidad_resueltos'), DB::raw('coalesce(sum(disponible.cantidad_intentos), 0) as sum_cantidad_intentos'), DB::raw('coalesce(sum(disponible.tiempo_total), 0) as sum_tiempo_total'), DB::raw('coalesce(sum(cant_retroalimentacion_solicitada), 0) as sum_cant_ra_solicitada'))
-        ->where('cursos.id', '=', $request->id_curso)
-        ->groupBy('cursos.id', 'cursos.nombre')
-        ->first();
+        // Estadísticas reales agregadas desde envios completados del curso
+        $envioStatsCurso = DB::table('envio_solucion_problemas')
+            ->join('cursa', 'cursa.id', '=', 'envio_solucion_problemas.id_cursa')
+            ->where('cursa.id_curso', '=', $request->id_curso)
+            ->whereNull('envio_solucion_problemas.id_certamen')
+            ->whereNotNull('envio_solucion_problemas.termino')
+            ->select(
+                DB::raw('COUNT(envio_solucion_problemas.id) as sum_cantidad_intentos'),
+                DB::raw('COALESCE(SUM(CASE WHEN envio_solucion_problemas.solucionado = 1 THEN 1 ELSE 0 END), 0) as sum_cantidad_resueltos'),
+                DB::raw('COALESCE(SUM(GREATEST(TIMESTAMPDIFF(SECOND, envio_solucion_problemas.inicio, envio_solucion_problemas.termino), 0)), 0) as sum_tiempo_total')
+            )
+            ->first();
 
-        if(!$curso_estadistica && $curso){
-            $curso_estadistica = (object)[
-                'id' => $curso->id,
-                'nombre' => $curso->nombre,
-                'sum_cantidad_resueltos' => 0,
-                'sum_cantidad_intentos' => 0,
-                'sum_tiempo_total' => 0,
-                'sum_cant_ra_solicitada' => 0,
-                'tiempo_promedio' => '00:00:00',
-            ];
-        }
+        $raCountCurso = DB::table('solicitud_ra_llms')
+            ->join('envio_solucion_problemas', 'envio_solucion_problemas.id', '=', 'solicitud_ra_llms.id_envio')
+            ->join('cursa', 'cursa.id', '=', 'envio_solucion_problemas.id_cursa')
+            ->where('cursa.id_curso', '=', $request->id_curso)
+            ->whereNull('envio_solucion_problemas.id_certamen')
+            ->count();
 
-        //Consulta del problemas más resuelto y el problema con más intentos
+        $curso_estadistica = (object)[
+            'id' => $curso->id,
+            'nombre' => $curso->nombre,
+            'sum_cantidad_resueltos' => (int)($envioStatsCurso->sum_cantidad_resueltos ?? 0),
+            'sum_cantidad_intentos' => (int)($envioStatsCurso->sum_cantidad_intentos ?? 0),
+            'sum_tiempo_total' => (int)($envioStatsCurso->sum_tiempo_total ?? 0),
+            'sum_cant_ra_solicitada' => (int)$raCountCurso,
+            'tiempo_promedio' => '00:00:00',
+        ];
+
+        // Consulta del problema más resuelto y más intentado usando envíos completados
+        $enviosProbCursoSub = DB::table('envio_solucion_problemas')
+            ->join('resolver', 'resolver.id', '=', 'envio_solucion_problemas.id_resolver')
+            ->join('cursa', 'cursa.id', '=', 'envio_solucion_problemas.id_cursa')
+            ->leftJoin('solicitud_ra_llms', 'solicitud_ra_llms.id_envio', '=', 'envio_solucion_problemas.id')
+            ->where('cursa.id_curso', '=', $request->id_curso)
+            ->whereNull('envio_solucion_problemas.id_certamen')
+            ->whereNotNull('envio_solucion_problemas.termino')
+            ->groupBy('resolver.id_problema')
+            ->select(
+                'resolver.id_problema',
+                DB::raw('COUNT(DISTINCT envio_solucion_problemas.id) as cantidad_intentos'),
+                DB::raw('COALESCE(SUM(CASE WHEN envio_solucion_problemas.solucionado = 1 THEN 1 ELSE 0 END), 0) as cantidad_resueltos'),
+                DB::raw('COUNT(DISTINCT solicitud_ra_llms.id) as cant_retroalimentacion_solicitada'),
+                DB::raw('COALESCE(SUM(GREATEST(TIMESTAMPDIFF(SECOND, envio_solucion_problemas.inicio, envio_solucion_problemas.termino), 0)), 0) as tiempo_total')
+            );
+
         $dataset_problemas = DB::table('problemas')
-        ->leftJoin('disponible', 'disponible.id_problema', '=', 'problemas.id')
-        ->where('disponible.id_curso', '=', $request->id_curso)  
-        ->select('problemas.nombre', 'problemas.codigo', 'problemas.id', DB::raw('coalesce(disponible.cantidad_intentos, 0) as cantidad_intentos'), DB::raw('coalesce(disponible.cantidad_resueltos, 0) as cantidad_resueltos'), DB::raw('coalesce(disponible.cant_retroalimentacion_solicitada, 0) as cant_retroalimentacion_solicitada'), DB::raw('coalesce(disponible.tiempo_total,0) as tiempo_total'))
-        ->distinct();
+            ->join('disponible', 'disponible.id_problema', '=', 'problemas.id')
+            ->leftJoinSub($enviosProbCursoSub, 'epc', 'epc.id_problema', '=', 'problemas.id')
+            ->where('disponible.id_curso', '=', $request->id_curso)
+            ->select(
+                'problemas.nombre',
+                'problemas.codigo',
+                'problemas.id',
+                DB::raw('COALESCE(epc.cantidad_intentos, 0) as cantidad_intentos'),
+                DB::raw('COALESCE(epc.cantidad_resueltos, 0) as cantidad_resueltos'),
+                DB::raw('COALESCE(epc.cant_retroalimentacion_solicitada, 0) as cant_retroalimentacion_solicitada'),
+                DB::raw('COALESCE(epc.tiempo_total, 0) as tiempo_total')
+            )
+            ->distinct();
         $problema_mas_intentado = clone $dataset_problemas;
         $problema_mas_resuelto = clone $dataset_problemas;
-        $problema_mas_intentado = $problema_mas_intentado->orderBy('cantidad_intentos', 'DESC')->first();
-        $problema_mas_resuelto = $problema_mas_resuelto->orderBy('cantidad_resueltos', 'DESC')->first();
-        $dataset_problemas = $dataset_problemas->orderBy('cantidad_resueltos','DESC')->limit(5)->get();
-        //Consulta de listado de estudiantes en el curso, con la cantidad de problemas resueltos, cantidad de intento de solucion de problemas y la cantidad de solicitud de retroalimentación.
+        $problema_mas_intentado = $problema_mas_intentado->where('epc.cantidad_intentos', '>', 0)->orderBy('cantidad_intentos', 'DESC')->first();
+        $problema_mas_resuelto = $problema_mas_resuelto->where('epc.cantidad_resueltos', '>', 0)->orderBy('cantidad_resueltos', 'DESC')->first();
+        $dataset_problemas = $dataset_problemas->orderBy('cantidad_resueltos', 'DESC')->orderBy('cantidad_intentos', 'DESC')->limit(5)->get();
+
+        // Consulta de listado de estudiantes en el curso (solo envíos completados)
         $subquery_envios = DB::table('envio_solucion_problemas')
         ->leftJoin('solicitud_ra_llms', 'solicitud_ra_llms.id_envio', '=', 'envio_solucion_problemas.id')
         ->join('resolver', 'resolver.id', '=', 'envio_solucion_problemas.id_resolver')
@@ -296,6 +368,7 @@ class InformeController extends Controller
         ->join('cursa', 'cursa.id', '=', 'envio_solucion_problemas.id_cursa')
         ->select('cursa.id_usuario', DB::raw('count(envio_solucion_problemas.id) as cantidad_intentos'), DB::raw('sum(CASE WHEN envio_solucion_problemas.solucionado IS TRUE THEN 1 ELSE 0 END) as cantidad_resueltos'), DB::raw('count(solicitud_ra_llms.id) as cantidad_ra'))
         ->whereNull('id_certamen')
+        ->whereNotNull('envio_solucion_problemas.termino')
         ->where('cursa.id_curso', '=', $request->id_curso)
         ->orderByDesc('cantidad_intentos')
         ->groupBy('cursa.id_usuario');
@@ -386,8 +459,8 @@ class InformeController extends Controller
         if(!isset($certamen)){
             return redirect()->route('certamen.index')->with("error", "La evaluación no existe");
         }
-        if(!auth()->user()->cursos()->where('cursos.id', '=', $certamen->id_curso)->exists()){
-            return redirect()->route('informes.problemas.index', ["id"=>$request->id_problema])->with("error", "No tienes acceso para ver éste informe");
+        if(!auth()->user()->hasRole('administrador') && !auth()->user()->cursos()->where('cursos.id', '=', $certamen->id_curso)->exists()){
+            return redirect()->route('certamen.index')->with("error", "No tienes acceso para ver este informe");
         }
 
         $certamen_estadistica = DB::table('certamenes')
@@ -405,6 +478,16 @@ class InformeController extends Controller
         ->select('resultado')
         ->where('certamenes.id', '=', $request->id_certamen)
         ->get()->countBy('resultado')->toArray();
+        if (empty($estadistica_estados)) {
+            $estadistica_estados = EnvioSolucionProblema::join('resolucion_certamenes', 'resolucion_certamenes.id', '=', 'envio_solucion_problemas.id_certamen')
+                ->join('certamenes', 'resolucion_certamenes.id_certamen', '=', 'certamenes.id')
+                ->where('certamenes.id', '=', $request->id_certamen)
+                ->whereNotNull('envio_solucion_problemas.termino')
+                ->get()
+                ->map(fn($env) => $env->solucionado ? 'Aceptado' : 'Rechazado')
+                ->countBy()
+                ->toArray();
+        }
 
         //Consulta estadistica de los lenguajes utilizados en el certamen
         $lenguajes_estadistica = DB::table('lenguajes_programaciones')
@@ -420,30 +503,148 @@ class InformeController extends Controller
 
         $problemas_subquery = DB::table('problemas')
         ->leftJoin('casos__pruebas', 'casos__pruebas.id_problema', '=', 'problemas.id')
-        ->select('problemas.id',DB::raw('sum(casos__pruebas.puntos) as puntos_total'), DB::raw('count(casos__pruebas.id) as total_casos'))
-        ->groupBy('problemas.id');
+        ->select(
+            'problemas.id',
+            'problemas.puntaje_total as col_puntaje_total',
+            DB::raw('COALESCE(NULLIF(sum(casos__pruebas.puntos), 0), problemas.puntaje_total, 100) as puntos_total'),
+            DB::raw('count(casos__pruebas.id) as total_casos')
+        )
+        ->groupBy('problemas.id', 'problemas.puntaje_total');
 
         $resultado_certamenes = DB::table('envio_solucion_problemas')
         ->join('resolucion_certamenes', 'envio_solucion_problemas.id_certamen', '=', 'resolucion_certamenes.id')
         ->join('certamenes', 'resolucion_certamenes.id_certamen', '=', 'certamenes.id')
         ->leftJoin('resolver', 'envio_solucion_problemas.id_resolver', '=', 'resolver.id')
         ->leftJoinSub($problemas_subquery, 'problemas', 'problemas.id', '=', 'resolver.id_problema')
-        ->select('resolucion_certamenes.id as id_res_certamen', 'problemas.id as id_problema', 'puntos_total', 'total_casos', DB::raw('count(envio_solucion_problemas.id) as cantidad_intentos'), DB::raw('COALESCE(max(envio_solucion_problemas.puntaje),0) as maximo_puntaje'), DB::raw('COALESCE(max(solucionado),0) as resuelto'), DB::raw('COALESCE(max(cant_casos_resuelto), 0) as max_casos_resueltos'))
+        ->select(
+            'resolucion_certamenes.id as id_res_certamen',
+            'problemas.id as id_problema',
+            'puntos_total',
+            'total_casos',
+            DB::raw('count(envio_solucion_problemas.id) as cantidad_intentos'),
+            DB::raw('COALESCE(max(envio_solucion_problemas.puntaje),0) as maximo_puntaje'),
+            DB::raw('COALESCE(max(solucionado),0) as resuelto'),
+            DB::raw('COALESCE(max(cant_casos_resuelto), 0) as max_casos_resueltos')
+        )
         ->where('certamenes.id', '=', $request->id_certamen)
         ->whereNotNull('termino')
-        ->groupBy('problemas.id','resolucion_certamenes.id', 'puntos_total', 'total_casos')->get()->map(function($item) use($certamen){
-            if($item->cantidad_intentos>0){
-                $errores = $item->cantidad_intentos - 1 <= $certamen->cantidad_penalizacion? $item->cantidad_intentos - 1 : $certamen->cantidad_penalizacion;
-                $item->maximo_puntaje = $item->maximo_puntaje - ($errores*$certamen->penalizacion_error);
+        ->groupBy('problemas.id','resolucion_certamenes.id', 'puntos_total', 'total_casos')
+        ->get()
+        ->map(function($item) use($certamen){
+            if($item->cantidad_intentos > 0){
+                $errores = $item->cantidad_intentos - 1 <= $certamen->cantidad_penalizacion ? $item->cantidad_intentos - 1 : $certamen->cantidad_penalizacion;
+                $item->maximo_puntaje = $item->maximo_puntaje - ($errores * $certamen->penalizacion_error);
+            }
+            if ($item->maximo_puntaje < 0) {
+                $item->maximo_puntaje = 0;
+            }
+            // Evitar que el puntaje obtenido supere el puntaje total del problema (ej. 100/90)
+            if ($item->puntos_total > 0 && $item->maximo_puntaje > $item->puntos_total) {
+                $item->maximo_puntaje = $item->puntos_total;
             }
             return $item;
         });
+
+        // Auto-finalizar resoluciones del certamen cuyo plazo límite haya expirado
+        $resolucionesAbiertas = ResolucionCertamenes::where('id_certamen', $certamen->id)
+            ->where('finalizado', false)
+            ->get();
+        $_now = Carbon::now();
+        foreach ($resolucionesAbiertas as $resAbierta) {
+            $limite = $resAbierta->fecha_termino_efectiva ?? Carbon::parse($certamen->fecha_termino);
+            if ($_now->gt($limite)) {
+                try {
+                    $resAbierta->finalizar_certamen();
+                } catch (\Exception $e) {}
+            }
+        }
+
+        // Obtener la asignación ordenada de problemas de cada resolución (P1, P2, etc.)
+        $resIds = ResolucionCertamenes::where('id_certamen', $request->id_certamen)->pluck('id')->toArray();
+        $problemasAsignadosPorResolucion = DB::table('seleccion_problemas_certamen')
+            ->join('problemas', 'problemas.id', '=', 'seleccion_problemas_certamen.id_problema')
+            ->leftJoinSub($problemas_subquery, 'sub_prob', 'sub_prob.id', '=', 'problemas.id')
+            ->whereIn('seleccion_problemas_certamen.id_res_certamen', $resIds)
+            ->select(
+                'seleccion_problemas_certamen.id_res_certamen',
+                'seleccion_problemas_certamen.id_problema',
+                'seleccion_problemas_certamen.id as id_seleccion',
+                'problemas.nombre as nombre_problema',
+                'sub_prob.puntos_total'
+            )
+            ->orderBy('seleccion_problemas_certamen.id', 'asc')
+            ->get()
+            ->groupBy('id_res_certamen');
+
         $listado_resultados = DB::table('users')
         ->join('resolucion_certamenes', 'resolucion_certamenes.id_usuario','=','users.id')
-        ->select('resolucion_certamenes.id', 'users.firstname', 'users.lastname', 'users.rut', 'puntaje_obtenido', 'problemas_resueltos')
-        ->where('id_certamen', '=', $request->id_certamen)
-        ->get()->map(function($item) use($resultado_certamenes){
-            $item->resultados = $resultado_certamenes->where('id_res_certamen','=',$item->id)->all();
+        ->select('resolucion_certamenes.id', 'resolucion_certamenes.token', 'resolucion_certamenes.finalizado', 'resolucion_certamenes.fecha_finalizado', 'users.firstname', 'users.lastname', 'users.rut', 'puntaje_obtenido', 'problemas_resueltos')
+        ->where('resolucion_certamenes.id_certamen', '=', $request->id_certamen)
+        ->get()->map(function($item) use($resultado_certamenes, $problemasAsignadosPorResolucion, $certamen){
+            $asignados = $problemasAsignadosPorResolucion->get($item->id, collect());
+            $resultadosMapeados = [];
+
+            if ($asignados->isNotEmpty()) {
+                // Mapear cada problema asignado según el orden P1, P2, etc.
+                foreach ($asignados as $asignado) {
+                    $envioProb = $resultado_certamenes
+                        ->where('id_res_certamen', $item->id)
+                        ->where('id_problema', $asignado->id_problema)
+                        ->first();
+
+                    if ($envioProb) {
+                        $puntosTot = (int)($envioProb->puntos_total ?: ($asignado->puntos_total ?: 100));
+                        $maxPunt = (int)$envioProb->maximo_puntaje;
+                        if ($puntosTot > 0 && $maxPunt > $puntosTot) {
+                            $maxPunt = $puntosTot;
+                        }
+                        $resultadosMapeados[] = (object)[
+                            'id_problema' => $asignado->id_problema,
+                            'nombre_problema' => $asignado->nombre_problema,
+                            'maximo_puntaje' => $maxPunt,
+                            'puntos_total' => $puntosTot,
+                            'resuelto' => (bool)$envioProb->resuelto,
+                            'cantidad_intentos' => (int)$envioProb->cantidad_intentos,
+                            'entregado' => true
+                        ];
+                    } else {
+                        $puntosTot = (int)($asignado->puntos_total ?: 100);
+                        $resultadosMapeados[] = (object)[
+                            'id_problema' => $asignado->id_problema,
+                            'nombre_problema' => $asignado->nombre_problema,
+                            'maximo_puntaje' => 0,
+                            'puntos_total' => $puntosTot,
+                            'resuelto' => false,
+                            'cantidad_intentos' => 0,
+                            'entregado' => false
+                        ];
+                    }
+                }
+            } else {
+                // Fallback para evaluaciones antiguas sin selección registrada
+                $enviosDirectos = $resultado_certamenes->where('id_res_certamen', $item->id)->values();
+                foreach ($enviosDirectos as $env) {
+                    $puntosTot = (int)($env->puntos_total ?: 100);
+                    $maxPunt = (int)$env->maximo_puntaje;
+                    if ($puntosTot > 0 && $maxPunt > $puntosTot) {
+                        $maxPunt = $puntosTot;
+                    }
+                    $resultadosMapeados[] = (object)[
+                        'id_problema' => $env->id_problema,
+                        'maximo_puntaje' => $maxPunt,
+                        'puntos_total' => $puntosTot,
+                        'resuelto' => (bool)$env->resuelto,
+                        'cantidad_intentos' => (int)$env->cantidad_intentos,
+                        'entregado' => true
+                    ];
+                }
+            }
+
+            $item->resultados = $resultadosMapeados;
+            $resueltosCalculados = collect($resultadosMapeados)->where('resuelto', true)->count();
+            $puntajeCalculado = collect($resultadosMapeados)->sum('maximo_puntaje');
+            $item->problemas_resueltos = $resueltosCalculados;
+            $item->puntaje_obtenido = $puntajeCalculado;
             return $item;
         });
 
@@ -474,6 +675,11 @@ class InformeController extends Controller
         ->orderBy("envio_solucion_problemas.created_at", "DESC")
         ->get();
 
+        $certamen_estadistica->cantidad_intentos = $todos_envios->count();
+        $certamen_estadistica->cantidad_resueltos = $todos_envios->where('solucionado', true)->count();
+        $certamen_estadistica->promedio_resolucion_problemas = $listado_resultados->count() > 0 ? round($listado_resultados->avg('problemas_resueltos'), 1) : 0;
+        $certamen_estadistica->puntaje_promedio = $listado_resultados->count() > 0 ? round($listado_resultados->avg('puntaje_obtenido'), 1) : 0;
+
         return view("informes.certamenes.informe", compact("listado_resultados" ,"certamen_estadistica", "todos_envios", "lenguajes_estadistica", "estadistica_estados"));
     }
 
@@ -482,11 +688,14 @@ class InformeController extends Controller
         if(!isset($certamen)){
            return redirect()->route('certamen.index')->with("error", "La evaluación no existe");
         }
-        if(!auth()->user()->cursos()->where('cursos.id', '=', $certamen->id_curso)->exists()){
-           return redirect()->route('certamen.index')->with("error", "No tienes acceso para ver éste informe");
+        if(!auth()->user()->hasRole('administrador') && !auth()->user()->cursos()->where('cursos.id', '=', $certamen->id_curso)->exists()){
+           return redirect()->route('certamen.index')->with("error", "No tienes acceso para ver este informe");
         }
 
         $res_certamen = ResolucionCertamenes::find($request->id_res_certamen);
+        if (!$res_certamen || (int)$res_certamen->id_certamen !== (int)$certamen->id) {
+            return redirect()->route('informe.certamen', ['id_certamen' => $certamen->id])->with("error", "El registro de resolución solicitado no existe.");
+        }
         $resultado_certamenes = DB::table('envio_solucion_problemas')
         ->leftJoin('resolver', 'envio_solucion_problemas.id_resolver', '=', 'resolver.id')
         ->select('resolver.id_problema', DB::raw('count(envio_solucion_problemas.id) as cantidad_intentos'), DB::raw('COALESCE(max(envio_solucion_problemas.puntaje),0) as maximo_puntaje'), DB::raw('COALESCE(max(solucionado),0) as resuelto'), DB::raw('COALESCE(max(cant_casos_resuelto), 0) as max_casos_resueltos'))
@@ -495,15 +704,18 @@ class InformeController extends Controller
         ->groupBy('resolver.id_problema');
 
         $resultado = DB::table('problemas')
-        ->join('casos__pruebas', 'casos__pruebas.id_problema', '=', 'problemas.id')
+        ->leftJoin('casos__pruebas', 'casos__pruebas.id_problema', '=', 'problemas.id')
         ->leftJoinSub($resultado_certamenes,'resultados_certamenes','problemas.id', '=', 'resultados_certamenes.id_problema')
-        ->select('problemas.id', 'problemas.nombre', DB::raw('sum(casos__pruebas.puntos) as puntos_total'), DB::raw('count(casos__pruebas.id) as total_casos'), DB::raw('COALESCE(cantidad_intentos, 0) as cantidad_intentos'), DB::raw('COALESCE(maximo_puntaje, 0) as maximo_puntaje'), DB::raw('COALESCE(resuelto, 0) as resuelto'),DB::raw('COALESCE(max_casos_resueltos, 0) as max_casos_resueltos'))
-        ->groupBy('problemas.id', 'problemas.nombre', 'cantidad_intentos', 'maximo_puntaje', 'resuelto', 'max_casos_resueltos')
+        ->select('problemas.id', 'problemas.nombre', DB::raw('COALESCE(NULLIF(sum(casos__pruebas.puntos), 0), problemas.puntaje_total, 100) as puntos_total'), DB::raw('count(casos__pruebas.id) as total_casos'), DB::raw('COALESCE(cantidad_intentos, 0) as cantidad_intentos'), DB::raw('COALESCE(maximo_puntaje, 0) as maximo_puntaje'), DB::raw('COALESCE(resuelto, 0) as resuelto'),DB::raw('COALESCE(max_casos_resueltos, 0) as max_casos_resueltos'))
+        ->groupBy('problemas.id', 'problemas.nombre', 'problemas.puntaje_total', 'cantidad_intentos', 'maximo_puntaje', 'resuelto', 'max_casos_resueltos')
         ->whereIn('problemas.id',$res_certamen->ProblemasSeleccionadas()->pluck('id_problema'))
         ->get()->map(function($item) use($certamen, $res_certamen){
             if($item->cantidad_intentos>0){
                 $errores = $item->cantidad_intentos - 1 <= $certamen->cantidad_penalizacion? $item->cantidad_intentos - 1 : $certamen->cantidad_penalizacion;
-                $item->maximo_puntaje = $item->maximo_puntaje - ($errores*$certamen->penalizacion_error);
+                $item->maximo_puntaje = max(0, $item->maximo_puntaje - ($errores*$certamen->penalizacion_error));
+            }
+            if ($item->puntos_total > 0 && $item->maximo_puntaje > $item->puntos_total) {
+                $item->maximo_puntaje = $item->puntos_total;
             }
             $item->variacion_formato = false;
             if ($item->resuelto) {
@@ -548,6 +760,132 @@ class InformeController extends Controller
         ->orderBy("users.firstname", "ASC")
         ->get();
 
-        return view("informes.certamenes.envios", compact("envios", "certamen", "resultado"));
+        return view("informes.certamenes.envios", compact("envios", "certamen", "resultado", "res_certamen"));
+    }
+
+    public function exportar_informe_certamen(Request $request)
+    {
+        $certamen = Certamenes::find($request->id_certamen);
+        if (!isset($certamen)) {
+            return redirect()->route('certamen.index')->with("error", "La evaluación no existe");
+        }
+        if (!auth()->user()->hasRole('administrador') && !auth()->user()->cursos()->where('cursos.id', '=', $certamen->id_curso)->exists()) {
+            return redirect()->route('certamen.index')->with("error", "No tienes acceso para exportar este informe");
+        }
+
+        $problemas_subquery = DB::table('problemas')
+            ->leftJoin('casos__pruebas', 'casos__pruebas.id_problema', '=', 'problemas.id')
+            ->select(
+                'problemas.id',
+                DB::raw('COALESCE(NULLIF(sum(casos__pruebas.puntos), 0), problemas.puntaje_total, 100) as puntos_total'),
+                DB::raw('count(casos__pruebas.id) as total_casos')
+            )
+            ->groupBy('problemas.id', 'problemas.puntaje_total');
+
+        $resultado_certamenes = DB::table('envio_solucion_problemas')
+            ->join('resolucion_certamenes', 'envio_solucion_problemas.id_certamen', '=', 'resolucion_certamenes.id')
+            ->join('certamenes', 'resolucion_certamenes.id_certamen', '=', 'certamenes.id')
+            ->leftJoin('resolver', 'envio_solucion_problemas.id_resolver', '=', 'resolver.id')
+            ->leftJoinSub($problemas_subquery, 'problemas', 'problemas.id', '=', 'resolver.id_problema')
+            ->select(
+                'resolucion_certamenes.id as id_res_certamen',
+                'problemas.id as id_problema',
+                'puntos_total',
+                DB::raw('count(envio_solucion_problemas.id) as cantidad_intentos'),
+                DB::raw('COALESCE(max(envio_solucion_problemas.puntaje),0) as maximo_puntaje'),
+                DB::raw('COALESCE(max(solucionado),0) as resuelto')
+            )
+            ->where('certamenes.id', '=', $certamen->id)
+            ->whereNotNull('termino')
+            ->groupBy('problemas.id', 'resolucion_certamenes.id', 'puntos_total')
+            ->get()
+            ->map(function ($item) use ($certamen) {
+                if ($item->cantidad_intentos > 0) {
+                    $errores = $item->cantidad_intentos - 1 <= $certamen->cantidad_penalizacion ? $item->cantidad_intentos - 1 : $certamen->cantidad_penalizacion;
+                    $item->maximo_puntaje = max(0, $item->maximo_puntaje - ($errores * $certamen->penalizacion_error));
+                }
+                if ($item->puntos_total > 0 && $item->maximo_puntaje > $item->puntos_total) {
+                    $item->maximo_puntaje = $item->puntos_total;
+                }
+                return $item;
+            });
+
+        $resIds = ResolucionCertamenes::where('id_certamen', $certamen->id)->pluck('id')->toArray();
+        $problemasAsignadosPorResolucion = DB::table('seleccion_problemas_certamen')
+            ->join('problemas', 'problemas.id', '=', 'seleccion_problemas_certamen.id_problema')
+            ->leftJoinSub($problemas_subquery, 'sub_prob', 'sub_prob.id', '=', 'problemas.id')
+            ->whereIn('seleccion_problemas_certamen.id_res_certamen', $resIds)
+            ->select(
+                'seleccion_problemas_certamen.id_res_certamen',
+                'seleccion_problemas_certamen.id_problema',
+                'problemas.nombre as nombre_problema',
+                'sub_prob.puntos_total'
+            )
+            ->orderBy('seleccion_problemas_certamen.id', 'asc')
+            ->get()
+            ->groupBy('id_res_certamen');
+
+        $listado_resultados = DB::table('users')
+            ->join('resolucion_certamenes', 'resolucion_certamenes.id_usuario', '=', 'users.id')
+            ->select('resolucion_certamenes.id', 'resolucion_certamenes.finalizado', 'users.firstname', 'users.lastname', 'users.rut')
+            ->where('resolucion_certamenes.id_certamen', '=', $certamen->id)
+            ->get();
+
+        $filename = 'informe_evaluacion_' . $certamen->id . '_' . date('Ymd_His') . '.csv';
+
+        return response()->streamDownload(function () use ($listado_resultados, $resultado_certamenes, $problemasAsignadosPorResolucion, $certamen) {
+            $out = fopen('php://output', 'w');
+            // UTF-8 BOM para compatibilidad directa con Microsoft Excel
+            fwrite($out, "\xEF\xBB\xBF");
+
+            $headers = ['Nombre Completo', 'RUT', 'Estado', 'Problemas Resueltos'];
+            for ($i = 1; $i <= $certamen->cantidad_problemas; $i++) {
+                $headers[] = 'P' . $i;
+            }
+            $headers[] = 'Puntaje Total Obtenido';
+            fputcsv($out, $headers, ';');
+
+            foreach ($listado_resultados as $item) {
+                $asignados = $problemasAsignadosPorResolucion->get($item->id, collect());
+                $puntajesProblemas = [];
+                $resueltosCount = 0;
+                $puntajeTotalEstudiante = 0;
+
+                for ($i = 0; $i < $certamen->cantidad_problemas; $i++) {
+                    $asignado = $asignados->values()->get($i);
+                    if ($asignado) {
+                        $envioProb = $resultado_certamenes
+                            ->where('id_res_certamen', $item->id)
+                            ->where('id_problema', $asignado->id_problema)
+                            ->first();
+                        if ($envioProb) {
+                            $puntosTot = (int)($envioProb->puntos_total ?: ($asignado->puntos_total ?: 100));
+                            $maxPunt = min((int)$envioProb->maximo_puntaje, $puntosTot);
+                            if ($envioProb->resuelto) {
+                                $resueltosCount++;
+                            }
+                            $puntajeTotalEstudiante += $maxPunt;
+                            $puntajesProblemas[] = $maxPunt . '/' . $puntosTot;
+                        } else {
+                            $puntajesProblemas[] = 'NR';
+                        }
+                    } else {
+                        $puntajesProblemas[] = 'NR';
+                    }
+                }
+
+                $row = array_merge([
+                    trim($item->firstname . ' ' . $item->lastname),
+                    $item->rut,
+                    $item->finalizado ? 'Finalizado' : 'En Curso',
+                    $resueltosCount . '/' . $certamen->cantidad_problemas,
+                ], $puntajesProblemas, [$puntajeTotalEstudiante]);
+
+                fputcsv($out, $row, ';');
+            }
+            fclose($out);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 }

@@ -55,12 +55,22 @@
         const fecha_inicio = flatpickr("#fecha_inicio", {
             enableTime: true,
             dateFormat: "Y-m-d H:i",
-            defaultDate: f_ini_val ? f_ini_val : null
+            altInput: true,
+            altFormat: "d-m-Y H:i",
+            defaultDate: f_ini_val ? f_ini_val : null,
+            onReady: function(dObj, dStr, fp) {
+                if (fp.altInput) fp.altInput.id = 'fecha_inicio_visible';
+            }
         }); 
         const fecha_termino = flatpickr("#fecha_termino", {
             enableTime: true,
             dateFormat: "Y-m-d H:i",
-            defaultDate: f_ter_val ? f_ter_val : null
+            altInput: true,
+            altFormat: "d-m-Y H:i",
+            defaultDate: f_ter_val ? f_ter_val : null,
+            onReady: function(dObj, dStr, fp) {
+                if (fp.altInput) fp.altInput.id = 'fecha_termino_visible';
+            }
         });
         const editor = new Editor({
             el: document.querySelector('#editor'),
@@ -129,6 +139,11 @@
             return md;
         }
 
+        window.syncAdminEditors = function() {
+            const target = document.querySelector('#body_problema');
+            if (target) target.value = getSanitizedMarkdown();
+        };
+
         editor.on('change', () => {
             document.querySelector('#body_problema').value = getSanitizedMarkdown();
         });
@@ -137,14 +152,25 @@
             document.querySelector('#body_problema').value = getSanitizedMarkdown();
         });
 
-
-
         checkbox.addEventListener('change', (event) => {
             const isChecked = event.currentTarget.checked;
+            const sqlBanner = document.getElementById('sql-lenguaje-banner');
+            const normWrapper = document.getElementById('lenguajes-normales-wrapper');
+            if (sqlBanner) sqlBanner.classList.toggle('d-none', !isChecked);
+            if (normWrapper) normWrapper.classList.toggle('d-none', isChecked);
             lenguajeCheckboxes.forEach(cb => {
-                cb.disabled = isChecked;
                 const card = cb.closest('.selection-card');
-                if (card) card.classList.toggle('disabled', isChecked);
+                if (isChecked) {
+                    cb.dataset.wasChecked = cb.checked ? '1' : '0';
+                    cb.checked = false;
+                } else {
+                    cb.checked = cb.dataset.wasChecked ? cb.dataset.wasChecked === '1' : false;
+                }
+                cb.disabled = isChecked;
+                if (card) {
+                    card.classList.toggle('checked', cb.checked);
+                    card.classList.toggle('disabled', isChecked);
+                }
             });
             if (isChecked) {
                 sql_file.classList.remove("d-none");

@@ -5,14 +5,14 @@
         @include('components.alert')
         
         <div class="card border-danger">
-            <div class="card-body px-5">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="ms-2 mb-0"><strong>Curso: {{ $curso->nombre }}</strong></h5>
-                    <div class="btn-group shadow-sm" role="group" aria-label="Selección de vista">
-                        <button type="button" class="btn btn-danger btn-md px-4 font-weight-bold active" id="btn-problemas" onclick="mostrarSeccion('problemas')">
+            <div class="card-body px-3 px-md-5">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <h5 class="ms-1 ms-md-2 mb-0"><strong>Curso: {{ $curso->nombre }}</strong></h5>
+                    <div class="btn-group flex-wrap shadow-sm" role="group" aria-label="Selección de vista">
+                        <button type="button" class="btn btn-danger btn-md px-3 px-md-4 font-weight-bold active" id="btn-problemas" onclick="mostrarSeccion('problemas')">
                             <i class="fa fa-code me-1"></i> Problemas de Práctica ({{ $problemas->count() }})
                         </button>
-                        <button type="button" class="btn btn-outline-danger btn-md px-4 font-weight-bold" id="btn-evaluaciones" onclick="mostrarSeccion('evaluaciones')">
+                        <button type="button" class="btn btn-outline-danger btn-md px-3 px-md-4 font-weight-bold" id="btn-evaluaciones" onclick="mostrarSeccion('evaluaciones')">
                             <i class="fa fa-file-text me-1"></i> Evaluaciones del Curso ({{ $evaluaciones->count() }})
                         </button>
                     </div>
@@ -27,7 +27,7 @@
                                 <tr>
                                     <th>Nombre</th>
                                     <th>Puntos</th>
-                                    <th>Categoria</th>
+                                    <th>Categoría</th>
                                     <th>¿Resuelto?</th>
                                     <th>Creado</th>
                                 </tr>
@@ -43,13 +43,13 @@
                                                 @if(!empty($problema->variacion_formato))
                                                     <span class="badge text-bg-success">Aceptado (Variación de Formato)</span>
                                                 @else
-                                                    Si
+                                                    Sí
                                                 @endif
                                             @else
                                                 No
                                             @endif
                                         </td>
-                                        <td>{{ $problema->creado }}</td>
+                                        <td data-order="{{ \App\Support\DateHelper::timestamp($problema->created_at ?? ($problema->creado ?? null)) }}">{{ $problema->creado }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -70,7 +70,7 @@
                                     <th>Tiempo de Desarrollo</th>
                                     <th>Ejercicios Resueltos</th>
                                     <th>Fecha Inicio</th>
-                                    <th>Fecha Termino</th>
+                                    <th>Fecha Término</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -79,11 +79,11 @@
                                         <td><a href="{{ route('certamenes.ver', ['id_certamen' => $evaluacion->id]) }}">{{ $evaluacion->nombre }}</a></td>
                                         <td>{{ $evaluacion->cantidad_problemas }}</td>
                                         <td>{{ $evaluacion->penalizacion_error }}</td>
-                                        <td>{{ $evaluacion->estado_finalizado ? 'Si' : 'No' }}</td>
+                                        <td>{{ $evaluacion->estado_finalizado ? 'Sí' : 'No' }}</td>
                                         <td>{{ isset($evaluacion->estado_finalizado) && isset($evaluacion->tiempo_desarrollo) ? gmdate('H:i:s', $evaluacion->tiempo_desarrollo) : "-" }}</td>
                                         <td>{{ isset($evaluacion->maximo_resuelto) ? $evaluacion->maximo_resuelto . '/' . $evaluacion->cantidad_problemas : '-/' . $evaluacion->cantidad_problemas }}</td>
-                                        <td>{{ $evaluacion->fecha_inicio_formatted ?? $evaluacion->fecha_inicio }}</td>
-                                        <td>{{ $evaluacion->fecha_termino_formatted ?? $evaluacion->fecha_termino }}</td>
+                                        <td data-order="{{ \App\Support\DateHelper::timestamp($evaluacion->fecha_inicio ?? null) }}">{{ $evaluacion->fecha_inicio_formatted ?? $evaluacion->fecha_inicio }}</td>
+                                        <td data-order="{{ \App\Support\DateHelper::timestamp($evaluacion->fecha_termino ?? null) }}">{{ $evaluacion->fecha_termino_formatted ?? $evaluacion->fecha_termino }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -101,18 +101,34 @@
     <script src="{{ asset('assets/js/DataTables/datatables.min.js') }}"></script>
     <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}"></script>
     <script>
+        var cursoTabStorageKey = 'tb_curso_tab_{{ $curso->id }}';
         function mostrarSeccion(tipo) {
+            try { localStorage.setItem(cursoTabStorageKey, tipo); } catch (e) {}
             if (tipo === 'problemas') {
                 $('#seccion-problemas').show();
                 $('#seccion-evaluaciones').hide();
                 $('#btn-problemas').addClass('btn-danger active').removeClass('btn-outline-danger');
                 $('#btn-evaluaciones').addClass('btn-outline-danger').removeClass('btn-danger active');
+                if (typeof $.fn !== 'undefined' && $.fn.DataTable && $.fn.DataTable.isDataTable('#table')) {
+                    $('#table').DataTable().columns.adjust().responsive.recalc();
+                }
             } else {
                 $('#seccion-problemas').hide();
                 $('#seccion-evaluaciones').show();
                 $('#btn-evaluaciones').addClass('btn-danger active').removeClass('btn-outline-danger');
                 $('#btn-problemas').addClass('btn-outline-danger').removeClass('btn-danger active');
+                if (typeof $.fn !== 'undefined' && $.fn.DataTable && $.fn.DataTable.isDataTable('#table_evaluaciones')) {
+                    $('#table_evaluaciones').DataTable().columns.adjust().responsive.recalc();
+                }
             }
         }
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                var savedTab = localStorage.getItem(cursoTabStorageKey);
+                if (savedTab === 'evaluaciones' || savedTab === 'problemas') {
+                    mostrarSeccion(savedTab);
+                }
+            } catch (e) {}
+        });
     </script>
 @endpush

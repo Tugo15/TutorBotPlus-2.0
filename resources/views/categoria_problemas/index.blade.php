@@ -57,7 +57,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="align-middle text-center text-sm">
+                                        <td class="align-middle text-center text-sm" data-order="{{ $categoria->created_at ? \Carbon\Carbon::parse($categoria->created_at)->timestamp : 0 }}">
                                             <p class="text-xs text-secondary font-weight-bold mb-0">
                                                 {{ $categoria->fecha ? $categoria->fecha : 'Desconocido' }}</p>
                                         </td>
@@ -70,7 +70,7 @@
                                                     @endcan
                                                     @can('eliminar categoría de problema')
                                                         <form action="{{ route('categorias.eliminar', ['id' => $categoria->id]) }}"
-                                                            method="POST" onsubmit="event.preventDefault();submitFormEliminar('{{'la categoria '.$categoria->nombre}}', {{$categoria->id}})" id="eliminarForm_{{$categoria->id}}">
+                                                            method="POST" onsubmit="event.preventDefault();submitFormEliminar('{{'la categoría '.addslashes($categoria->nombre)}}', {{$categoria->id}})" id="eliminarForm_{{$categoria->id}}">
                                                             @csrf
                                                             <button type="submit" class="btn btn-xs btn-outline-danger mb-0" title="Eliminar Categoría"><i class="fa fa-fw fa-trash me-1"></i> Eliminar</button>
                                                         </form>

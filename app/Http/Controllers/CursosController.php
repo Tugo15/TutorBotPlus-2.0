@@ -30,7 +30,11 @@ class CursosController extends Controller
     }
 
     public function editar(Request $request){
-        $curso = Cursos::find($request->id);
+        $id = $request->input('id') ?? $request->id;
+        $curso = $id ? Cursos::find($id) : null;
+        if (!$curso) {
+            return redirect()->route('cursos.index')->with('error', 'El curso solicitado no fue encontrado.');
+        }
         return view('cursos.editar', compact('curso'));
     }
 
@@ -52,25 +56,35 @@ class CursosController extends Controller
     }
 
     public function update(Request $request){
-        $validated = $request->validate(Cursos::updateRules($request->id));
+        $id = $request->input('id') ?? $request->id;
+        $curso = $id ? Cursos::find($id) : null;
+        if (!$curso) {
+            return redirect()->route('cursos.index')->with('error', 'El curso solicitado no fue encontrado.');
+        }
+
+        $validated = $request->validate(Cursos::updateRules($curso->id));
         try{
             DB::beginTransaction();
-            $curso = Cursos::find($request->id);
             $curso->nombre = $request->input('nombre');
             $curso->descripcion = $request->input('descripcion');
             $curso->codigo = $request->input('codigo');
             $curso->save();
             DB::commit();
         }catch(\Exception $e){
+            DB::rollBack();
             return redirect()->route('cursos.index')->with('error', $e->getMessage());
         }
         return redirect()->route('cursos.index')->with('success','El curso ha sido modificado');
     }
     public function eliminar(Request $request)
     {
+        $id = $request->input('id') ?? $request->id;
+        $curso = $id ? Cursos::find($id) : null;
+        if (!$curso) {
+            return redirect()->route('cursos.index')->with('error', 'El curso solicitado no fue encontrado.');
+        }
         try{
             DB::beginTransaction();
-            $curso = Cursos::find($request->id);
             $curso->delete();
             DB::commit();
         }catch(\PDOException $e){
@@ -82,12 +96,20 @@ class CursosController extends Controller
 
     public function listado_cursos(Request $request){
         $cursos = auth()->user()->cursos();
-        $busqueda = $request->buscar_curso;
-        if(isset($busqueda)){
-            $cursos = $cursos->where('nombre', 'LIKE', '%'.$busqueda.'%');
+        $busqueda = is_string($request->buscar_curso) ? trim($request->buscar_curso) : null;
+        if ($busqueda !== null && $busqueda !== '') {
+            $busquedaEscapada = addcslashes($busqueda, '%_\\');
+            $cursos = $cursos->where(function ($query) use ($busquedaEscapada) {
+                $query->where('cursos.nombre', 'LIKE', '%' . $busquedaEscapada . '%')
+                      ->orWhere('cursos.codigo', 'LIKE', '%' . $busquedaEscapada . '%')
+                      ->orWhere('cursos.descripcion', 'LIKE', '%' . $busquedaEscapada . '%');
+            });
         }
         
-        $cursos = $cursos->paginate(5);
+        $cursos = $cursos->paginate(5)->withQueryString();
+        if ($cursos->lastPage() > 0 && (int) $request->input('page', 1) > $cursos->lastPage()) {
+            return redirect()->to($request->fullUrlWithQuery(['page' => $cursos->lastPage()]));
+        }
         return view('plataforma.cursos.index', compact('cursos'))->with('busqueda', $busqueda);
     }
 

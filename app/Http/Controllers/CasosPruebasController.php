@@ -10,7 +10,10 @@ use App\Models\LenguajesProgramaciones;
 class CasosPruebasController extends Controller
 {
     public function asignacion_casos(Request $request){
-        $problema = Problemas::findOrFail($request->id);
+        $problema = Problemas::find($request->id);
+        if (!$problema) {
+            return redirect()->route('problemas.index')->with('error', 'El problema solicitado no existe.');
+        }
 
         if ($request->filled('id_curso')) {
             session(['id_curso_problema_' . $problema->id => $request->input('id_curso')]);
@@ -48,13 +51,18 @@ class CasosPruebasController extends Controller
             ->where('nombre', 'NOT LIKE', '%sql%')
             ->exists();
 
+        $ordenEjemplo = [];
+        foreach ($problema->casos_de_prueba()->where('ejemplo', true)->orderBy('id', 'asc')->pluck('id') as $idx => $casoId) {
+            $ordenEjemplo[$casoId] = $idx + 1;
+        }
+
         if ($has_non_sql_language || !$problema->lenguajes()->exists()) {
             $casos = $problema->casos_de_prueba()->orderBy('created_at','desc')->get();
-            return view("problemas.casos_pruebas.assign", compact('problema', 'casos', 'es_wizard', 'id_curso', 'urlRetorno'));
+            return view("problemas.casos_pruebas.assign", compact('problema', 'casos', 'ordenEjemplo', 'es_wizard', 'id_curso', 'urlRetorno'));
         } else {
             $casos = $problema->casos_de_prueba()->orderBy('id','asc')->get();
             $caso = $casos->first();
-            return view("problemas.casos_pruebas.assign_sql", compact('problema', 'caso', 'casos', 'es_wizard', 'id_curso', 'urlRetorno'));
+            return view("problemas.casos_pruebas.assign_sql", compact('problema', 'caso', 'casos', 'ordenEjemplo', 'es_wizard', 'id_curso', 'urlRetorno'));
         }
     }
 
@@ -62,10 +70,16 @@ class CasosPruebasController extends Controller
         try{
             DB::beginTransaction();
             $caso = Casos_Pruebas::find($request->id);
+            if (!$caso) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'El caso de prueba solicitado no existe.');
+            }
             $problema = Problemas::find($caso->id_problema);
-            $problema->puntaje_total = $problema->puntaje_total - $caso->puntos;
             $caso->delete();
-            $problema->save();
+            if ($problema) {
+                $problema->puntaje_total = max(0, $problema->casos_de_prueba()->sum('puntos'));
+                $problema->save();
+            }
             DB::commit();
         }catch(\PDOException $e){
             DB::rollback();
@@ -110,7 +124,7 @@ class CasosPruebasController extends Controller
         $validated = $request->validate(Casos_Pruebas::$rules);
         try{
             DB::beginTransaction();
-            $problema = Problemas::find( $request->id );
+            $problema = Problemas::findOrFail( $request->id );
 
             $caso = new Casos_Pruebas;
             if(isset($request->puntos)){
@@ -120,8 +134,8 @@ class CasosPruebasController extends Controller
             $caso->salidas = $request->input("salidas");
             $caso->ejemplo = $request->has('ejemplo') ? true : false;
             $problema->casos_de_prueba()->save($caso);
-            $problema->puntaje_total = $problema->puntaje_total + $caso->puntos;
-            $problema->refresh();
+            $problema->puntaje_total = $problema->casos_de_prueba()->sum('puntos');
+            $problema->save();
             DB::commit();
         }catch( \PDOException $e){
             DB::rollback();

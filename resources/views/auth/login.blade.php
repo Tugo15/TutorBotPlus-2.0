@@ -25,21 +25,27 @@
                                         <div class="flex flex-col mb-3">
                                             <input type="email" name="email" class="form-control form-control-lg"
                                                 value="{{ old('email') ?? '' }}" aria-label="Email"
-                                                placeholder="Ej estudiante@tutorbot.com">
+                                                placeholder="Ej estudiante@tutorbot.com" autocomplete="email" maxlength="255">
                                             @error('email')
                                                 <p class="text-danger text-xs pt-1"> {{ $message }} </p>
                                             @enderror
                                         </div>
                                         <div class="flex flex-col mb-3">
-                                            <input type="password" name="password" class="form-control form-control-lg"
-                                                aria-label="Password" placeholder="Introduzca su contraseña">
+                                            <div class="input-group">
+                                                <input type="password" name="password" id="login_password" class="form-control form-control-lg"
+                                                    aria-label="Password" placeholder="Introduzca su contraseña" autocomplete="current-password" maxlength="255">
+                                                <button class="btn btn-outline-secondary mb-0 px-3" type="button" aria-label="Mostrar u ocultar contraseña"
+                                                    onclick="const inp = document.getElementById('login_password'); const icon = this.querySelector('i'); const isPwd = inp.type === 'password'; inp.type = isPwd ? 'text' : 'password'; icon.className = isPwd ? 'fa fa-eye-slash' : 'fa fa-eye';">
+                                                    <i class="fa fa-eye" aria-hidden="true"></i>
+                                                </button>
+                                            </div>
                                             @error('password')
                                                 <p class="text-danger text-xs pt-1"> {{ $message }} </p>
                                             @enderror
                                         </div>
                                         <div class="form-check form-switch">
-                                            <input class="form-check-input" name="remember" type="checkbox" id="rememberMe">
-                                            <label class="form-check-label" for="rememberMe">Recuerdame</label>
+                                            <input class="form-check-input" name="remember" type="checkbox" id="rememberMe" {{ old('remember') ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="rememberMe">Recuérdame</label>
                                         </div>
                                         <div class="text-center">
                                             <button type="submit"
@@ -64,7 +70,7 @@
               background-size: cover;">
                                 <span class="mask bg-gradient-primary opacity-6"></span>
                                 <h4 class="mt-2 text-white font-weight-bolder position-relative">Universidad Católica de la
-                                    Santisima Concepción</h4>
+                                    Santísima Concepción</h4>
                                 <p class="text-white position-relative">Plataforma de juez online</p>
                             </div>
                         </div>

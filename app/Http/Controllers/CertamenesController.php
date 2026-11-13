@@ -543,9 +543,15 @@ class CertamenesController extends Controller
             $resultados_certamenes = DB::table('resolucion_certamenes')
             ->leftJoin('envio_solucion_problemas', 'envio_solucion_problemas.id_certamen', '=', 'resolucion_certamenes.id')
             ->where('id_usuario','=', auth()->user()->id)
-            ->select('resolucion_certamenes.id_certamen',  DB::raw('max(finalizado) as estado_finalizado'), 'fecha_finalizado', DB::raw('max(puntaje_obtenido) as puntaje_maximo'), DB::raw('max(problemas_resueltos) as maximo_resuelto'))
-            ->groupBy('resolucion_certamenes.id_certamen', 'fecha_finalizado')
-            ->orderBy('fecha_finalizado', 'desc');
+            ->select(
+                'resolucion_certamenes.id_certamen',
+                DB::raw('max(finalizado) as estado_finalizado'),
+                DB::raw('min(resolucion_certamenes.created_at) as fecha_inicio_resolucion'),
+                DB::raw('max(fecha_finalizado) as fecha_finalizado'),
+                DB::raw('max(puntaje_obtenido) as puntaje_maximo'),
+                DB::raw('max(problemas_resueltos) as maximo_resuelto')
+            )
+            ->groupBy('resolucion_certamenes.id_certamen');
 
             $evaluaciones = Certamenes::leftJoinSub($resultados_certamenes, 'resultados_certamenes', function (JoinClause $join){
                 $join->on('resultados_certamenes.id_certamen', '=', 'certamenes.id');
@@ -555,7 +561,8 @@ class CertamenesController extends Controller
                 $item->fecha_termino = Carbon::parse( $item->fecha_termino)->locale('es_ES')->isoFormat('lll');
                 if(isset($item->fecha_finalizado)){
                     $fecha_termino = Carbon::parse($item->fecha_finalizado);
-                    $item->tiempo_desarrollo = $fecha_termino->diffInSeconds($fecha_inicio);
+                    $inicioRef = isset($item->fecha_inicio_resolucion) ? Carbon::parse($item->fecha_inicio_resolucion) : $fecha_inicio;
+                    $item->tiempo_desarrollo = $fecha_termino->diffInSeconds($inicioRef);
                 }
                 return $item;
             });
@@ -569,15 +576,33 @@ class CertamenesController extends Controller
     public function ver_certamen(Request $request){
         try{
             $certamen = Certamenes::find($request->id_certamen);
+            if (!$certamen) {
+                return redirect()->route('certamenes.listado')->with('error', 'La evaluación solicitada no existe.');
+            }
             $_now = Carbon::now();
             $certamen->disponibilidad = true;
             if(!($_now->gte(Carbon::parse($certamen->fecha_inicio)) && $_now->lte(Carbon::parse($certamen->fecha_termino)))){
                 $certamen->disponibilidad = false;
             }
-            if($certamen->categorias()->count()==0){
+            if($certamen->categorias()->count()==0 && empty($certamen->bancos_preguntas) && empty($certamen->problemas_seleccionados)){
                 $certamen->disponibilidad = false;
             }
             $res_certamen = $certamen->resoluciones()->with(['ProblemasSeleccionadas','envios'])->where('id_usuario', '=', auth()->user()->id)->first();
+            if (isset($res_certamen) && !$res_certamen->finalizado) {
+                $fechaTerminoEfectiva = $res_certamen->fecha_termino_efectiva ?? Carbon::parse($certamen->fecha_termino);
+                if ($_now->lte($fechaTerminoEfectiva)) {
+                    $certamen->disponibilidad = true;
+                } else {
+                    // Si el plazo límite ya pasó y la evaluación quedó abierta, cerrarla automáticamente
+                    try {
+                        DB::beginTransaction();
+                        $res_certamen->finalizar_certamen();
+                        DB::commit();
+                    } catch (\Exception $e) {
+                        DB::rollBack();
+                    }
+                }
+            }
             $resultado = null;
             if(isset($res_certamen)){
                 $resultado_certamenes = DB::table('envio_solucion_problemas')
@@ -596,7 +621,7 @@ class CertamenesController extends Controller
                 ->get()->map(function($item) use($certamen, $res_certamen){
                     if($item->cantidad_intentos>0){
                         $errores = $item->cantidad_intentos - 1 <= $certamen->cantidad_penalizacion? $item->cantidad_intentos - 1 : $certamen->cantidad_penalizacion;
-                        $item->maximo_puntaje = $item->maximo_puntaje - ($errores*$certamen->penalizacion_error);
+                        $item->maximo_puntaje = max(0, $item->maximo_puntaje - ($errores*$certamen->penalizacion_error));
                     }
                     $item->variacion_formato = false;
                     if ($item->resuelto) {
@@ -742,7 +767,7 @@ class CertamenesController extends Controller
             ->where('cursa.id_usuario', '=', auth()->user()->id)
             ->select('resolver.id_problema', 'envio_solucion_problemas.solucionado', 'envio_solucion_problemas.puntaje');
             $problemas = Problemas::with(['lenguajes', 'casos_de_prueba' => function($q) {
-                $q->where('ejemplo', true);
+                $q->where('ejemplo', true)->orderBy('id', 'asc');
             }])->leftJoinSub($ultimos_envios, 'ultimos_envios', function (JoinClause $join){
                 $join->on('ultimos_envios.id_problema', '=', 'problemas.id');
             })
@@ -776,6 +801,10 @@ class CertamenesController extends Controller
             if($res_certamen->id_usuario != auth()->user()->id){
                 throw new \Exception("Error: No tienes permiso para acceder a esta resolución de certamen.");
             }
+            if($res_certamen->finalizado){
+                return redirect()->route('certamenes.ver', ['id_certamen' => $res_certamen->id_certamen])
+                    ->with("error", "No puedes acceder porque esta evaluación ya ha sido finalizada.");
+            }
 
             $problemas = $this->get_ultimos_envios($res_certamen);
             
@@ -784,17 +813,48 @@ class CertamenesController extends Controller
         }catch(\Exception $e){
             return redirect()->route('certamenes.listado')->with("error", $e->getMessage());
         }
-            return view('plataforma.certamen.ver_problemas', compact('problemas', 'res_certamen'));
+        return response()
+            ->view('plataforma.certamen.ver_problemas', compact('problemas', 'res_certamen'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
     }
 
     public function finalizar_certamen(Request $request){
         try{
             $res_certamen = ResolucionCertamenes::where('token', '=', $request->token)->first();
-            $res_certamen->finalizar_certamen();
+            if ($res_certamen) {
+                $res_certamen->finalizar_certamen();
+            }
         }catch(\PDOException $e){
             return redirect()->route('certamenes.ver', ['id_certamen'=>$res_certamen->id_certamen])->with("error", $e->getMessage());
         }
-            return redirect()->route('certamenes.ver', ['id_certamen'=>$res_certamen->id_certamen])->with("success", "Has finalizado el certamen");
+        return redirect()->route('certamenes.ver', ['id_certamen'=>$res_certamen->id_certamen])->with("success", "Has finalizado la evaluación con éxito.");
+    }
+
+    public function reabrir_resolucion(Request $request, $id_res_certamen){
+        try {
+            $res_certamen = ResolucionCertamenes::with(['certamen.curso', 'usuario'])->findOrFail($id_res_certamen);
+            $certamen = $res_certamen->certamen;
+
+            if (!auth()->user()->hasRole('administrador')) {
+                if (!auth()->user()->cursos()->where('cursos.id', $certamen->id_curso)->exists() && !auth()->user()->can('editar certamen')) {
+                    return redirect()->back()->with('error', 'No tienes permisos para modificar el acceso de esta evaluación.');
+                }
+            }
+
+            $minutosAdicionales = (int) $request->input('minutos_adicionales', 0);
+            $motivo = $request->input('motivo', 'Cierre accidental o reapertura docente');
+
+            $res_certamen->reabrir_certamen($minutosAdicionales, $motivo, auth()->id());
+
+            $nombreEstudiante = ($res_certamen->usuario->firstname ?? 'Estudiante') . ' ' . ($res_certamen->usuario->lastname ?? '');
+            $msjExtra = ($res_certamen->fecha_termino_efectiva) ? " con plazo extendido hasta las " . $res_certamen->fecha_termino_efectiva->format('H:i') : "";
+
+            return redirect()->back()->with('success', "Se ha reabierto con éxito el acceso a la evaluación para {$nombreEstudiante}{$msjExtra}. El estudiante ya puede ingresar a resolver sus ejercicios.");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error al reabrir la evaluación: ' . $e->getMessage());
+        }
     }
     
 
@@ -843,11 +903,18 @@ class CertamenesController extends Controller
         }catch(\Throwable $e){
             DB::rollBack();
             \Log::error("Error en guardar_codigo_certamen: " . $e->getMessage());
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['saved' => false, 'message' => $e->getMessage()], 500);
+            }
             $token = $request->token_certamen ?? ($last_envio && $last_envio->certamen ? $last_envio->certamen->token : null);
             if ($token) {
                 return redirect()->route('certamenes.resolucion', ['token' => $token])->with('error', 'Error al guardar: ' . $e->getMessage());
             }
             return back()->with('error', 'Error al guardar: ' . $e->getMessage());
+        }
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json(['saved' => true]);
         }
 
         $token = $request->token_certamen ?? ($last_envio && $last_envio->certamen ? $last_envio->certamen->token : null);

@@ -4,7 +4,7 @@
             <div class="card-body p-3 d-flex flex-column justify-content-between">
                 <p class="text-xs mb-2 text-uppercase font-weight-bold text-secondary">Soluciones Enviadas</p>
                 <h5 class="font-weight-bolder text-dark mb-0">
-                    {{$certamen_estadistica->cantidad_resueltos}}
+                    {{$certamen_estadistica->cantidad_resueltos ?? 0}}
                 </h5>
             </div>
         </div>
@@ -14,7 +14,7 @@
             <div class="card-body p-3 d-flex flex-column justify-content-between">
                 <p class="text-xs mb-2 text-uppercase font-weight-bold text-secondary">Cantidad de Intentos</p>
                 <h5 class="font-weight-bolder text-dark mb-0">
-                    {{$certamen_estadistica->cantidad_intentos}}
+                    {{$certamen_estadistica->cantidad_intentos ?? 0}}
                 </h5>
             </div>
         </div>
@@ -24,7 +24,7 @@
             <div class="card-body p-3 d-flex flex-column justify-content-between">
                 <p class="text-xs mb-2 text-uppercase font-weight-bold text-secondary">Evaluaciones Aceptadas</p>
                 <h5 class="font-weight-bolder text-dark mb-0">
-                    {{ ($estadistica_estados["Accepted"] ?? 0) + ($estadistica_estados["Aceptado (Variación de Formato)"] ?? 0) }}
+                    {{ $certamen_estadistica->cantidad_resueltos ?? 0 }}
                 </h5>
             </div>
         </div>
@@ -34,7 +34,7 @@
             <div class="card-body p-3 d-flex flex-column justify-content-between">
                 <p class="text-xs mb-2 text-uppercase font-weight-bold text-secondary">Promedio Resueltos</p>
                 <h5 class="font-weight-bolder text-dark mb-0">
-                    {{round($certamen_estadistica->promedio_resolucion_problemas)}}
+                    {{ number_format((float)($certamen_estadistica->promedio_resolucion_problemas ?? 0), 1) }}
                 </h5>
             </div>
         </div>
@@ -44,7 +44,7 @@
             <div class="card-body p-3 d-flex flex-column justify-content-between">
                 <p class="text-xs mb-2 text-uppercase font-weight-bold text-secondary">Puntaje Promedio</p>
                 <h5 class="font-weight-bolder text-dark mb-0">
-                    {{round($certamen_estadistica->puntaje_promedio)}}
+                    {{ number_format((float)($certamen_estadistica->puntaje_promedio ?? 0), 1) }}
                 </h5>
             </div>
         </div>

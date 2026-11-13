@@ -63,16 +63,21 @@ $old_roles = old('roles')? old('roles') : [];
             @enderror
         </div>
     </div>
-    <p>La contraseña para ingresar a la plataforma sera el RUT sin dígito verificador</p>
+    <p>La contraseña para ingresar a la plataforma será el RUT sin dígito verificador</p>
 </div>
 <div class="row">
     <div class="col">
         <label class="form-control-label" for="roles">Roles*</label>
         <div class="form-group has-danger">
             @foreach ($roles as $role)  
+                @php
+                    $isRoleChecked = old('roles') !== null
+                        ? in_array($role->name, $old_roles)
+                        : (isset($user) && $user->hasRole($role->name));
+                @endphp
                 <div class="form-check form-check-inline" id="roles">
                     <input class="form-check-input" type="checkbox" id="rol_{{ $role->id }}"
-                        name="roles[]" value="{{ $role->name }}" @if((isset($user) && $user->hasRole($role->name))||(!isset($user) && in_array($role->name,$old_roles))) checked @endif @if(isset($user) && $role->name=="administrador" && $user->id == auth()->user()->id) disabled @endif>
+                        name="roles[]" value="{{ $role->name }}" @if($isRoleChecked) checked @endif @if(isset($user) && $role->name=="administrador" && $user->id == auth()->user()->id) disabled @endif>
                     <label class="form-check-label" for="rol_{{ $role->id }}">{{ ucFirst($role->name) }}</label>
                 </div>
             @endforeach
@@ -100,7 +105,9 @@ $old_roles = old('roles')? old('roles') : [];
                 <div class="row g-2" id="user-cursos-container">
                     @foreach($cursos as $curso)
                         @php
-                            $isChecked = (isset($user) && $user->cursos()->get()->contains($curso)) || (!isset($user) && in_array($curso->id, $old_cursos));
+                            $isChecked = old('cursos') !== null
+                                ? in_array($curso->id, $old_cursos)
+                                : (isset($user) && $user->cursos->contains('id', $curso->id));
                         @endphp
                         <div class="col-md-4 col-sm-6">
                             <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif" for="curso_{{ $curso->id }}">

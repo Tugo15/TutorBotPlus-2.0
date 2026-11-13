@@ -50,16 +50,16 @@
                                 @foreach ($banco_categorias as $categoria)
                                     <tr>
                                         <td>
-                                            <h6>{{ $categoria->nombre }}
+                                            <h6>{{ $categoria->nombre }}</h6>
                                         </td>
                                         <td class="align-middle text-end">
                                             <div class="d-flex px-3 py-1 justify-content-center align-items-center">
                                                 @can('editar certamen')
                                                     <form action="{{ route('certamen.eliminar_categoria', ['id_certamen' => $certamen->id, 'id_categoria'=>$categoria->id_categoria]) }}"
-                                                        method="POST">
+                                                        method="POST" onsubmit="return confirmarAccionForm(event, this, '¿Eliminar categoría del banco?', 'Se quitará la categoría {{ addslashes($categoria->nombre) }} de esta evaluación.', 'Sí, eliminar', true);">
                                                         @csrf
                                                         <button type="submit" class="btn btn-outline-danger delete_button"><i
-                                                                class="fa fa-fw fa-trash" onclick="deactivate_buttons()"></i></button>
+                                                                class="fa fa-fw fa-trash"></i></button>
                                                     </form>
                                                 @endcan
                                             </div>

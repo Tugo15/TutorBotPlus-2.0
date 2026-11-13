@@ -138,7 +138,7 @@
                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Estado</th>
                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Disponibilidad</th>
                 @canany(['editar problemas', 'eliminar problemas', 'ver informe del problema'])
-                    <th class="none text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Acciones</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Acciones</th>
                 @endcanany
             </tr>
         </thead>
@@ -165,6 +165,7 @@
                                         {{ $c->codigo }}
                                     </span>
                                 @else
+                                    <span class="d-none">{{ $problema->cursos->pluck('codigo')->implode(' ') }}</span>
                                     <button type="button" class="btn btn-xs btn-outline-primary mb-0 d-inline-flex align-items-center"
                                             onclick="verCursosModal('Cursos asignados al ejercicio: {{ addslashes($problema->nombre) }}', {{ json_encode($problema->cursos->map(fn($c) => ['codigo' => $c->codigo, 'nombre' => $c->nombre])) }})"
                                             title="Ver cursos asignados">
@@ -190,6 +191,7 @@
                                     @if($cats->count() == 1)
                                         <span class="badge border border-danger text-danger text-xxs bg-white">{{ $cats->first()->nombre }}</span>
                                     @else
+                                        <span class="d-none">{{ $cats->pluck('nombre')->implode(' ') }}</span>
                                         <button type="button" class="btn btn-xs btn-outline-danger mb-0 d-inline-flex align-items-center"
                                                 onclick="verEtiquetasModal('Categorías de {{ addslashes($problema->nombre) }}', {{ json_encode($cats->pluck('nombre')) }}, 'danger', 'fa-tags')"
                                                 title="Ver categorías asignadas">
@@ -211,6 +213,7 @@
                                         <span class="badge border border-dark text-dark text-xxs bg-white">{{ $lenguaje }}</span>
                                     @endforeach
                                 @else
+                                    <span class="d-none">{{ $langs->implode(' ') }}</span>
                                     <button type="button" class="btn btn-xs btn-outline-dark mb-0 d-inline-flex align-items-center"
                                             onclick="verEtiquetasModal('Lenguajes de {{ addslashes($problema->nombre) }}', {{ json_encode($langs->values()) }}, 'dark', 'fa-code')"
                                             title="Ver todos los lenguajes">
@@ -237,7 +240,7 @@
                             </span>
                         </div>
                     </td>
-                    <td class="align-middle text-center">
+                    <td class="align-middle text-center" data-order="{{ \App\Support\DateHelper::timestamp(method_exists($problema, 'getRawOriginal') ? $problema->getRawOriginal('fecha_inicio') : $problema->fecha_inicio, method_exists($problema, 'getRawOriginal') ? $problema->getRawOriginal('created_at') : $problema->created_at) }}">
                         <div class="d-flex flex-column justify-content-center text-center">
                             <span class="text-xs font-weight-bold text-dark">Inicio: {{ $problema->fecha_inicio ? $problema->fecha_inicio : 'Inmediata' }}</span>
                             <span class="text-xs text-secondary">Término: {{ $problema->fecha_termino ? $problema->fecha_termino : 'Indefinida' }}</span>
@@ -337,7 +340,7 @@
                                 @else
                                     @can('eliminar problemas')
                                         <form action="{{ route('problemas.eliminar', ['id' => $problema->id]) }}"
-                                            method="POST" onsubmit="event.preventDefault();submitFormEliminar('{{'el problema '.$problema->nombre}}', {{$problema->id}})" id="eliminarForm_{{$problema->id}}">
+                                            method="POST" onsubmit="event.preventDefault();submitFormEliminar('{{'el problema '.addslashes($problema->nombre)}}', {{$problema->id}})" id="eliminarForm_{{$problema->id}}">
                                             @csrf
                                             <button type="submit" class="btn btn-xs btn-outline-danger mb-0" title="Eliminar Problema"><i class="fa fa-fw fa-trash me-1"></i> Eliminar</button>
                                         </form>

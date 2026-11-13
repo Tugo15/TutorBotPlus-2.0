@@ -8,6 +8,7 @@
     <div class="container-fluid py-4">
         <form role="form" method="POST" action="{{ route('usuarios.update', ['id'=>$user->id]) }}" enctype="multipart/form-data" onsubmit="event.preventDefault();submitFormEditar('el usuario {{ $user->username }}')" id="editarForm">
             @csrf
+            <input type="hidden" name="id" value="{{ $user->id }}">
             <div class="card shadow-xs border mb-4">
                 <div class="card-header pb-0 border-bottom mb-0">
                     <div class="row align-items-center pb-2 gy-2">

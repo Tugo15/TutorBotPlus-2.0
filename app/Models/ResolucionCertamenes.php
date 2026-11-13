@@ -34,23 +34,43 @@ class ResolucionCertamenes extends Model
                     $this->fecha_finalizado = $certamen->fecha_termino;
                 }
                 $envios = $this->envios()->with('problema')->whereNotNull('termino')->orderBy('solucionado', 'asc')->get();
-                //Tener registro de las penalizaciones por problema, asi no sobrepasar el limite establecido por el administrador o profesor (si es que ha impuesto penalización por error y limite de penalización)
-                $problemas_penalizacion = [];
-                foreach ($this->ProblemasSeleccionadas as $problema_seleccionado) {
-                    $problemas_penalizacion[$problema_seleccionado->id_problema] = 0;
-                }
+                $this->puntaje_obtenido = 0;
+                $this->problemas_resueltos = 0;
+
+                $enviosPorProblema = [];
                 foreach ($envios as $envio) {
-                    if ($envio->solucionado==true) {
-                        $this->puntaje_obtenido += $envio->puntaje;
-                        $this->problemas_resueltos += 1;
-                    } else {
-                        $pen_error = $certamen->penalizacion_error ?? 0;
-                        $cant_pen = $certamen->cantidad_penalizacion ?? 0;
-                        if (isset($envio->problema->id) && isset($problemas_penalizacion[$envio->problema->id]) && $problemas_penalizacion[$envio->problema->id] < $cant_pen) {
-                            $this->puntaje_obtenido -= $pen_error;
-                            $problemas_penalizacion[$envio->problema->id] += 1;
+                    $probId = $envio->problema->id ?? optional($envio->ProblemaLenguaje)->id_problema;
+                    if ($probId) {
+                        $enviosPorProblema[$probId][] = $envio;
+                    }
+                }
+
+                $pen_error = $certamen->penalizacion_error ?? 0;
+                $cant_pen = $certamen->cantidad_penalizacion ?? 0;
+
+                foreach ($enviosPorProblema as $probId => $listaEnvios) {
+                    $resueltoProb = false;
+                    $maxPuntajeProb = 0;
+                    $erroresProb = 0;
+
+                    foreach ($listaEnvios as $env) {
+                        if (($env->puntaje ?? 0) > $maxPuntajeProb) {
+                            $maxPuntajeProb = (int)$env->puntaje;
+                        }
+                        if ($env->solucionado == true) {
+                            $resueltoProb = true;
+                        } else {
+                            $erroresProb++;
                         }
                     }
+
+                    if ($resueltoProb) {
+                        $this->problemas_resueltos += 1;
+                    }
+
+                    $erroresAplicados = min($erroresProb, $cant_pen);
+                    $puntajeNeto = max(0, $maxPuntajeProb - ($erroresAplicados * $pen_error));
+                    $this->puntaje_obtenido += $puntajeNeto;
                 }
                 $this->save();
                 DB::commit();
@@ -59,6 +79,76 @@ class ResolucionCertamenes extends Model
             }
         }
     }
+
+    public function reabrir_certamen(int $minutosAdicionales = 0, ?string $motivo = null, ?int $userId = null): void
+    {
+        try {
+            DB::beginTransaction();
+            $this->finalizado = false;
+            $this->fecha_finalizado = null;
+
+            $certamen = $this->certamen;
+            $ahora = Carbon::now();
+
+            if ($certamen) {
+                $fechaBase = Carbon::parse($certamen->fecha_termino);
+                if ($minutosAdicionales > 0) {
+                    if ($ahora->gt($fechaBase)) {
+                        $nuevaFecha = $ahora->copy()->addMinutes($minutosAdicionales);
+                    } else {
+                        $nuevaFecha = $fechaBase->copy()->addMinutes($minutosAdicionales);
+                    }
+                } elseif ($ahora->gte($fechaBase)) {
+                    $nuevaFecha = $ahora->copy()->addMinutes(15);
+                } else {
+                    $nuevaFecha = null;
+                }
+
+                if (\Illuminate\Support\Facades\Schema::hasColumn('resolucion_certamenes', 'fecha_termino_personalizada')) {
+                    $this->fecha_termino_personalizada = $nuevaFecha;
+                }
+                if (\Illuminate\Support\Facades\Schema::hasColumn('resolucion_certamenes', 'tiempo_adicional_minutos')) {
+                    $this->tiempo_adicional_minutos = $minutosAdicionales;
+                }
+                if (\Illuminate\Support\Facades\Schema::hasColumn('resolucion_certamenes', 'reabierto_por')) {
+                    $this->reabierto_por = $userId ?? (auth()->check() ? auth()->id() : null);
+                }
+                if (\Illuminate\Support\Facades\Schema::hasColumn('resolucion_certamenes', 'motivo_reapertura')) {
+                    $this->motivo_reapertura = $motivo;
+                }
+                if (\Illuminate\Support\Facades\Schema::hasColumn('resolucion_certamenes', 'veces_reabierto')) {
+                    $this->veces_reabierto = ($this->veces_reabierto ?? 0) + 1;
+                }
+            }
+
+            $this->save();
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            throw $e;
+        }
+    }
+
+    public function getFechaTerminoEfectivaAttribute(): Carbon
+    {
+        if (array_key_exists('fecha_termino_personalizada', $this->attributes) && !empty($this->attributes['fecha_termino_personalizada'])) {
+            return Carbon::parse($this->attributes['fecha_termino_personalizada']);
+        }
+        if ($this->certamen && !empty($this->certamen->fecha_termino)) {
+            $base = Carbon::parse($this->certamen->fecha_termino);
+            if (array_key_exists('tiempo_adicional_minutos', $this->attributes) && !empty($this->attributes['tiempo_adicional_minutos'])) {
+                return $base->copy()->addMinutes((int)$this->attributes['tiempo_adicional_minutos']);
+            }
+            return $base;
+        }
+        return Carbon::now()->addHour();
+    }
+
+    public function reabiertoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reabierto_por');
+    }
+
     public function usuario(): BelongsTo
     {
         return $this->BelongsTo(User::class, 'id_usuario');

@@ -23,7 +23,7 @@
                 </div>
                 <div class="card-body pt-3">
                     <div class="alert alert-info text-white text-xs mb-3" role="alert">
-                        <i class="fa fa-info-circle me-1"></i> Suba un archivo CSV o TXT delimitado por punto y coma (;) para registrar múltiples usuarios simultáneamente.
+                        <i class="fa fa-info-circle me-1"></i> Suba un archivo CSV o TXT delimitado por punto y coma (<code>;</code>) o coma (<code>,</code>) para registrar múltiples usuarios simultáneamente.
                     </div>
                     
                     <p class="text-sm">
@@ -53,10 +53,10 @@
                             <li class="mb-1"><strong>Apellido</strong> (ej. Macías)</li>
                             <li class="mb-1"><strong>Correo Electrónico</strong> (ej. jmacias@ejemplo.cl)</li>
                             <li class="mb-1"><strong>RUT</strong> (ej. 12345678-9)</li>
-                            <li class="mb-1"><strong>Códigos de Cursos</strong> (separados por coma dentro del campo, ej. INF-101,INF-102)</li>
-                            <li class="mb-1"><strong>Nombres de Roles</strong> (separados por coma dentro del campo, ej. estudiante,tutor)</li>
+                            <li class="mb-1"><strong>Códigos de Cursos</strong> (entre corchetes si hay varios, ej. <code>[INF-101,INF-102]</code>)</li>
+                            <li class="mb-1"><strong>Nombres de Roles</strong> (entre corchetes si hay varios, ej. <code>[estudiante,tutor]</code>)</li>
                         </ol>
-                        <p class="text-xs text-danger font-weight-bold mt-2 mb-0">⚠️ Nota: El archivo NO debe incluir fila de encabezados.</p>
+                        <p class="text-xs text-muted mt-2 mb-0"><i class="fa fa-check-circle text-success me-1"></i> Si el archivo incluye encabezados estándar (<code>username;firstname;...</code>), se omitirán automáticamente.</p>
                     </div>
 
                     <div class="mt-4 pt-3 border-top d-flex justify-content-center">

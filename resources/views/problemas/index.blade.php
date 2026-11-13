@@ -14,6 +14,63 @@
                         </div>
                         <div class="col-12 col-lg d-flex justify-content-center justify-content-lg-end align-items-center gap-2 flex-wrap">
                             @if(!isset($id_curso_activo) || !$id_curso_activo)
+                                <script>
+                                    function switchVista(mode) {
+                                        var vistaCarpetas = document.getElementById('vista-carpetas');
+                                        var vistaTodos = document.getElementById('vista-todos');
+                                        var btnCarpetas = document.getElementById('btnVistaCarpetas');
+                                        var btnTodos = document.getElementById('btnVistaTodos');
+                                        if (!vistaCarpetas || !vistaTodos) return;
+                                        if (mode === 'todos') {
+                                            vistaCarpetas.classList.add('d-none');
+                                            vistaCarpetas.style.display = 'none';
+                                            vistaTodos.classList.remove('d-none');
+                                            vistaTodos.style.display = 'block';
+                                            if (btnCarpetas) {
+                                                btnCarpetas.classList.remove('btn-primary', 'active');
+                                                btnCarpetas.classList.add('btn-outline-primary');
+                                            }
+                                            if (btnTodos) {
+                                                btnTodos.classList.remove('btn-outline-primary');
+                                                btnTodos.classList.add('btn-primary', 'active');
+                                            }
+                                            try {
+                                                localStorage.setItem('vista_problemas_pref', 'todos');
+                                                var url = new URL(window.location.href);
+                                                url.searchParams.set('vista', 'todos');
+                                                window.history.replaceState({}, '', url.toString());
+                                            } catch(e) {}
+                                            if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable('#table')) {
+                                                setTimeout(function() {
+                                                    try {
+                                                        var dt = $('#table').DataTable();
+                                                        dt.columns.adjust();
+                                                        if (dt.responsive && typeof dt.responsive.recalc === 'function') dt.responsive.recalc();
+                                                    } catch(e) {}
+                                                }, 50);
+                                            }
+                                        } else {
+                                            vistaTodos.classList.add('d-none');
+                                            vistaTodos.style.display = 'none';
+                                            vistaCarpetas.classList.remove('d-none');
+                                            vistaCarpetas.style.display = 'block';
+                                            if (btnTodos) {
+                                                btnTodos.classList.remove('btn-primary', 'active');
+                                                btnTodos.classList.add('btn-outline-primary');
+                                            }
+                                            if (btnCarpetas) {
+                                                btnCarpetas.classList.remove('btn-outline-primary');
+                                                btnCarpetas.classList.add('btn-primary', 'active');
+                                            }
+                                            try {
+                                                localStorage.setItem('vista_problemas_pref', 'carpetas');
+                                                var url = new URL(window.location.href);
+                                                url.searchParams.delete('vista');
+                                                window.history.replaceState({}, '', url.toString());
+                                            } catch(e) {}
+                                        }
+                                    }
+                                </script>
                                 <div class="btn-group me-1" role="group" id="btnGroupVista" aria-label="Modo de Vista">
                                     <button type="button" class="btn btn-xs btn-primary active mb-0" id="btnVistaCarpetas" onclick="switchVista('carpetas')">
                                         <i class="fa fa-folder-open me-1"></i> Vista Carpetas
@@ -183,17 +240,17 @@
                                             @endif
                                         </select>
                                     </div>
-                                    <div class="col-6 col-sm-3 col-md-3">
-                                        <select class="form-select form-select-sm text-xs" id="filtroDifProbDisponibles" style="padding-right: 2rem;">
-                                            <option value="">Dificultad (Todas)</option>
+                                    <div class="col-6 col-sm-6 col-md-3">
+                                        <select class="form-select form-select-sm text-xs" id="filtroDifProbDisponibles" style="padding-right: 2.2rem; min-width: 130px;">
+                                            <option value="">Dificultad: Todas</option>
                                             <option value="facil">Fácil</option>
                                             <option value="medio">Medio</option>
                                             <option value="dificil">Difícil</option>
                                         </select>
                                     </div>
-                                    <div class="col-6 col-sm-3 col-md-3">
-                                        <select class="form-select form-select-sm text-xs" id="filtroEstadoProbDisponibles" style="padding-right: 2rem;">
-                                            <option value="">Visibilidad (Todas)</option>
+                                    <div class="col-6 col-sm-6 col-md-3">
+                                        <select class="form-select form-select-sm text-xs" id="filtroEstadoProbDisponibles" style="padding-right: 2.2rem; min-width: 130px;">
+                                            <option value="">Visibilidad: Todas</option>
                                             <option value="visible">Solo Visibles</option>
                                             <option value="oculto">Solo Ocultos</option>
                                         </select>
@@ -295,7 +352,7 @@
     <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}?v={{ @filemtime(public_path('assets/js/DataTables/gestion_initialize_es_cl.js')) ?: '1.0' }}"></script>
     <script src="{{ asset('assets/js/alertas_administracion.js') }}?v={{ @filemtime(public_path('assets/js/alertas_administracion.js')) ?: '1.0' }}"></script> 
     <script>
-        function switchVista(mode) {
+        window.switchVista = function(mode) {
             var vistaCarpetas = document.getElementById('vista-carpetas');
             var vistaTodos = document.getElementById('vista-todos');
             var btnCarpetas = document.getElementById('btnVistaCarpetas');
@@ -305,7 +362,9 @@
 
             if (mode === 'todos') {
                 vistaCarpetas.classList.add('d-none');
+                vistaCarpetas.style.display = 'none';
                 vistaTodos.classList.remove('d-none');
+                vistaTodos.style.display = 'block';
                 
                 if (btnCarpetas) {
                     btnCarpetas.classList.remove('btn-primary', 'active');
@@ -316,16 +375,29 @@
                     btnTodos.classList.add('btn-primary', 'active');
                 }
 
-                localStorage.setItem('vista_problemas_pref', 'todos');
+                try {
+                    localStorage.setItem('vista_problemas_pref', 'todos');
+                    var url = new URL(window.location.href);
+                    url.searchParams.set('vista', 'todos');
+                    window.history.replaceState({}, '', url.toString());
+                } catch(e) {}
 
                 if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable('#table')) {
                     setTimeout(function() {
-                        $('#table').DataTable().columns.adjust().responsive.recalc();
-                    }, 100);
+                        try {
+                            var dt = $('#table').DataTable();
+                            dt.columns.adjust();
+                            if (dt.responsive && typeof dt.responsive.recalc === 'function') {
+                                dt.responsive.recalc();
+                            }
+                        } catch(err) {}
+                    }, 50);
                 }
             } else {
                 vistaTodos.classList.add('d-none');
+                vistaTodos.style.display = 'none';
                 vistaCarpetas.classList.remove('d-none');
+                vistaCarpetas.style.display = 'block';
                 
                 if (btnTodos) {
                     btnTodos.classList.remove('btn-primary', 'active');
@@ -336,9 +408,15 @@
                     btnCarpetas.classList.add('btn-primary', 'active');
                 }
 
-                localStorage.setItem('vista_problemas_pref', 'carpetas');
+                try {
+                    localStorage.setItem('vista_problemas_pref', 'carpetas');
+                    var url = new URL(window.location.href);
+                    url.searchParams.delete('vista');
+                    window.history.replaceState({}, '', url.toString());
+                } catch(e) {}
             }
-        }
+        };
+        var switchVista = window.switchVista;
 
         document.addEventListener("DOMContentLoaded", function() {
             var pref = localStorage.getItem('vista_problemas_pref');
@@ -349,6 +427,11 @@
                 switchVista('todos');
             }
 
+            var btnCarpetas = document.getElementById('btnVistaCarpetas');
+            var btnTodos = document.getElementById('btnVistaTodos');
+            if (btnCarpetas) btnCarpetas.addEventListener('click', function() { switchVista('carpetas'); });
+            if (btnTodos) btnTodos.addEventListener('click', function() { switchVista('todos'); });
+
             setTimeout(() => {
                 if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable('#table')) {
                     var table = $('#table').DataTable();
@@ -357,48 +440,84 @@
                         $('#custom-filters-src').children().appendTo('.custom-filters-container');
                         $('#custom-filters-src').remove();
                     }
+
+                    var storageKeyProblemas = typeof window.getTutorBotFilterKey === 'function'
+                        ? window.getTutorBotFilterKey('problemas_filters')
+                        : 'tb_filters_problemas';
+
+                    function saveProblemasFilters(estado, cursos, categorias) {
+                        try {
+                            localStorage.setItem(storageKeyProblemas, JSON.stringify({
+                                estado: estado,
+                                cursos: cursos,
+                                categorias: categorias
+                            }));
+                        } catch (e) {}
+                    }
+
+                    function updateProblemasLabels(rawCursos, rawCats) {
+                        var $lblCur = $('.lbl-curso-selected');
+                        if ($lblCur.length) {
+                            if (rawCursos.length === 0) $lblCur.html('Seleccionar...');
+                            else if (rawCursos.length === 1) $lblCur.html(rawCursos[0] + ' <span class="badge bg-primary text-xxs ms-1">1</span>');
+                            else $lblCur.html(rawCursos.length + ' selec. <span class="badge bg-primary text-xxs ms-1">' + rawCursos.length + '</span>');
+                        }
+                        var $lblCat = $('.lbl-cat-selected');
+                        if ($lblCat.length) {
+                            if (rawCats.length === 0) $lblCat.html('Seleccionar...');
+                            else if (rawCats.length === 1) $lblCat.html(rawCats[0] + ' <span class="badge bg-primary text-xxs ms-1">1</span>');
+                            else $lblCat.html(rawCats.length + ' selec. <span class="badge bg-primary text-xxs ms-1">' + rawCats.length + '</span>');
+                        }
+                    }
+
+                    function applyProblemasFilters(redrawFull) {
+                        var estado = $('#filterEstado').val() || '';
+                        var rawCursos = $('.filter-curso-chk:checked').map(function() { return this.value; }).get();
+                        var rawCats = $('.filter-categoria-chk:checked').map(function() { return this.value; }).get();
+                        var curRegex = rawCursos.length > 0 ? '(' + rawCursos.map(function(v) { return $.fn.dataTable.util.escapeRegex(v); }).join('|') + ')' : '';
+                        var catRegex = rawCats.length > 0 ? '(' + rawCats.map(function(v) { return $.fn.dataTable.util.escapeRegex(v); }).join('|') + ')' : '';
+
+                        table.column(1).search(curRegex, true, false);
+                        table.column(2).search(catRegex, true, false);
+                        table.column(4).search(estado);
+                        if (redrawFull) {
+                            table.draw();
+                        } else {
+                            table.draw(false);
+                        }
+                        updateProblemasLabels(rawCursos, rawCats);
+                        saveProblemasFilters(estado, rawCursos, rawCats);
+                    }
+
+                    try {
+                        var savedProbRaw = localStorage.getItem(storageKeyProblemas);
+                        if (savedProbRaw) {
+                            var savedProb = JSON.parse(savedProbRaw);
+                            if (savedProb && typeof savedProb.estado === 'string') {
+                                $('#filterEstado').val(savedProb.estado);
+                            }
+                            if (savedProb && Array.isArray(savedProb.cursos)) {
+                                $('.filter-curso-chk').each(function() {
+                                    $(this).prop('checked', savedProb.cursos.indexOf(this.value) !== -1);
+                                });
+                            }
+                            if (savedProb && Array.isArray(savedProb.categorias)) {
+                                $('.filter-categoria-chk').each(function() {
+                                    $(this).prop('checked', savedProb.categorias.indexOf(this.value) !== -1);
+                                });
+                            }
+                        }
+                    } catch (e) {}
+
+                    applyProblemasFilters(false);
                     
                     $('#filterEstado').on('change', function() {
-                        table.column(4).search(this.value).draw();
+                        applyProblemasFilters(true);
                     });
                     
-                    function updateColCursoFilters() {
-                        var cursos = $('.filter-curso-chk:checked').map(function() { return this.value; }).get();
-                        var curRegex = cursos.length > 0 ? '(' + cursos.join('|') + ')' : '';
-                        table.column(1).search(curRegex, true, false).draw();
-                        
-                        var $lbl = $('.lbl-curso-selected');
-                        if ($lbl.length) {
-                            if (cursos.length === 0) {
-                                $lbl.text('Seleccionar...');
-                            } else if (cursos.length === 1) {
-                                $lbl.text(cursos[0]);
-                            } else {
-                                $lbl.text(cursos.length + ' selec.');
-                            }
-                        }
-                    }
-                    
-                    $(document).on('change', '.filter-curso-chk', updateColCursoFilters);
-                    
-                    function updateCol1Filters() {
-                        var categorias = $('.filter-categoria-chk:checked').map(function() { return this.value; }).get();
-                        var catRegex = categorias.length > 0 ? '(' + categorias.join('|') + ')' : '';
-                        table.column(2).search(catRegex, true, false).draw();
-                        
-                        var $lbl = $('.lbl-cat-selected');
-                        if ($lbl.length) {
-                            if (categorias.length === 0) {
-                                $lbl.text('Seleccionar...');
-                            } else if (categorias.length === 1) {
-                                $lbl.text(categorias[0]);
-                            } else {
-                                $lbl.text(categorias.length + ' selec.');
-                            }
-                        }
-                    }
-                    
-                    $(document).on('change', '.filter-categoria-chk', updateCol1Filters);
+                    $(document).on('change', '.filter-curso-chk, .filter-categoria-chk', function() {
+                        applyProblemasFilters(true);
+                    });
                 }
             }, 500);
         });
@@ -438,6 +557,20 @@
             const filtroEstadoProb = document.getElementById('filtroEstadoProbDisponibles');
             const btnLimpiarFiltros = document.getElementById('btnLimpiarFiltrosProbDisp');
             const countVisibles = document.getElementById('countVisiblesProb');
+            const modalFilterStorageKey = typeof window.getTutorBotFilterKey === 'function'
+                ? window.getTutorBotFilterKey('problemas_modal_disp')
+                : 'tb_filters_problemas_modal_disp_' + window.location.pathname;
+
+            function saveModalFiltersState() {
+                try {
+                    localStorage.setItem(modalFilterStorageKey, JSON.stringify({
+                        term: buscadorProb ? buscadorProb.value : '',
+                        cat: filtroCatProb ? filtroCatProb.value : '',
+                        dif: filtroDifProb ? filtroDifProb.value : '',
+                        estado: filtroEstadoProb ? filtroEstadoProb.value : ''
+                    }));
+                } catch (e) {}
+            }
 
             function aplicarFiltrosModal() {
                 const termRaw = buscadorProb ? buscadorProb.value : '';
@@ -445,6 +578,7 @@
                 const cat = normalizarTexto(filtroCatProb ? filtroCatProb.value : '');
                 const dif = normalizarTexto(filtroDifProb ? filtroDifProb.value : '');
                 const estado = normalizarTexto(filtroEstadoProb ? filtroEstadoProb.value : '');
+                saveModalFiltersState();
 
                 if (btnLimpiarBuscador) {
                     btnLimpiarBuscador.classList.toggle('d-none', !termRaw);
@@ -492,7 +626,12 @@
             }
 
             if (buscadorProb) {
-                ['input', 'paste', 'keyup', 'search'].forEach(evento => {
+                let debounceBuscadorProb;
+                buscadorProb.addEventListener('input', function() {
+                    clearTimeout(debounceBuscadorProb);
+                    debounceBuscadorProb = setTimeout(aplicarFiltrosModal, 180);
+                });
+                ['paste', 'search'].forEach(evento => {
                     buscadorProb.addEventListener(evento, aplicarFiltrosModal);
                 });
             }
@@ -525,9 +664,24 @@
                     if (filtroCatProb) filtroCatProb.value = '';
                     if (filtroDifProb) filtroDifProb.value = '';
                     if (filtroEstadoProb) filtroEstadoProb.value = '';
+                    try { localStorage.removeItem(modalFilterStorageKey); } catch (e) {}
                     aplicarFiltrosModal();
                 });
             }
+
+            try {
+                const savedModalRaw = localStorage.getItem(modalFilterStorageKey);
+                if (savedModalRaw) {
+                    const savedModal = JSON.parse(savedModalRaw);
+                    if (savedModal) {
+                        if (buscadorProb && typeof savedModal.term === 'string') buscadorProb.value = savedModal.term;
+                        if (filtroCatProb && typeof savedModal.cat === 'string') filtroCatProb.value = savedModal.cat;
+                        if (filtroDifProb && typeof savedModal.dif === 'string') filtroDifProb.value = savedModal.dif;
+                        if (filtroEstadoProb && typeof savedModal.estado === 'string') filtroEstadoProb.value = savedModal.estado;
+                        aplicarFiltrosModal();
+                    }
+                }
+            } catch (e) {}
 
             document.querySelectorAll('.check-prob-disp').forEach(function(ch) {
                 ch.addEventListener('change', actualizarContadorProbDisp);
@@ -556,9 +710,6 @@
                 const checks = document.querySelectorAll('.check-prob-disp');
                 checks.forEach(function(ch) {
                     ch.checked = false;
-                });
-                actualizarContadorProbDisp();
-            });
                 });
                 actualizarContadorProbDisp();
             });

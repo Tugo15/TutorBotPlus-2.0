@@ -1,4 +1,4 @@
-@extends('layouts.app', ['class' => 'g-sidenav-show bg-gray-100'])
+@extends('layouts.app', ['class' => 'g-sidenav-show bg-gray-100', 'title_url' => 'Editar Curso'])
 
 @section('content')
     @include('layouts.navbars.auth.topnav', ['title' => 'Editar Curso'])
@@ -6,8 +6,9 @@
         @include('components.alert')
     </div>
     <div class="container-fluid py-4">
-        <form role="form" method="POST" action="{{ route('cursos.update', ['id'=>$curso->id]) }}" onsubmit="event.preventDefault();submitFormEditar('{{'el curso '.$curso->nombre}}')" id="editarForm">
+        <form role="form" method="POST" action="{{ route('cursos.update', ['id'=>$curso->id]) }}" onsubmit="event.preventDefault();submitFormEditar('{{'el curso '.addslashes($curso->nombre)}}')" id="editarForm">
             @csrf
+            <input type="hidden" name="id" value="{{ $curso->id }}">
             <div class="card shadow-xs border mb-4">
                 <div class="card-header pb-0 border-bottom mb-0">
                     <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">

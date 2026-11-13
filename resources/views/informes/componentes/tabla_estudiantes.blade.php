@@ -95,19 +95,33 @@
     </div>
 </div>
 @push('js')
-    <link href="{{ asset('assets/js/DataTables/datatables.min.css') }}" rel="stylesheet">
-    <script src="{{ asset('assets/js/DataTables/datatables.min.js') }}"></script>
-    <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}"></script>
+    @once
+        <link href="{{ asset('assets/js/DataTables/datatables.min.css') }}" rel="stylesheet">
+        <script src="{{ asset('assets/js/DataTables/datatables.min.js') }}"></script>
+        <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}"></script>
+    @endonce
     <script>
-        new DataTable('#tabla_estudiantes', {
+        var stateExtraEstProb = typeof window.tutorBotStateCallbacks === 'function'
+            ? window.tutorBotStateCallbacks('tabla_estudiantes_prob')
+            : { stateDuration: 60 * 60 * 24 * 30 };
+        var tablaEstProb = new DataTable('#tabla_estudiantes', Object.assign({
             language: typeof espaniol !== 'undefined' ? espaniol : {},
             responsive: true,
+            stateSave: true,
             order: [
                 [0, 'ASC']
             ],
             dom: typeof responsiveDomLayout !== 'undefined' ? responsiveDomLayout : "<'row mx-0 px-2 px-md-4 pb-2 pt-1 align-items-center gy-2'<'col-12 col-md-6 d-flex align-items-center flex-wrap'l><'col-12 col-md-6 d-flex align-items-center justify-content-md-end justify-content-start'f>>" +
                  "<'row mx-0'<'col-12 px-0 table-responsive'tr>>" +
                  "<'row mx-0 px-2 px-md-4 pt-3 pb-4 align-items-center gy-2'<'col-12 col-md-5 text-center text-md-start'i><'col-12 col-md-7 d-flex justify-content-center justify-content-md-end'p>>"
+        }, stateExtraEstProb));
+        tablaEstProb.on('page.dt', function () {
+            var el = document.getElementById('tabla_estudiantes');
+            if (el) {
+                var card = el.closest('.card') || el;
+                var offset = card.getBoundingClientRect().top + window.pageYOffset - 80;
+                window.scrollTo({ top: offset, behavior: 'smooth' });
+            }
         });
     </script>
 @endpush

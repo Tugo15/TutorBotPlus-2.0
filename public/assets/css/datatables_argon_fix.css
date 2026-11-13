@@ -128,13 +128,21 @@ html body div.dataTables_wrapper div.dataTables_paginate .paginate_button.curren
     border-color: #5e72e4 !important;
 }
 
-/* DataTables Header Sorting Arrows Fix */
-table.dataTable thead th.sorting,
-table.dataTable thead th.sorting_asc,
-table.dataTable thead th.sorting_desc {
+/* DataTables Header Sorting Arrows Fix (DataTables 1.x & 2.x) */
+html body table.dataTable thead th.dt-orderable-asc,
+html body table.dataTable thead th.dt-orderable-desc,
+html body table.dataTable thead th.dt-ordering-asc,
+html body table.dataTable thead th.dt-ordering-desc,
+html body table.dataTable thead th.sorting,
+html body table.dataTable thead th.sorting_asc,
+html body table.dataTable thead th.sorting_desc {
     position: relative !important;
     padding-right: 28px !important;
     cursor: pointer !important;
+}
+
+html body table.dataTable thead th span.dt-column-order {
+    right: 8px !important;
 }
 
 table.dataTable thead th.sorting:after,
@@ -619,5 +627,42 @@ html body div.dataTables_wrapper > .row {
     html body div.dataTables_wrapper div.dataTables_paginate .paginate_button {
         padding: 0.25rem 0.5rem !important;
         font-size: 0.78rem !important;
+    }
+}
+
+/* Ghost dropdown prevention on desktop: Argon sets display:block;opacity:0 without visibility:hidden */
+@media (min-width: 992px) {
+    .dropdown .dropdown-menu:not(.show),
+    .dropup .dropdown-menu:not(.show),
+    .dropend .dropdown-menu:not(.show),
+    .dropstart .dropdown-menu:not(.show) {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+    .dropdown .dropdown-menu.show,
+    .dropup .dropdown-menu.show,
+    .dropend .dropdown-menu.show,
+    .dropstart .dropdown-menu.show,
+    .dropdown-hover:hover > .dropdown-menu {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+}
+
+/* Mobile sidenav overlay crispness & backdrop interaction */
+@media (max-width: 1199.98px) {
+    .g-sidenav-show .sidenav,
+    html body #sidenav-main {
+        z-index: 1050 !important;
+        transition: transform 0.25s ease !important;
+    }
+    .g-sidenav-show.g-sidenav-pinned .sidenav,
+    html body.g-sidenav-pinned #sidenav-main {
+        transform: translateX(0) !important;
+        box-shadow: 0 20px 27px 0 rgba(0, 0, 0, 0.18) !important;
     }
 }

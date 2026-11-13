@@ -125,12 +125,12 @@
                                         <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Configuración</th>
                                         <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Disponibilidad</th>
                                         @canany(['editar certamen', 'eliminar certamen', 'ver informe del certamen'])
-                                            <th class="none text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Acciones</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Acciones</th>
                                         @endcanany
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse ($certamenes as $certamen)
+                                    @foreach ($certamenes as $certamen)
                                         <tr>
                                             <td class="align-middle text-center">
                                                 <div class="d-inline-flex px-2 py-1 justify-content-center text-center align-items-center">
@@ -143,7 +143,7 @@
                                             <td class="align-middle text-center">
                                                 <div class="d-flex flex-column gap-1 py-1 justify-content-center">
                                                     <div class="d-flex align-items-center justify-content-center gap-1">
-                                                        <span class="badge border border-primary text-primary text-xxs bg-white">{{ $certamen->curso->codigo }}</span>
+                                                        <span class="badge border border-primary text-primary text-xxs bg-white">{{ $certamen->curso->codigo ?? 'Sin Curso' }}</span>
                                                         @php
                                                             $difBadgeClass = ($certamen->dificultad == 'Fácil') ? 'border-success text-success' : (($certamen->dificultad == 'Difícil') ? 'border-danger text-danger' : 'border-warning text-warning');
                                                         @endphp
@@ -173,7 +173,7 @@
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td class="align-middle text-center">
+                                            <td class="align-middle text-center" data-order="{{ \App\Support\DateHelper::timestamp(method_exists($certamen, 'getRawOriginal') ? $certamen->getRawOriginal('fecha_inicio') : $certamen->fecha_inicio) }}">
                                                 <div class="d-flex flex-column justify-content-center text-center">
                                                     <span class="text-xs font-weight-bold text-dark">Inicio: {{ $certamen->fecha_inicio ? $certamen->fecha_inicio : 'No Definido' }}</span>
                                                     <span class="text-xs text-secondary">Término: {{ $certamen->fecha_termino ? $certamen->fecha_termino : 'No Definido' }}</span>
@@ -204,13 +204,7 @@
                                                 </td>
                                             @endcanany
                                         </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="6" class="text-center py-4 text-secondary">
-                                                No hay evaluaciones registradas en este curso.
-                                            </td>
-                                        </tr>
-                                    @endforelse
+                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
@@ -234,7 +228,7 @@
                                                         <label for="id_curso_{{ $certamen->id }}" class="form-control-label font-weight-bold text-sm">Curso / Sección Destino*</label>
                                                         <select class="form-select" name="id_curso" id="id_curso_{{ $certamen->id }}" required>
                                                             @foreach ($cursos as $c)
-                                                                <option value="{{ $c->id }}" {{ (isset($curso_activo) && $c->id == $curso_activo->id) || ($c->id == $certamen->id_curso) ? 'selected' : '' }}>
+                                                                <option value="{{ $c->id }}" {{ (isset($curso_activo) && $curso_activo && $c->id == $curso_activo->id) || ($c->id == $certamen->id_curso) ? 'selected' : '' }}>
                                                                     {{ $c->nombre }} ({{ $c->codigo }})
                                                                 </option>
                                                             @endforeach
@@ -286,9 +280,30 @@
                     
                     $('#custom-filters-src').children().appendTo('.custom-filters-container');
                     $('#custom-filters-src').remove();
+
+                    var storageKeyCertamen = typeof window.getTutorBotFilterKey === 'function'
+                        ? window.getTutorBotFilterKey('certamen_filters')
+                        : 'tb_filters_certamen';
+
+                    try {
+                        var savedRaw = localStorage.getItem(storageKeyCertamen);
+                        if (savedRaw) {
+                            var saved = JSON.parse(savedRaw);
+                            if (saved && typeof saved.dificultad === 'string') {
+                                $('#filterDificultad').val(saved.dificultad);
+                            }
+                        }
+                    } catch (e) {}
+
+                    var initDif = $('#filterDificultad').val() || '';
+                    table.column(1).search(initDif).draw(false);
                     
                     $('#filterDificultad').on('change', function() {
-                        table.column(1).search(this.value).draw();
+                        var val = this.value || '';
+                        try {
+                            localStorage.setItem(storageKeyCertamen, JSON.stringify({ dificultad: val }));
+                        } catch (e) {}
+                        table.column(1).search(val).draw();
                     });
                 }
             }, 500);

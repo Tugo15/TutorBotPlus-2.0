@@ -14,12 +14,16 @@
             <div class="card-body px-0 pt-0 pb-2">
                 <div class="row">
                     @if(!empty($lenguajes_estadistica) || !empty($estadistica_estados))
-                        <div class="col @if(empty($estadistica_estados)) d-none @endif">
-                            <canvas id="estadistica_estado" height="400"></canvas>
-                        </div>
-                        <div class="col @if(empty($lenguajes_estadistica)) d-none @endif">
-                            <canvas id="lenguajes_estadistica" height="400"></canvas>
-                        </div>
+                        @if(!empty($estadistica_estados))
+                            <div class="col">
+                                <canvas id="estadistica_estado" height="400"></canvas>
+                            </div>
+                        @endif
+                        @if(!empty($lenguajes_estadistica))
+                            <div class="col">
+                                <canvas id="lenguajes_estadistica" height="400"></canvas>
+                            </div>
+                        @endif
                     @else
                         <div class="col-12 text-center py-5">
                             <i class="fa fa-chart-pie text-muted fa-3x mb-3 opacity-5"></i>
@@ -44,21 +48,28 @@
         estadistica_estado_key.forEach(element => {
             switch(element){
                 case "Accepted":
+                case "Aceptado":
                     rgb_estados_envios.push('rgb(42,255,0)');
                     break;
                 case "Aceptado (Variación de Formato)":
                     rgb_estados_envios.push('rgb(45,206,137)');
                     break;
                 case "Wrong Answer":
+                case "Respuesta Incorrecta":
+                case "Rechazado":
                     rgb_estados_envios.push('rgb(255,45,0)');
                     break;
                 case "Time Limit Exceeded":
+                case "Tiempo Límite Excedido":
                     rgb_estados_envios.push('rgb(255,251,0)');
                     break;
                 case "Compilation Error":
+                case "Error de Compilación":
                     rgb_estados_envios.push('rgb(26,82,255)');
                     break;
                 case "Internal Error":
+                case "Error Interno":
+                case "Error de Ejecución":
                     rgb_estados_envios.push('rgb(255,193,29)')
                     break;
                 case "Exec Format Error":
@@ -71,7 +82,7 @@
         const data_1 = {
             labels: @json(array_keys($estadistica_estados)),
             datasets: [{
-                label: 'Estados de los envios',
+                label: 'Estados de los envíos',
                 data: @json(array_values($estadistica_estados)),
                 backgroundColor: rgb_estados_envios,
             }]
@@ -93,7 +104,7 @@
                 plugins: {
                     title: {
                         display: true,
-                        text: 'Estados de los envios',
+                        text: 'Estados de los envíos',
                         color: 'navy',
                         position: 'bottom',
                         align: 'center',
@@ -129,11 +140,15 @@
                 }
             },
         };
-        new Chart(
-            document.getElementById("estadistica_estado"), config_1
-        )
-        new Chart(
-            document.getElementById("lenguajes_estadistica"), config_2
-        )
+        if (document.getElementById("estadistica_estado")) {
+            new Chart(
+                document.getElementById("estadistica_estado"), config_1
+            );
+        }
+        if (document.getElementById("lenguajes_estadistica")) {
+            new Chart(
+                document.getElementById("lenguajes_estadistica"), config_2
+            );
+        }
     </script>
 @endpush

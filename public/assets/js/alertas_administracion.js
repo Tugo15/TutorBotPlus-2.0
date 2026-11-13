@@ -1,43 +1,97 @@
+var adminFormSubmitting = false;
+
 function submitFormEliminar(item, id) {
+    if (adminFormSubmitting) return;
     Swal.fire({
-        title: "¿Estás seguro que quieres eliminar "+item+"?",
+        title: "¿Estás seguro que quieres eliminar " + item + "?",
         icon: "warning",
         showDenyButton: true,
-        confirmButtonText: "Si",
+        confirmButtonText: "Sí",
         denyButtonText: `No`
     }).then((result) => {
         if (result.isConfirmed) {
-            document.getElementById('eliminarForm_'+id).submit();
+            var form = document.getElementById('eliminarForm_' + id);
+            if (form) {
+                adminFormSubmitting = true;
+                form.submit();
+            }
         }
-    })
+    });
+}
+
+function validarFormularioAdmin(form) {
+    if (!form) return true;
+    if (typeof window.syncAdminEditors === 'function') {
+        try { window.syncAdminEditors(); } catch (e) {}
+    }
+    if (typeof form.reportValidity === 'function' && !form.reportValidity()) {
+        return false;
+    }
+    var requiredHidden = form.querySelectorAll('input[type="hidden"][data-required-label]');
+    for (var i = 0; i < requiredHidden.length; i++) {
+        if (!requiredHidden[i].value || requiredHidden[i].value.trim() === '') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Campo obligatorio faltante',
+                text: 'Por favor complete el campo: ' + requiredHidden[i].getAttribute('data-required-label') + '.',
+                confirmButtonText: 'Entendido'
+            });
+            return false;
+        }
+    }
+    return true;
 }
 
 function submitFormCrear() {
+    if (adminFormSubmitting) return;
+    var form = document.getElementById('crearForm');
+    if (!validarFormularioAdmin(form)) return;
     Swal.fire({
         title: "¿Estás seguro de que los datos están correctos?",
         icon: "warning",
         showDenyButton: true,
-        confirmButtonText: "Si",
+        confirmButtonText: "Sí",
         denyButtonText: `No`
     }).then((result) => {
         if (result.isConfirmed) {
-            document.getElementById('crearForm').submit();
+            if (form) {
+                adminFormSubmitting = true;
+                form.submit();
+            }
         }
-    })
+    });
 }
 
 function submitFormEditar(item) {
+    if (adminFormSubmitting) return;
+    var form = document.getElementById('editarForm');
+    if (!validarFormularioAdmin(form)) return;
     Swal.fire({
-        title: "¿Estás seguro que quieres editar el item "+item+"?",
+        title: "¿Estás seguro que quieres editar " + item + "?",
         icon: "warning",
         showDenyButton: true,
-        confirmButtonText: "Si",
+        confirmButtonText: "Sí",
         denyButtonText: `No`
     }).then((result) => {
         if (result.isConfirmed) {
-            document.getElementById('editarForm').submit();
+            if (form) {
+                adminFormSubmitting = true;
+                form.submit();
+            }
         }
-    })
+    });
+}
+
+function toggleSelectionCards(containerId, state) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    var checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(function(cb) {
+        if (cb.disabled) return;
+        cb.checked = state;
+        var card = cb.closest('.selection-card');
+        if (card) card.classList.toggle('checked', state);
+    });
 }
 
 function verEtiquetasModal(titulo, etiquetas, tipoColor = 'info', icono = 'fa-tag') {
@@ -101,4 +155,28 @@ function verCursosModal(titulo, cursos) {
         confirmButtonText: '<i class="fa fa-times me-1"></i> Cerrar',
         confirmButtonColor: '#344767'
     });
+}
+
+function confirmarAccionForm(event, form, titulo, texto, confirmText, isDanger) {
+    if (event) event.preventDefault();
+    if (adminFormSubmitting) return false;
+    Swal.fire({
+        title: titulo || '¿Estás seguro?',
+        text: texto || '',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: confirmText || 'Sí, continuar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: isDanger === false ? '#344767' : '#d33',
+        cancelButtonColor: '#6c757d',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed && form) {
+            adminFormSubmitting = true;
+            var btn = form.querySelector('button[type="submit"]');
+            if (btn) btn.disabled = true;
+            form.submit();
+        }
+    });
+    return false;
 }

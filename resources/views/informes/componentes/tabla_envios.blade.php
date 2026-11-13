@@ -96,7 +96,15 @@
                                     <td class="text-center align-middle">
                                         <div class="d-flex px-2 py-1 justify-content-center text-center">
                                             <div class="d-flex flex-column justify-content-center text-center">
-                                                <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $nombreProb }}</h6>
+                                                <h6 class="mb-0 text-sm font-weight-bold">
+                                                    @if(isset($envio->token))
+                                                        <a href="{{ route('envios.ver', ['token' => $envio->token]) }}" class="text-dark text-decoration-none text-primary-hover" title="Ver Enunciado y Detalle del Envío">
+                                                            {{ $nombreProb }}
+                                                        </a>
+                                                    @else
+                                                        <span class="text-dark">{{ $nombreProb }}</span>
+                                                    @endif
+                                                </h6>
                                             </div>
                                         </div>
                                     </td>
@@ -110,11 +118,20 @@
                                     </td>
                                     <td class="align-middle text-center text-sm">
                                         @if($esAceptado)
+                                            <span class="d-none">Aceptado Accepted</span>
                                             <span class="badge bg-success text-xxs"><i class="fa fa-check-circle me-1"></i> {{ !empty($envio->variacion_formato) ? 'Aceptado (Variación de Formato)' : 'Aceptado' }}</span>
                                         @elseif($esError)
+                                            <span class="d-none">{{ $envio->estado ?? 'Rechazado' }} Rechazado Wrong Answer Error</span>
                                             <span class="badge bg-danger text-xxs"><i class="fa fa-times-circle me-1"></i> {{ $envio->resultado ?? $envio->estado ?? 'Rechazado' }}</span>
-                                        @else
+                                        @elseif(isset($envio->estado) && $envio->estado == 'En Proceso')
+                                            <span class="d-none">En Proceso In Process</span>
                                             <span class="badge bg-warning text-xxs"><i class="fa fa-clock me-1"></i> En Proceso</span>
+                                        @elseif(empty($envio->termino))
+                                            <span class="d-none">En Proceso In Process</span>
+                                            <span class="badge bg-warning text-xxs"><i class="fa fa-clock me-1"></i> En Proceso</span>
+                                        @else
+                                            <span class="d-none">Rechazado Sin Evaluación</span>
+                                            <span class="badge bg-secondary text-xxs"><i class="fa fa-exclamation-triangle me-1"></i> Sin Evaluación</span>
                                         @endif
                                         @if(isset($envio->cumple_restricciones))
                                             <div class="mt-1">
@@ -146,8 +163,8 @@
                                                 <i class="fa fa-code me-1"></i> Ver Código
                                             </button>
                                             @if(isset($envio->token))
-                                                <a class="btn btn-xs btn-outline-info mb-0" title="Ver Detalles del Envío" href="{{ route('envios.ver', ['token' => $envio->token]) }}">
-                                                    <i class="fa fa-info-circle me-1"></i> Detalles
+                                                <a class="btn btn-xs btn-outline-info mb-0" title="Ver Enunciado y Detalle del Envío" href="{{ route('envios.ver', ['token' => $envio->token]) }}">
+                                                    <i class="fa fa-info-circle me-1"></i> Ver Detalle
                                                 </a>
                                             @endif
                                         </div>
@@ -196,40 +213,108 @@
 </div>
 
 @push('js')
-    <link href="{{ asset('assets/js/DataTables/datatables.min.css') }}" rel="stylesheet">
-    <script src="{{ asset('assets/js/DataTables/datatables.min.js') }}"></script>
-    <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}"></script>
+    @once
+        <link href="{{ asset('assets/js/DataTables/datatables.min.css') }}" rel="stylesheet">
+        <script src="{{ asset('assets/js/DataTables/datatables.min.js') }}"></script>
+        <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}"></script>
+    @endonce
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             if (window.jQuery && $.fn.DataTable && !$.fn.DataTable.isDataTable('#tabla_envios_list')) {
-                var tableEnvios = $('#tabla_envios_list').DataTable({
+                var stateExtraEnvios = typeof window.tutorBotStateCallbacks === 'function'
+                    ? window.tutorBotStateCallbacks('tabla_envios_list')
+                    : { stateDuration: 60 * 60 * 24 * 30 };
+                var tableEnvios = $('#tabla_envios_list').DataTable(Object.assign({
                     language: typeof espaniol !== 'undefined' ? espaniol : {},
                     responsive: true,
+                    stateSave: true,
                     order: [[6, 'desc']],
                     dom: typeof responsiveDomLayout !== 'undefined' ? responsiveDomLayout : "<'row mx-0 px-2 px-md-4 pb-2 pt-1 align-items-center gy-2'<'col-12 col-md-6 d-flex align-items-center flex-wrap'l><'col-12 col-md-6 d-flex align-items-center justify-content-md-end justify-content-start'f>>" +
                          "<'row mx-0'<'col-12 px-0 table-responsive'tr>>" +
                          "<'row mx-0 px-2 px-md-4 pt-3 pb-4 align-items-center gy-2'<'col-12 col-md-5 text-center text-md-start'i><'col-12 col-md-7 d-flex justify-content-center justify-content-md-end'p>>"
+                }, stateExtraEnvios));
+
+                var storageKeyEnvios = typeof window.getTutorBotFilterKey === 'function'
+                    ? window.getTutorBotFilterKey('envios_filters')
+                    : 'tb_filters_envios_' + window.location.pathname;
+                var filtroProb = $('#filtroProblemaEnvio');
+
+                function saveEnviosFilters() {
+                    try {
+                        localStorage.setItem(storageKeyEnvios, JSON.stringify({
+                            estado: $('#filtroEstadoEnvio').val() || '',
+                            problema: filtroProb.length ? (filtroProb.val() || '') : '',
+                            estudiante: $('#filtroEstudianteEnvio').val() || ''
+                        }));
+                    } catch (e) {}
+                }
+
+                function applyEnviosFilters(redrawFull) {
+                    var estadoVal = $('#filtroEstadoEnvio').val() || '';
+                    var probVal = filtroProb.length ? (filtroProb.val() || '') : '';
+                    var estVal = $('#filtroEstudianteEnvio').val() || '';
+                    tableEnvios.column(4).search(estadoVal);
+                    if (filtroProb.length) {
+                        tableEnvios.column(1).search(probVal);
+                    }
+                    tableEnvios.column(0).search(estVal);
+                    if (redrawFull) {
+                        tableEnvios.draw();
+                    } else {
+                        tableEnvios.draw(false);
+                    }
+                    saveEnviosFilters();
+                }
+
+                // Al cambiar de página, desplazarse suavemente al encabezado de la tabla de envíos
+                tableEnvios.on('page.dt', function () {
+                    var el = document.getElementById('tabla_envios_list');
+                    if (el) {
+                        var card = el.closest('.card') || el;
+                        var offset = card.getBoundingClientRect().top + window.pageYOffset - 80;
+                        window.scrollTo({ top: offset, behavior: 'smooth' });
+                    }
                 });
+
+                try {
+                    var savedEnviosRaw = localStorage.getItem(storageKeyEnvios);
+                    if (savedEnviosRaw) {
+                        var savedEnvios = JSON.parse(savedEnviosRaw);
+                        if (savedEnvios) {
+                            if (typeof savedEnvios.estado === 'string') $('#filtroEstadoEnvio').val(savedEnvios.estado);
+                            if (filtroProb.length && typeof savedEnvios.problema === 'string') filtroProb.val(savedEnvios.problema);
+                            if (typeof savedEnvios.estudiante === 'string') $('#filtroEstudianteEnvio').val(savedEnvios.estudiante);
+                        }
+                    }
+                } catch (e) {}
+                applyEnviosFilters(false);
 
                 $('#filtroEstadoEnvio').on('change', function() {
-                    tableEnvios.column(4).search(this.value).draw();
+                    applyEnviosFilters(true);
                 });
 
-                var filtroProb = $('#filtroProblemaEnvio');
                 if (filtroProb.length) {
                     filtroProb.on('change', function() {
-                        tableEnvios.column(1).search(this.value).draw();
+                        applyEnviosFilters(true);
                     });
                 }
 
-                $('#filtroEstudianteEnvio').on('keyup change', function() {
-                    tableEnvios.column(0).search(this.value).draw();
+                var debounceEnvioEst;
+                $('#filtroEstudianteEnvio').on('input change', function(e) {
+                    if (e.type === 'change') {
+                        clearTimeout(debounceEnvioEst);
+                        applyEnviosFilters(true);
+                    } else {
+                        clearTimeout(debounceEnvioEst);
+                        debounceEnvioEst = setTimeout(function() { applyEnviosFilters(true); }, 180);
+                    }
                 });
 
                 $('#btnLimpiarFiltrosEnvio').on('click', function() {
                     $('#filtroEstadoEnvio').val('');
                     if (filtroProb.length) filtroProb.val('');
                     $('#filtroEstudianteEnvio').val('');
+                    try { localStorage.removeItem(storageKeyEnvios); } catch (e) {}
                     tableEnvios.search('').columns().search('').draw();
                 });
             }

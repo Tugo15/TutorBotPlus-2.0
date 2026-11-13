@@ -19,6 +19,9 @@
                         @endif
                         @php
                             $bodyProblemaSanitized = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $problema->body_problema ?? '');
+                            $bodyProblemaSanitized = preg_replace_callback('/```[\s\S]*?```|`[^`]*`|(?<![\*\s\\\\])\*(?![\*\s])/u', function ($m) {
+                                return $m[0] === '*' ? '\\*' : $m[0];
+                            }, $bodyProblemaSanitized);
                         @endphp
                         {!! Str::markdown($bodyProblemaSanitized, [
                             'html_input' => 'strip',
@@ -26,7 +29,7 @@
                         ]) !!}
 
                         @php
-                            $casos_ejemplo = $problema->casos_de_prueba()->where('ejemplo', true)->get();
+                            $casos_ejemplo = $problema->casos_de_prueba()->where('ejemplo', true)->orderBy('id', 'asc')->get();
                         @endphp
 
                         @if($casos_ejemplo->count() > 0)
@@ -78,9 +81,16 @@
                                 <a class="btn btn-outline-secondary btn-sm text-wrap"
                                     href="{{ route('problemas.pdf_enunciado', ['id_problema' => $problema->id]) }}"
                                     target="_blank" role="button">Descargar PDF Enunciado</a>
-                                <a class="btn btn-outline-secondary text-wrap btn-sm {{ isset($problema->body_editorial) ? '' : 'disabled' }}"
-                                    href="{{ route('problemas.ver_editorial', ['codigo' => $problema->codigo, 'id_curso' => $id_curso]) }}"
-                                    role="button">{{ isset($problema->body_editorial) ? 'Ver Pistas' : 'Pistas No Disponible' }}</a>
+                                @php
+                                    $tienePistas = !empty(trim($problema->body_editorial ?? ''));
+                                @endphp
+                                <a class="btn btn-outline-secondary text-wrap btn-sm {{ $tienePistas ? '' : 'disabled' }}"
+                                    @if($tienePistas)
+                                        href="{{ route('problemas.ver_editorial', ['codigo' => $problema->codigo, 'id_curso' => $id_curso]) }}"
+                                    @else
+                                        href="#" onclick="return false;" aria-disabled="true" tabindex="-1"
+                                    @endif
+                                    role="button">{{ $tienePistas ? 'Ver Pistas' : 'Pistas No Disponible' }}</a>
                                 @can('ver informe del problema')
                                     <a class="btn btn-outline-secondary text-wrap btn-sm"
                                         href="{{ route('informe.problema', ['id_curso' => $id_curso, 'id_problema' => $problema->id]) }}"

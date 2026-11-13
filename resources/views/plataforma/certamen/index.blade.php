@@ -16,7 +16,7 @@
                                 <th>Tiempo de Desarrollo</th>
                                 <th>Ejercicios Resueltos</th>
                                 <th>Fecha Inicio</th>
-                                <th>Fecha Termino</th>
+                                <th>Fecha Término</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -26,11 +26,11 @@
                                     <td>{{$evaluacion->curso->nombre}}</td>
                                     <td>{{$evaluacion->cantidad_problemas}}</td>
                                     <td>{{$evaluacion->penalizacion_error}}</td>
-                                    <td>{{$evaluacion->estado_finalizado? 'Si' : 'No'}}</td>
-                                    <td>{{isset($evaluacion->estado_finalizado)? gmdate('H:i:s', $evaluacion->tiempo_desarrollo) : "-"}}</td>
+                                    <td>{{$evaluacion->estado_finalizado ? 'Sí' : 'No'}}</td>
+                                    <td>{{isset($evaluacion->estado_finalizado) && isset($evaluacion->tiempo_desarrollo) ? gmdate('H:i:s', $evaluacion->tiempo_desarrollo) : "-"}}</td>
                                     <td>{{isset($evaluacion->maximo_resuelto)? $evaluacion->maximo_resuelto.'/'.$evaluacion->cantidad_problemas : '-/'.$evaluacion->cantidad_problemas}}</td>
-                                    <td>{{$evaluacion->fecha_inicio}}</td>
-                                    <td>{{$evaluacion->fecha_termino}}</td>
+                                    <td data-order="{{ \App\Support\DateHelper::timestamp(method_exists($evaluacion, 'getRawOriginal') ? $evaluacion->getRawOriginal('fecha_inicio') : ($evaluacion->fecha_inicio ?? null)) }}">{{$evaluacion->fecha_inicio}}</td>
+                                    <td data-order="{{ \App\Support\DateHelper::timestamp(method_exists($evaluacion, 'getRawOriginal') ? $evaluacion->getRawOriginal('fecha_termino') : ($evaluacion->fecha_termino ?? null)) }}">{{$evaluacion->fecha_termino}}</td>
                                 </tr>
                             @endforeach
                         </tbody>

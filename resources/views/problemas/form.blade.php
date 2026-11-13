@@ -8,9 +8,9 @@
 <div class="row">
     <div class="col-md-4">
         <div class="form-group has-danger">
-            <label for="example-text-input"
+            <label for="nombre"
                 class="form-control-label @error('nombre') is-invalid @enderror">Nombre*</label>
-            <input class="form-control" type="text" name="nombre" placeholder="Ej. Sumar A y B"
+            <input class="form-control" type="text" id="nombre" name="nombre" placeholder="Ej. Sumar A y B"
                 value="{{ isset($problema) ? old('nombre', $problema->nombre) : old('nombre') }}">
             @error('nombre')
                 <p class="text-danger text-xs pt-1"> {{ $message }} </p>
@@ -45,7 +45,7 @@
 
     <div class="col-md-6">
         <div class="form-group has-danger">
-            <label for="fecha_inicio" class="form-control-label @error('fecha_inicio') is-invalid @enderror">Fecha de
+            <label for="fecha_inicio_visible" class="form-control-label @error('fecha_inicio') is-invalid @enderror">Fecha de
                 Inicio</label>
             <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" role="switch" id="set_fecha_inicio" name="set_fecha_inicio" value="1" @if(isset($problema->fecha_inicio) || old('set_fecha_inicio', false) == true) checked @endif>
@@ -54,7 +54,7 @@
             <p class="opacity-25 fecha_inicio_class @if(!isset($problema->fecha_inicio) && old('set_fecha_inicio', false) == false) d-none @endif"><small>Indica la disponibilidad del problema, en caso de no ingresar estará disponible
                     de manera
                     inmediata.</small></p>
-            <input class="form-control fecha_inicio_class @if(!isset($problema->fecha_inicio) && old('set_fecha_inicio', false) == false) d-none @endif" type="date" name="fecha_inicio" id="fecha_inicio" @if(!isset($problema->fecha_inicio) && old('set_fecha_inicio', false) == false) disabled @endif value="{{isset($problema)? old('fecha_inicio', $problema->fecha_inicio) : old('fecha_inicio')}}">
+            <input class="form-control bg-white fecha_inicio_class @if(!isset($problema->fecha_inicio) && old('set_fecha_inicio', false) == false) d-none @endif" type="text" placeholder="Seleccionar fecha y hora..." name="fecha_inicio" id="fecha_inicio" @if(!isset($problema->fecha_inicio) && old('set_fecha_inicio', false) == false) disabled @endif value="{{isset($problema)? old('fecha_inicio', $problema->fecha_inicio) : old('fecha_inicio')}}">
             @error('fecha_inicio')
                 <p class="text-danger text-xs pt-1"> {{ $message }} </p>
             @enderror
@@ -62,14 +62,14 @@
     </div>
     <div class="col-md-6">
         <div class="form-group has-danger">
-            <label for="fecha_termino" class="form-control-label">Fecha de Termino</label>
+            <label for="fecha_termino_visible" class="form-control-label">Fecha de Término</label>
             <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" role="switch" id="set_fecha_termino" name="set_fecha_termino" value="1" @if(isset($problema->fecha_termino) || old('set_fecha_termino', false) == true) checked @endif>
-                <label class="form-check-label" for="set_fecha_termino">Establecer Fecha de Termino</label>
+                <label class="form-check-label" for="set_fecha_termino">Establecer Fecha de Término</label>
             </div>
-            <p class="opacity-25 fecha_termino_class @if(!isset($problema->fecha_termino) && old('set_fecha_termino', false) == false) d-none @endif"><small>Indica hasta que fecha estara disponible el problema, en caso de no ingresar
-                    estara disponible hasta que el usuario desee editarlo, eliminarlo o ocultarlo.</small></p>
-            <input class="form-control fecha_termino_class @if(!isset($problema->fecha_termino) && old('set_fecha_termino', false) == false) d-none @endif  @error('fecha_termino') is-invalid @enderror" type="date" name="fecha_termino"
+            <p class="opacity-25 fecha_termino_class @if(!isset($problema->fecha_termino) && old('set_fecha_termino', false) == false) d-none @endif"><small>Indica hasta qué fecha estará disponible el problema, en caso de no ingresar
+                    estará disponible hasta que el usuario desee editarlo, eliminarlo o ocultarlo.</small></p>
+            <input class="form-control bg-white fecha_termino_class @if(!isset($problema->fecha_termino) && old('set_fecha_termino', false) == false) d-none @endif  @error('fecha_termino') is-invalid @enderror" type="text" placeholder="Seleccionar fecha y hora..." name="fecha_termino"
                 id="fecha_termino" @if(!isset($problema->fecha_termino) && old('set_fecha_termino', false) == false) disabled @endif value="{{isset($problema)? old('fecha_termino', $problema->fecha_termino) : old('fecha_termino')}}">
             @error('fecha_termino')
                 <p class="text-danger text-xs pt-1"> {{ $message }} </p>
@@ -83,7 +83,7 @@
                 <input type="number" class="form-control  @error('memoria_limite') is-invalid @enderror"
                     name="memoria_limite" id="memoria_limite" placeholder="Ej. 5000 (5MB)" min="0"
                     value="{{ isset($problema) ? old('memoria_limite', $problema->memoria_limite) : old('memoria_limite') }}">
-                <span class="input-group-text" id="basic-addon1">KB</span>
+                <span class="input-group-text" id="addon-memoria">KB</span>
             </div>
             @error('memoria_limite')
                 <p class="text-danger text-xs pt-1"> {{ $message }} </p>
@@ -98,7 +98,7 @@
                 <input type="number" class="form-control @error('tiempo_limite') is-invalid @enderror"
                     name="tiempo_limite" id="tiempo_limite" placeholder="Ej. 5" min="0" step=".1"
                     value="{{ isset($problema) ? old('tiempo_limite', $problema->tiempo_limite) : old('tiempo_limite') }}">
-                <span class="input-group-text" id="basic-addon1">Segundos</span>
+                <span class="input-group-text" id="addon-tiempo">Segundos</span>
             </div>
             @error('tiempo_limite')
                 <p class="text-danger text-xs pt-1"> {{ $message }} </p>
@@ -113,15 +113,15 @@
         Mostrar el problema en el listado de problemas de los cursos.
     </label>
 </div>
-<label>Si no ingresa el tiempo y la memoria límite, el juez virtual no evaluara estos dos parametros.</label>
+<p class="text-xs text-secondary mb-2">Si no ingresa el tiempo y la memoria límite, el juez virtual no evaluará estos dos parámetros.</p>
 <div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom mt-4">
     <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-file-alt text-primary me-2"></i>Enunciado del Problema</h6>
 </div>
 <div class="row">
     <div class="col">
         <div class="form-group" style="position: relative; z-index: 9999;">
-            <label for="body_problema">Enunciado del Problema*</label>
-            <input type="hidden" id="body_problema" name="body_problema"
+            <span class="form-control-label d-block mb-1">Enunciado del Problema*</span>
+            <input type="hidden" id="body_problema" name="body_problema" data-required-label="Enunciado del Problema"
                 value="{{ isset($problema) ? old('body_problema', $problema->body_problema) : old('body_problema') }}">
             <div class="flex flex-col space-y-2">
                 <div id="editor" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" style="position: relative; z-index: 9999;"></div>
@@ -185,7 +185,7 @@
                         @if(count($categorias) > 8)
                             <div class="input-group input-group-sm me-1" style="max-width: 180px;">
                                 <span class="input-group-text bg-white py-0 px-2"><i class="fa fa-search text-xxs"></i></span>
-                                <input type="text" class="form-control text-xs py-1" placeholder="Filtrar categorías..." oninput="filtrarCardsSeleccion('prob-categorias-container', this.value)">
+                                <input type="text" id="filtro_categorias_problema" name="filtro_categorias_problema" aria-label="Filtrar categorías" class="form-control text-xs py-1" placeholder="Filtrar categorías..." oninput="filtrarCardsSeleccion('prob-categorias-container', this.value)">
                             </div>
                         @endif
                         <button type="button" class="btn btn-xs btn-outline-secondary mb-0 me-1" onclick="toggleSelectionCards('prob-categorias-container', true)">Seleccionar Todos</button>
@@ -223,40 +223,51 @@
                     </label>
                 </div>
 
+                @php
+                    $isSqlInit = (isset($problema) && $problema->sql) || old('sql');
+                @endphp
                 <div id="div_lenguajes">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h6 class="mb-0 text-sm font-weight-bold"><i class="fa fa-code text-danger me-2"></i>Lenguajes de Programación Permitidos*</h6>
-                            <p class="text-xs text-secondary mb-0">Marque los lenguajes en los cuales los estudiantes podrán resolver el problema:</p>
-                        </div>
-                        <div>
-                            <button type="button" class="btn btn-xs btn-outline-secondary mb-0 me-1" onclick="toggleSelectionCards('prob-lenguajes-container', true)">Seleccionar Todos</button>
-                            <button type="button" class="btn btn-xs btn-outline-secondary mb-0" onclick="toggleSelectionCards('prob-lenguajes-container', false)">Desmarcar Todos</button>
+                    <div id="sql-lenguaje-banner" class="alert alert-info border-0 text-white py-2 px-3 mb-2 {{ $isSqlInit ? '' : 'd-none' }}" role="alert">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <span class="text-xs font-weight-bold mb-0"><i class="fa fa-database me-2"></i>Modo SQL activo: Se asignará automáticamente <strong>SQLite (SQL)</strong> como único lenguaje permitido.</span>
+                            <span class="badge bg-white text-info text-xxs">SQLite</span>
                         </div>
                     </div>
-                    <div class="row g-2" id="prob-lenguajes-container">
-                        @foreach ($lenguajes as $lenguaje)
-                            @php
-                                $isDisabled = (isset($problema) && $problema->sql) || old('sql');
-                                $hasSavedLenguajes = isset($problema) && $problema->lenguajes->isNotEmpty();
-                                if (old('lenguajes')) {
-                                    $isChecked = in_array($lenguaje->id, old('lenguajes'));
-                                } elseif ($hasSavedLenguajes) {
-                                    $isChecked = $problema->lenguajes->pluck('id')->contains($lenguaje->id);
-                                } else {
-                                    $isChecked = !$isDisabled;
-                                }
-                            @endphp
-                            <div class="col-md-3 col-sm-6">
-                                <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif @if($isDisabled) disabled @endif" for="prob_leng_{{ $lenguaje->id }}">
-                                    <input class="lenguaje-checkbox" type="checkbox" id="prob_leng_{{ $lenguaje->id }}" name="lenguajes[]" value="{{ $lenguaje->id }}" @if($isChecked) checked @endif @if($isDisabled) disabled @endif onchange="this.closest('.selection-card').classList.toggle('checked', this.checked)">
-                                    <div class="selection-card-content">
-                                        <div class="selection-card-title">{{ $lenguaje->nombre }}</div>
-                                        <div class="selection-card-subtitle"><span class="badge bg-info text-xxs px-2 py-1">{{ $lenguaje->abreviatura }}</span></div>
-                                    </div>
-                                </label>
+                    <div id="lenguajes-normales-wrapper" class="{{ $isSqlInit ? 'd-none' : '' }}">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6 class="mb-0 text-sm font-weight-bold"><i class="fa fa-code text-danger me-2"></i>Lenguajes de Programación Permitidos*</h6>
+                                <p class="text-xs text-secondary mb-0">Marque los lenguajes en los cuales los estudiantes podrán resolver el problema:</p>
                             </div>
-                        @endforeach
+                            <div>
+                                <button type="button" class="btn btn-xs btn-outline-secondary mb-0 me-1" onclick="toggleSelectionCards('prob-lenguajes-container', true)">Seleccionar Todos</button>
+                                <button type="button" class="btn btn-xs btn-outline-secondary mb-0" onclick="toggleSelectionCards('prob-lenguajes-container', false)">Desmarcar Todos</button>
+                            </div>
+                        </div>
+                        <div class="row g-2" id="prob-lenguajes-container">
+                            @foreach ($lenguajes as $lenguaje)
+                                @php
+                                    $isDisabled = $isSqlInit;
+                                    $hasSavedLenguajes = isset($problema) && $problema->lenguajes->isNotEmpty();
+                                    if (old('lenguajes')) {
+                                        $isChecked = in_array($lenguaje->id, old('lenguajes'));
+                                    } elseif ($hasSavedLenguajes) {
+                                        $isChecked = $problema->lenguajes->pluck('id')->contains($lenguaje->id);
+                                    } else {
+                                        $isChecked = !$isDisabled;
+                                    }
+                                @endphp
+                                <div class="col-md-3 col-sm-6">
+                                    <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif @if($isDisabled) disabled @endif" for="prob_leng_{{ $lenguaje->id }}">
+                                        <input class="lenguaje-checkbox" type="checkbox" id="prob_leng_{{ $lenguaje->id }}" name="lenguajes[]" value="{{ $lenguaje->id }}" @if($isChecked) checked @endif @if($isDisabled) disabled @endif onchange="this.closest('.selection-card').classList.toggle('checked', this.checked)">
+                                        <div class="selection-card-content">
+                                            <div class="selection-card-title">{{ $lenguaje->nombre }}</div>
+                                            <div class="selection-card-subtitle"><span class="badge bg-info text-xxs px-2 py-1">{{ $lenguaje->abreviatura }}</span></div>
+                                        </div>
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                     @error('lenguajes')
                         <p class="text-danger text-xs pt-2 mb-0"> {{ $message }} </p>
@@ -266,7 +277,7 @@
         </div>
     </div>
 </div>
-<div id="sql_file" class="card border shadow-xs mb-3 p-3 @if ((isset($problema) && $problema->sql == false) || (!isset($problema) && old('sql', false) == false)) ) d-none @endif">
+<div id="sql_file" class="card border shadow-xs mb-3 p-3 @if ((isset($problema) && $problema->sql == false) || (!isset($problema) && old('sql', false) == false)) d-none @endif">
     <h6 class="mb-1 text-sm font-weight-bold text-dark"><i class="fa fa-database text-warning me-2"></i>Base de Datos SQLite (Solo para problemas de SQL)</h6>
     <p class="text-xs text-secondary mb-3">Suba el archivo de la base de datos en .sqlite comprimido en .zip que se utilizará para realizar la evaluación de consultas SQL.</p>
     <div class="mb-3">

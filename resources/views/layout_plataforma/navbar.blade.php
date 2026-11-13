@@ -24,18 +24,20 @@
                     </a>
                     <ul class="dropdown-menu">
                         @can('acceso al panel de administración')
-                            <li><a class="dropdown-item" href="{{ route('home') }}">Ir al Panel de Admnistración</a>
+                            <li><a class="dropdown-item" href="{{ route('home') }}">Ir al Panel de Administración</a>
                             </li>
                         @endcan
                         @auth
                             <li><a class="dropdown-item" href="{{ route('ver.perfil') }}">Mi Perfil</a>
                             </li>
-                            <form role="form" method="post" action="{{ route('logout') }}" id="logout-form">
-                                @csrf
-                                <li><a class="dropdown-item"
+                            <li>
+                                <form role="form" method="post" action="{{ route('logout') }}" id="logout-form" class="m-0">
+                                    @csrf
+                                    <a class="dropdown-item"
                                         onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-                                        href="{{ route('logout') }}">Cerrar Sesión</a></li>
-                            </form>
+                                        href="{{ route('logout') }}">Cerrar Sesión</a>
+                                </form>
+                            </li>
                         @endauth
                         @guest
                             <li><a class="dropdown-item" href="{{ route('login') }}">Iniciar Sesión</a></li>

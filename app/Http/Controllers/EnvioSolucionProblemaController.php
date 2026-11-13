@@ -33,7 +33,7 @@ class EnvioSolucionProblemaController extends Controller
         })
         ->join('resolver', 'resolver.id', '=', 'envio_solucion_problemas.id_resolver')
         ->join('problemas', 'problemas.id', '=', 'resolver.id_problema')
-        ->join('casos__pruebas', 'casos__pruebas.id_problema', '=', 'problemas.id')
+        ->leftJoin('casos__pruebas', 'casos__pruebas.id_problema', '=', 'problemas.id')
         ->join('lenguajes_programaciones', 'lenguajes_programaciones.id', '=', 'resolver.id_lenguaje')
         ->join('cursa', 'cursa.id', '=', 'envio_solucion_problemas.id_cursa')
         ->join('cursos', 'cursos.id', '=', 'cursa.id_curso')
@@ -47,6 +47,8 @@ class EnvioSolucionProblemaController extends Controller
             $envios_query = $envios_query->where('problemas.id', '=', $request->id_problema);
         }
         $envios = $envios_query->get()->map(function ($envio){
+            $envio->inicio_ts = \App\Support\DateHelper::timestamp($envio->inicio ?? null);
+            $envio->termino_ts = \App\Support\DateHelper::timestamp($envio->termino ?? null);
             $envio->inicio = Carbon::parse($envio->inicio)->locale('es_ES')->isoFormat('lll');
             $envio->termino = Carbon::parse($envio->termino)->locale('es_ES')->isoFormat('lll');
             return $envio;
@@ -66,6 +68,12 @@ class EnvioSolucionProblemaController extends Controller
         try {
             DB::beginTransaction();
             if(isset($request->id_certamen)){
+                $resCertCheck = \App\Models\ResolucionCertamenes::find($request->id_certamen);
+                if ($resCertCheck && $resCertCheck->finalizado) {
+                    DB::rollBack();
+                    return redirect()->route('certamenes.ver', ['id_certamen' => $resCertCheck->id_certamen])
+                        ->with('error', 'No puedes enviar soluciones porque la evaluación ya ha sido finalizada.');
+                }
                 $envio = EnvioSolucionProblema::where('id_resolver', '=', $request->id_resolver)->where('id_certamen', '=', $request->id_certamen)->orderBy('created_at', 'DESC')->first();
             }else{
                 $envio = EnvioSolucionProblema::where('id_resolver', '=', $request->id_resolver)->where('id_cursa', '=', $request->id_cursa)->orderBy('created_at', 'DESC')->first();

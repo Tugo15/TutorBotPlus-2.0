@@ -14,13 +14,13 @@
                                         src="{{ asset('img/ico_tutorbot.png') }}" alt="" style="width:150px" id="mobileIcon">
                                     </div>
                                     <h4 class="font-weight-bolder">Recupera tu Contraseña</h4>
-                                    <p class="mb-0">Ingresa tu correo electronico</p>
+                                    <p class="mb-0">Ingresa tu correo electrónico</p>
                                 </div>
                                 <div class="card-body">
-                                    <form method="POST" action="{{ route('password.email') }}">
+                                    <form method="POST" action="{{ route('password.email') }}" onsubmit="const btn = this.querySelector('button[type=submit]'); if (btn.disabled) { return false; } btn.disabled = true;">
                                         @csrf
                                         <div class="flex flex-col mb-3">
-                                            <input type="email" name="email" class="form-control form-control-lg" placeholder="Ej. estudiante@tutorbot.com" value="{{ old('email') }}" aria-label="Email">
+                                            <input type="email" name="email" class="form-control form-control-lg" placeholder="Ej. estudiante@tutorbot.com" value="{{ old('email') }}" aria-label="Email" autocomplete="email" maxlength="255">
                                             @error('email') <p class="text-danger text-xs pt-1"> {{$message}} </p>@enderror
                                         </div>
                                         <div class="text-center">
@@ -42,7 +42,7 @@
                                 style="background-image: url('{{asset('img/ucsc-image.jpg')}}');
                                         background-size: cover;">
                                 <span class="mask bg-gradient-primary opacity-6"></span>
-                                <h4 class="mt-5 text-white font-weight-bolder position-relative">Universidad Católica de la Santisima Concepción</h4>
+                                <h4 class="mt-5 text-white font-weight-bolder position-relative">Universidad Católica de la Santísima Concepción</h4>
                                 <p class="text-white position-relative">Plataforma de Juez Virtual</p>
                             </div>
                         </div>

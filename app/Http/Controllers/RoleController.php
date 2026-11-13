@@ -26,14 +26,18 @@ class RoleController extends Controller
     }
 
     public function editar(Request $request){
-        $rol = Role::find($request->id);
+        $id = $request->input('id') ?? $request->id;
+        $rol = $id ? Role::find($id) : null;
+        if (!$rol || strtolower($rol->name) === 'administrador') {
+            return redirect()->route('roles.index')->with('error', 'El rol solicitado no fue encontrado.');
+        }
         $permisos = Permission::all();
         return view('roles.editar', compact('rol', 'permisos'));
     }
 
     public function store(Request $request){
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:roles,name',
             'permisos'=> 'required|array|min:1',
         ]);
         
@@ -52,26 +56,37 @@ class RoleController extends Controller
     }
 
     public function update(Request $request){
+        $id = $request->input('id') ?? $request->id;
+        $rol = $id ? Role::find($id) : null;
+        if (!$rol || strtolower($rol->name) === 'administrador') {
+            return redirect()->route('roles.index')->with('error', 'El rol solicitado no fue encontrado.');
+        }
+
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('roles', 'name')->ignore($rol->id)],
+            'permisos' => ['required', 'array', 'min:1'],
         ]);
         try{
             DB::beginTransaction();
-            $rol = Role::find($request->id);
             $rol->name = $request->input('name');
             $rol->save();
-            $rol->syncPermissions($request->input('permisos'));
+            $rol->syncPermissions($request->input('permisos', []));
             DB::commit();
         }catch(\Exception $e){
+            DB::rollBack();
             return redirect()->route('roles.index')->with('error', $e->getMessage());
         }
         return redirect()->route('roles.index')->with('success','El rol ha sido modificado');
     }
     public function eliminar(Request $request)
     {
+        $id = $request->input('id') ?? $request->id;
+        $rol = $id ? Role::find($id) : null;
+        if (!$rol || strtolower($rol->name) === 'administrador') {
+            return redirect()->route('roles.index')->with('error', 'El rol solicitado no fue encontrado o no puede ser eliminado.');
+        }
         try{
             DB::beginTransaction();
-            $rol = Role::find($request->id);
             $rol->delete();
             DB::commit();
         }catch(\PDOException $e){

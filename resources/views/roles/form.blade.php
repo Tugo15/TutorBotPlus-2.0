@@ -67,7 +67,10 @@
                         <div class="row g-2">
                             @foreach ($groupItems as $permiso)
                                 @php
-                                    $isChecked = isset($rol) && $rol->hasPermissionTo($permiso->name);
+                                    $old_permisos = old('permisos', []);
+                                    $isChecked = old('permisos') !== null
+                                        ? in_array($permiso->name, (array) $old_permisos)
+                                        : (isset($rol) && $rol->hasPermissionTo($permiso->name));
                                 @endphp
                                 <div class="col-md-3 col-sm-6">
                                     <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif" for="permiso_{{ $permiso->id }}">
@@ -90,6 +93,18 @@
 </div>
 
 <script>
+    function toggleSelectionCards(containerId, state) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        var checkboxes = container.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(function(cb) {
+            if (cb.disabled) return;
+            cb.checked = state;
+            var card = cb.closest('.selection-card');
+            if (card) card.classList.toggle('checked', state);
+        });
+    }
+
     function toggleGroupCheckboxes(btn) {
         var cardBody = btn.closest('.card-body');
         if (!cardBody) return;

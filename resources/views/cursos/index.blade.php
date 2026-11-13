@@ -65,7 +65,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="align-middle text-center text-sm">
+                                        <td class="align-middle text-center text-sm" data-order="{{ $curso->created_at ? \Carbon\Carbon::parse($curso->created_at)->timestamp : 0 }}">
                                             <p class="text-xs text-secondary font-weight-bold mb-0">
                                                 {{ $curso->fecha ? $curso->fecha : 'Desconocido' }}</p>
                                         </td>
