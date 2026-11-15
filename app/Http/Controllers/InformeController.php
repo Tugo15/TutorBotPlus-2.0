@@ -187,6 +187,10 @@ class InformeController extends Controller
         ->whereNotNull('envio_solucion_problemas.termino')
         ->get()->countBy('nombre')->toArray();
 
+        $diffSecExpr = DB::getDriverName() === 'sqlite'
+            ? 'MAX(CAST((julianday(envio_solucion_problemas.termino) - julianday(envio_solucion_problemas.inicio)) * 86400 AS INTEGER), 0)'
+            : 'GREATEST(TIMESTAMPDIFF(SECOND, envio_solucion_problemas.inicio, envio_solucion_problemas.termino), 0)';
+
         $probBase = Problemas::withCount('casos_de_prueba')->find($request->id_problema);
         $envioStatsProb = DB::table('envio_solucion_problemas')
             ->join('resolver', 'resolver.id', '=', 'envio_solucion_problemas.id_resolver')
@@ -198,7 +202,7 @@ class InformeController extends Controller
             ->select(
                 DB::raw('COUNT(envio_solucion_problemas.id) as cantidad_intentos'),
                 DB::raw('COALESCE(SUM(CASE WHEN envio_solucion_problemas.solucionado = 1 THEN 1 ELSE 0 END), 0) as cantidad_resueltos'),
-                DB::raw('COALESCE(SUM(GREATEST(TIMESTAMPDIFF(SECOND, envio_solucion_problemas.inicio, envio_solucion_problemas.termino), 0)), 0) as tiempo_total')
+                DB::raw("COALESCE(SUM($diffSecExpr), 0) as tiempo_total")
             )
             ->first();
 
@@ -293,6 +297,10 @@ class InformeController extends Controller
         ->where('cursa.id_curso', '=', $request->id_curso)
         ->whereNotNull('envio_solucion_problemas.termino')
         ->get()->countBy('nombre')->toArray();
+        $diffSecExpr = DB::getDriverName() === 'sqlite'
+            ? 'MAX(CAST((julianday(envio_solucion_problemas.termino) - julianday(envio_solucion_problemas.inicio)) * 86400 AS INTEGER), 0)'
+            : 'GREATEST(TIMESTAMPDIFF(SECOND, envio_solucion_problemas.inicio, envio_solucion_problemas.termino), 0)';
+
         // Estadísticas reales agregadas desde envios completados del curso
         $envioStatsCurso = DB::table('envio_solucion_problemas')
             ->join('cursa', 'cursa.id', '=', 'envio_solucion_problemas.id_cursa')
@@ -302,7 +310,7 @@ class InformeController extends Controller
             ->select(
                 DB::raw('COUNT(envio_solucion_problemas.id) as sum_cantidad_intentos'),
                 DB::raw('COALESCE(SUM(CASE WHEN envio_solucion_problemas.solucionado = 1 THEN 1 ELSE 0 END), 0) as sum_cantidad_resueltos'),
-                DB::raw('COALESCE(SUM(GREATEST(TIMESTAMPDIFF(SECOND, envio_solucion_problemas.inicio, envio_solucion_problemas.termino), 0)), 0) as sum_tiempo_total')
+                DB::raw("COALESCE(SUM($diffSecExpr), 0) as sum_tiempo_total")
             )
             ->first();
 
@@ -337,7 +345,7 @@ class InformeController extends Controller
                 DB::raw('COUNT(DISTINCT envio_solucion_problemas.id) as cantidad_intentos'),
                 DB::raw('COALESCE(SUM(CASE WHEN envio_solucion_problemas.solucionado = 1 THEN 1 ELSE 0 END), 0) as cantidad_resueltos'),
                 DB::raw('COUNT(DISTINCT solicitud_ra_llms.id) as cant_retroalimentacion_solicitada'),
-                DB::raw('COALESCE(SUM(GREATEST(TIMESTAMPDIFF(SECOND, envio_solucion_problemas.inicio, envio_solucion_problemas.termino), 0)), 0) as tiempo_total')
+                DB::raw("COALESCE(SUM($diffSecExpr), 0) as tiempo_total")
             );
 
         $dataset_problemas = DB::table('problemas')

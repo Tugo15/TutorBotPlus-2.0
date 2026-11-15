@@ -25,22 +25,34 @@ return new class extends Migration
         }
 
         // 2. Índices compuestos para acelerar consultas de informes y certámenes
-        Schema::table('envio_solucion_problemas', function (Blueprint $table) {
-            $indexes = collect(DB::select("SHOW INDEX FROM envio_solucion_problemas"))->pluck('Key_name')->toArray();
-            if (!in_array('idx_envio_certamen_termino_sol', $indexes)) {
-                $table->index(['id_certamen', 'termino', 'solucionado'], 'idx_envio_certamen_termino_sol');
-            }
-            if (!in_array('idx_envio_cursa_resolver_termino', $indexes)) {
-                $table->index(['id_cursa', 'id_resolver', 'termino'], 'idx_envio_cursa_resolver_termino');
-            }
-        });
+        try {
+            Schema::table('envio_solucion_problemas', function (Blueprint $table) {
+                $indexes = DB::getDriverName() === 'mysql'
+                    ? collect(DB::select("SHOW INDEX FROM envio_solucion_problemas"))->pluck('Key_name')->toArray()
+                    : [];
+                if (!in_array('idx_envio_certamen_termino_sol', $indexes)) {
+                    $table->index(['id_certamen', 'termino', 'solucionado'], 'idx_envio_certamen_termino_sol');
+                }
+                if (!in_array('idx_envio_cursa_resolver_termino', $indexes)) {
+                    $table->index(['id_cursa', 'id_resolver', 'termino'], 'idx_envio_cursa_resolver_termino');
+                }
+            });
+        } catch (\Throwable $e) {
+            // Índices ya existentes
+        }
 
-        Schema::table('evaluacion_solucions', function (Blueprint $table) {
-            $indexes = collect(DB::select("SHOW INDEX FROM evaluacion_solucions"))->pluck('Key_name')->toArray();
-            if (!in_array('idx_eval_sol_envio_estado', $indexes)) {
-                $table->index(['id_envio', 'estado'], 'idx_eval_sol_envio_estado');
-            }
-        });
+        try {
+            Schema::table('evaluacion_solucions', function (Blueprint $table) {
+                $indexes = DB::getDriverName() === 'mysql'
+                    ? collect(DB::select("SHOW INDEX FROM evaluacion_solucions"))->pluck('Key_name')->toArray()
+                    : [];
+                if (!in_array('idx_eval_sol_envio_estado', $indexes)) {
+                    $table->index(['id_envio', 'estado'], 'idx_eval_sol_envio_estado');
+                }
+            });
+        } catch (\Throwable $e) {
+            // Índice ya existente
+        }
     }
 
     /**
@@ -48,22 +60,32 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('envio_solucion_problemas', function (Blueprint $table) {
-            $indexes = collect(DB::select("SHOW INDEX FROM envio_solucion_problemas"))->pluck('Key_name')->toArray();
-            if (in_array('idx_envio_certamen_termino_sol', $indexes)) {
-                $table->dropIndex('idx_envio_certamen_termino_sol');
-            }
-            if (in_array('idx_envio_cursa_resolver_termino', $indexes)) {
-                $table->dropIndex('idx_envio_cursa_resolver_termino');
-            }
-        });
+        try {
+            Schema::table('envio_solucion_problemas', function (Blueprint $table) {
+                $indexes = DB::getDriverName() === 'mysql'
+                    ? collect(DB::select("SHOW INDEX FROM envio_solucion_problemas"))->pluck('Key_name')->toArray()
+                    : ['idx_envio_certamen_termino_sol', 'idx_envio_cursa_resolver_termino'];
+                if (in_array('idx_envio_certamen_termino_sol', $indexes)) {
+                    $table->dropIndex('idx_envio_certamen_termino_sol');
+                }
+                if (in_array('idx_envio_cursa_resolver_termino', $indexes)) {
+                    $table->dropIndex('idx_envio_cursa_resolver_termino');
+                }
+            });
+        } catch (\Throwable $e) {
+        }
 
-        Schema::table('evaluacion_solucions', function (Blueprint $table) {
-            $indexes = collect(DB::select("SHOW INDEX FROM evaluacion_solucions"))->pluck('Key_name')->toArray();
-            if (in_array('idx_eval_sol_envio_estado', $indexes)) {
-                $table->dropIndex('idx_eval_sol_envio_estado');
-            }
-        });
+        try {
+            Schema::table('evaluacion_solucions', function (Blueprint $table) {
+                $indexes = DB::getDriverName() === 'mysql'
+                    ? collect(DB::select("SHOW INDEX FROM evaluacion_solucions"))->pluck('Key_name')->toArray()
+                    : ['idx_eval_sol_envio_estado'];
+                if (in_array('idx_eval_sol_envio_estado', $indexes)) {
+                    $table->dropIndex('idx_eval_sol_envio_estado');
+                }
+            });
+        } catch (\Throwable $e) {
+        }
     }
 };
 
