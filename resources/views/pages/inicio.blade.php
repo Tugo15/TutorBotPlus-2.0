@@ -46,14 +46,14 @@
                                 <button class="btn btn-sm {{ $id_curso_seleccionado ? 'btn-dark' : 'btn-outline-dark' }} dropdown-toggle mb-0 d-flex align-items-center shadow-xs" 
                                         type="button" id="dropdownFiltroCurso" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                                     <i class="fa fa-graduation-cap text-warning me-2"></i>
-                                    <span class="d-inline-block text-truncate" style="max-width: 250px;">
+                                    <span class="d-inline-block text-truncate" style="max-width: 220px;">
                                         {{ $curso_activo ? $curso_activo->nombre : 'Todos mis cursos (' . count($misCursos) . ')' }}
                                     </span>
                                     @if($curso_activo)
                                         <span class="badge bg-white text-dark text-xxs ms-2 font-monospace">{{ $curso_activo->codigo }}</span>
                                     @endif
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow border py-2" aria-labelledby="dropdownFiltroCurso" style="max-height: 380px; overflow-y: auto; min-width: 330px;" id="menuFiltroCursos">
+                                <ul class="dropdown-menu dropdown-menu-start dropdown-menu-md-end shadow border py-2" aria-labelledby="dropdownFiltroCurso" style="max-height: 380px; overflow-y: auto; min-width: min(310px, calc(100vw - 4.5rem)); max-width: calc(100vw - 2rem);" id="menuFiltroCursos">
                                     <li class="px-3 py-1 text-xxs font-weight-bolder text-uppercase text-secondary">
                                         Filtrar por curso
                                     </li>

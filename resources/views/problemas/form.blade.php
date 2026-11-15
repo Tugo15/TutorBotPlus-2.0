@@ -157,7 +157,7 @@
                         @php
                             $isChecked = (isset($problema) && $problema->cursos->pluck('id')->contains($curso->id)) || (old('cursos') && in_array($curso->id, old('cursos'))) || (isset($id_curso_preseleccionado) && $id_curso_preseleccionado == $curso->id);
                         @endphp
-                        <div class="col-md-4 col-sm-6 card-item-filtro" data-filter="{{ mb_strtolower($curso->nombre . ' ' . $curso->codigo) }}">
+                        <div class="col-12 col-sm-6 col-lg-4 card-item-filtro" data-filter="{{ mb_strtolower($curso->nombre . ' ' . $curso->codigo) }}">
                             <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif" for="prob_curso_{{ $curso->id }}">
                                 <input type="checkbox" id="prob_curso_{{ $curso->id }}" name="cursos[]" value="{{ $curso->id }}" @if($isChecked) checked @endif onchange="this.closest('.selection-card').classList.toggle('checked', this.checked)">
                                 <div class="selection-card-content">
@@ -197,7 +197,7 @@
                         @php
                             $isChecked = (isset($problema) && $problema->categorias->pluck('id')->contains($categoria->id)) || (old('categorias') && in_array($categoria->id, old('categorias')));
                         @endphp
-                        <div class="col-md-3 col-sm-6 card-item-filtro" data-filter="{{ mb_strtolower($categoria->nombre) }}">
+                        <div class="col-12 col-sm-6 col-lg-3 card-item-filtro" data-filter="{{ mb_strtolower($categoria->nombre) }}">
                             <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif" for="prob_cat_{{ $categoria->id }}">
                                 <input type="checkbox" id="prob_cat_{{ $categoria->id }}" name="categorias[]" value="{{ $categoria->id }}" @if($isChecked) checked @endif onchange="this.closest('.selection-card').classList.toggle('checked', this.checked)">
                                 <div class="selection-card-content">
@@ -234,12 +234,12 @@
                         </div>
                     </div>
                     <div id="lenguajes-normales-wrapper" class="{{ $isSqlInit ? 'd-none' : '' }}">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                             <div>
                                 <h6 class="mb-0 text-sm font-weight-bold"><i class="fa fa-code text-danger me-2"></i>Lenguajes de Programación Permitidos*</h6>
                                 <p class="text-xs text-secondary mb-0">Marque los lenguajes en los cuales los estudiantes podrán resolver el problema:</p>
                             </div>
-                            <div>
+                            <div class="d-flex flex-wrap gap-1">
                                 <button type="button" class="btn btn-xs btn-outline-secondary mb-0 me-1" onclick="toggleSelectionCards('prob-lenguajes-container', true)">Seleccionar Todos</button>
                                 <button type="button" class="btn btn-xs btn-outline-secondary mb-0" onclick="toggleSelectionCards('prob-lenguajes-container', false)">Desmarcar Todos</button>
                             </div>
@@ -257,7 +257,7 @@
                                         $isChecked = !$isDisabled;
                                     }
                                 @endphp
-                                <div class="col-md-3 col-sm-6">
+                                <div class="col-12 col-sm-6 col-lg-3">
                                     <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif @if($isDisabled) disabled @endif" for="prob_leng_{{ $lenguaje->id }}">
                                         <input class="lenguaje-checkbox" type="checkbox" id="prob_leng_{{ $lenguaje->id }}" name="lenguajes[]" value="{{ $lenguaje->id }}" @if($isChecked) checked @endif @if($isDisabled) disabled @endif onchange="this.closest('.selection-card').classList.toggle('checked', this.checked)">
                                         <div class="selection-card-content">

@@ -58,14 +58,14 @@
                         <table class="table align-items-center mb-0" id="table">
                             <thead>
                                 <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">ID</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Entradas</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Salidas</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Puntos</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Orden Enunciado</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ejemplo</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" data-priority="3">ID</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" data-priority="1">Entradas</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" data-priority="4">Salidas</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" data-priority="5">Puntos</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" data-priority="6">Orden Enunciado</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" data-priority="7">Ejemplo</th>
                                     @canany(['editar problemas'])
-                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Acción</th>
+                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" data-priority="2">Acción</th>
                                     @endcanany
                                 </tr>
                             </thead>

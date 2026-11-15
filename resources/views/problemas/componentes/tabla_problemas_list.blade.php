@@ -18,7 +18,8 @@
     .dataTables_filter {
         display: flex !important;
         align-items: center !important;
-        height: 32px !important;
+        min-height: 34px !important;
+        height: auto !important;
         margin-top: 0 !important;
         margin-bottom: 0 !important;
         padding-top: 0 !important;
@@ -27,32 +28,41 @@
     }
     .custom-filters-container {
         flex-wrap: wrap !important;
-        gap: 0.75rem !important;
-        white-space: nowrap !important;
+        row-gap: 0.5rem !important;
+        column-gap: 0.75rem !important;
+        white-space: normal !important;
     }
     .dataTables_filter {
         justify-content: flex-end !important;
+    }
+    @media (max-width: 991.98px) {
+        .dataTables_filter {
+            justify-content: flex-start !important;
+            width: 100% !important;
+        }
     }
     .custom-filters-container label,
     .dataTables_filter label {
         display: inline-flex !important;
         align-items: center !important;
-        height: 32px !important;
+        min-height: 32px !important;
+        height: auto !important;
         margin: 0 !important;
         padding: 0 !important;
         font-size: 0.75rem !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
         color: #6c757d !important;
-        line-height: 1 !important;
+        line-height: 1.2 !important;
         white-space: nowrap !important;
     }
     .custom-filters-container select,
     .custom-filters-container .dropdown-toggle,
-    .dataTables_filter input {
-        height: 32px !important;
-        max-height: 32px !important;
-        min-height: 32px !important;
+    .dataTables_filter input,
+    div.dt-container div.dt-search input {
+        height: 34px !important;
+        max-height: 34px !important;
+        min-height: 34px !important;
         line-height: 1.2 !important;
         padding: 0.25rem 0.5rem !important;
         margin-top: 0 !important;
@@ -62,26 +72,47 @@
         border-radius: 0.375rem !important;
         vertical-align: middle !important;
     }
-    .dataTables_filter input {
+    .custom-filters-container .dropdown-toggle:focus,
+    .custom-filters-container .dropdown-toggle:active,
+    .custom-filters-container .dropdown-toggle.show {
+        background-color: #ffffff !important;
+        color: #344767 !important;
+        border-color: #8392ab !important;
+    }
+    .dataTables_filter input,
+    div.dt-container div.dt-search input {
         margin-left: 0.35rem !important;
     }
     .custom-filters-container .dropdown {
         position: relative !important;
         display: inline-flex !important;
         align-items: center !important;
-        height: 32px !important;
+        min-height: 34px !important;
     }
     .custom-filters-container .dropdown-menu {
         z-index: 1060 !important;
+        max-width: calc(100vw - 3rem) !important;
+    }
+    .custom-filters-container .dropdown-menu .form-check-label {
+        white-space: normal !important;
+        overflow-wrap: break-word !important;
+    }
+    @media (max-width: 575.98px) {
+        .custom-filters-container .dropdown-menu {
+            width: min(220px, calc(100vw - 2.5rem)) !important;
+            min-width: 0 !important;
+            right: -12px !important;
+            left: auto !important;
+        }
     }
 </style>
 
 <div id="custom-filters-src" class="d-none">
     @if(isset($mostrar_curso) && $mostrar_curso && count($cursos_disponibles) > 0)
         <div class="d-flex align-items-center">
-            <label class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Curso: &nbsp</label>
+            <span class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Curso: &nbsp;</span>
             <div class="dropdown">
-                <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" data-bs-auto-close="outside" style="height: 32px; min-width: 130px;">
+                <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside" style="height: 32px; min-width: 130px;">
                     <span class="lbl-curso-selected">Seleccionar...</span>
                 </button>
                 <ul class="dropdown-menu px-2" style="max-height: 200px; overflow-y: auto;">
@@ -99,7 +130,7 @@
     @endif
 
     <div class="d-flex align-items-center">
-        <label for="filterEstado" class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Estado: &nbsp</label>
+        <label for="filterEstado" class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Estado: &nbsp;</label>
         <select id="filterEstado" class="form-select form-select-sm w-auto border-secondary" style="min-width: 110px; height: 32px;">
             <option value="">Todos</option>
             <option value="Visible">Visible</option>
@@ -108,12 +139,12 @@
     </div>
 
     <div class="d-flex align-items-center">
-        <label class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Categoría: &nbsp</label>
+        <span class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Categoría: &nbsp;</span>
         <div class="dropdown">
-            <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" data-bs-auto-close="outside" style="height: 32px; min-width: 130px;">
+            <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" data-bs-auto-close="outside" style="height: 34px; min-width: 130px;">
                 <span class="lbl-cat-selected">Seleccionar...</span>
             </button>
-            <ul class="dropdown-menu px-2" style="max-height: 200px; overflow-y: auto;">
+            <ul class="dropdown-menu dropdown-menu-start px-2" style="max-height: 200px; overflow-y: auto;">
                 @foreach($categorias_disponibles as $c)
                     <li>
                         <div class="form-check mb-1">
@@ -124,6 +155,12 @@
                 @endforeach
             </ul>
         </div>
+    </div>
+
+    <div class="d-flex align-items-center">
+        <button type="button" id="btnLimpiarFiltrosProblemas" class="btn btn-outline-secondary bg-white btn-sm mb-0 d-inline-flex align-items-center text-xs" style="height: 32px;" title="Restablecer filtros y búsqueda">
+            <i class="fa fa-eraser me-1"></i> Limpiar
+        </button>
     </div>
 </div>
 
@@ -146,10 +183,10 @@
             @foreach ($problemas as $problema)
                 <tr>
                     <td class="align-middle text-center">
-                        <div class="d-inline-flex px-2 py-1 justify-content-center text-center align-items-center">
-                            <div class="d-flex flex-column justify-content-center text-start">
-                                <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $problema->nombre }}</h6>
-                                <p class="text-xs text-secondary mb-0 mt-1">Código: <span class="badge border border-secondary text-secondary text-xxs px-2 py-0 bg-white">{{ $problema->codigo }}</span></p>
+                        <div class="d-inline-flex px-2 py-1 justify-content-center text-center align-items-center" style="max-width: 240px;">
+                            <div class="d-flex flex-column justify-content-center text-start w-100">
+                                <h6 class="mb-0 text-sm font-weight-bold text-dark text-wrap">{{ $problema->nombre }}</h6>
+                                <p class="text-xs text-secondary mb-0 mt-1 text-wrap">Código: <span class="badge border border-secondary text-secondary text-xxs px-2 py-0 bg-white text-wrap">{{ $problema->codigo }}</span></p>
                             </div>
                         </div>
                     </td>
@@ -177,13 +214,15 @@
                             @endif
                         </div>
                     </td>
-                    <td class="align-middle text-center">
+                    @php
+                        $difProbValor = $problema->dificultad ?? 'Medio';
+                        $difProbClass = ($difProbValor == 'Fácil') ? 'border-success text-success' : (($difProbValor == 'Difícil') ? 'border-danger text-danger' : 'border-warning text-warning');
+                        $difProbOrder = ($difProbValor == 'Fácil') ? 1 : (($difProbValor == 'Difícil') ? 3 : 2);
+                    @endphp
+                    <td class="align-middle text-center" data-order="{{ $difProbOrder }}">
                         <div class="d-flex flex-column gap-1 py-1 justify-content-center">
                             <div class="d-flex align-items-center justify-content-center gap-1 flex-wrap">
-                                @php
-                                    $difProbClass = ($problema->dificultad == 'Fácil') ? 'border-success text-success' : (($problema->dificultad == 'Difícil') ? 'border-danger text-danger' : 'border-warning text-warning');
-                                @endphp
-                                <span class="badge border {{ $difProbClass }} text-xxs bg-white">{{ $problema->dificultad ?? 'Medio' }}</span>
+                                <span class="badge border {{ $difProbClass }} text-xxs bg-white">{{ $difProbValor }}</span>
                                 @if(isset($problema->categorias) && $problema->categorias->isNotEmpty())
                                     @php
                                         $cats = $problema->categorias;

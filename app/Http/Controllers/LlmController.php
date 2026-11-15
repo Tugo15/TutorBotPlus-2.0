@@ -14,10 +14,36 @@ use Illuminate\Support\Facades\DB;
 
 class LlmController extends Controller
 {
+    /**
+     * Verifica que el usuario autenticado sea el dueño del envío o cuente con permisos docentes/administrativos.
+     */
+    private function puedeAccederEnvio(EnvioSolucionProblema $envio): bool
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+        $user = auth()->user();
+        $esDocenteOAdmin = $user->hasRole('administrador') ||
+            $user->hasRole('profesor') ||
+            $user->can('ver informe del certamen') ||
+            $user->can('ver informe del curso') ||
+            $user->can('ver informe del problema');
+
+        if ($esDocenteOAdmin) {
+            return true;
+        }
+
+        $envio->loadMissing('usuario');
+        return $envio->usuario && (int) $envio->usuario->id === (int) $user->id;
+    }
+
     public function generar_retroalimentacion(Request $request){
         $envioCheck = EnvioSolucionProblema::where('token', '=', $request->token)->first();
         if (!$envioCheck) {
             return redirect()->route('envios.listado')->with('error', 'El envío solicitado no existe.');
+        }
+        if (!$this->puedeAccederEnvio($envioCheck)) {
+            return redirect()->route('envios.listado')->with('error', 'No tienes permiso para acceder a este envío.');
         }
 
         $evaluacion = DB::table('evaluacion_solucions')
@@ -110,6 +136,9 @@ class LlmController extends Controller
         if (!$envios) {
             return redirect()->route('envios.listado')->with('error', 'El envío solicitado no existe.');
         }
+        if (!$this->puedeAccederEnvio($envios)) {
+            return redirect()->route('envios.listado')->with('error', 'No tienes permiso para visualizar la retroalimentación de este envío.');
+        }
 
         $retroalimentacion = DB::table('solicitud_ra_llms')
         ->join('envio_solucion_problemas', 'envio_solucion_problemas.id', '=', 'solicitud_ra_llms.id_envio')
@@ -134,6 +163,9 @@ class LlmController extends Controller
         $envio = EnvioSolucionProblema::where('token', '=', $request->token)->first();
         if (!$envio) {
             return redirect()->route('envios.listado')->with('error', 'El envío no existe');
+        }
+        if (!$this->puedeAccederEnvio($envio)) {
+            return redirect()->route('envios.listado')->with('error', 'No tienes permiso para verificar restricciones de este envío.');
         }
 
         $res = self::ejecutar_verificacion_restricciones($envio);

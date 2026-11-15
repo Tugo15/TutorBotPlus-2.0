@@ -25,7 +25,7 @@ class Certamenes extends Model
         "fecha_inicio" => ["date", "before_or_equal:fecha_termino", "required"],
         "fecha_termino" => ["date", "after_or_equal:fecha_inicio", "required"],
         "curso" => ["required", "numeric"],
-        "penalizacion_error" => ["nullable", "numeric", "min:0"],
+        "penalizacion_error" => ["nullable", "numeric", "min:0", "max:1000"],
         "cantidad_penalizacion" => ["nullable", "integer", "min:0"],
         "restriccion_red" => ["nullable", "boolean"],
         "ips_autorizadas" => ["nullable", "string"],

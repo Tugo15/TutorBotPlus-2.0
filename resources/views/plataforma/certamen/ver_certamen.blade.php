@@ -8,24 +8,43 @@
 @extends('layout_plataforma.app', ['title_html' => $certamen->nombre, 'title' => 'Evaluación - ' . $certamen->nombre, 'breadcrumbs' => $breadcrumbsCertamen, 'show_breadcrumbs' => true])
 
 @section('content')
-    <div class="container-fluid py-3 px-4">
+    <div class="container-fluid py-3 px-2 px-md-4">
         @include('components.alert')
-        <div class="row mb-3">
-            <div class="col-sm-8 col-xs-12">
-                <div class="card border-danger shadow-sm h-100" style="min-height:40rem">
+        <div class="row g-3 mb-3">
+            <div class="col-12 col-lg-8">
+                <div class="card border-danger shadow-sm certamen-desktop-card">
                     <div class="card-header">
                         Descripción
                     </div>
-                    <div class="card-body p-4 text-wrap" id="body_markdown">
-                        {!! Str::markdown($certamen->descripcion, [
-                            'html_input' => 'strip',
-                            'allow_unsafe_links' => false,
-                        ]) !!}
+                    <div class="card-body p-3 p-md-4 text-wrap" id="body_markdown">
+                        @php
+                            $descSanitized = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $certamen->descripcion ?? '');
+                            $mathBlocks = [];
+                            $descSanitized = preg_replace_callback('/```[\s\S]*?```|`[^`\r\n]*`|\$\$[\s\S]+?\$\$|(?<!\$)\$(?!\$)([^\$\r\n]+?)\$(?!\$)|(?<=[\p{L}\p{N}])\*(?=[\p{L}\p{N}])/u', function ($m) use (&$mathBlocks) {
+                                if ($m[0] === '*') {
+                                    return '\\*';
+                                }
+                                if (str_starts_with($m[0], '$')) {
+                                    $key = 'TBMATHPLACEHOLDER' . count($mathBlocks) . 'END';
+                                    $mathBlocks[$key] = e($m[0]);
+                                    return $key;
+                                }
+                                return $m[0];
+                            }, $descSanitized);
+                            $renderedDescHtml = Str::markdown($descSanitized, [
+                                'html_input' => 'strip',
+                                'allow_unsafe_links' => false,
+                            ]);
+                            if (!empty($mathBlocks)) {
+                                $renderedDescHtml = strtr($renderedDescHtml, $mathBlocks);
+                            }
+                        @endphp
+                        {!! $renderedDescHtml !!}
                     </div>
                 </div>
             </div>
-            <div class="col-sm-4 col-xs-12">
-                <div class="card border-danger" style="height:40rem">
+            <div class="col-12 col-lg-4">
+                <div class="card border-danger certamen-desktop-card">
                     <div class="card-body px-3">
                         @if (isset($res_certamen) && !$res_certamen->finalizado)
                             @if ($certamen->disponibilidad)
@@ -44,38 +63,34 @@
                                 </div>
                             @endif
                         @endif
-                        <div class="row px-5">
+                        <div class="d-grid gap-2 px-1 px-xl-3">
                             @if (isset($res_certamen))
-                                <a class="btn btn-primary text-nowrap btn-block {{ ($res_certamen->finalizado == true || !$certamen->disponibilidad) ? 'disabled' : '' }}"
+                                <a class="btn btn-primary text-wrap {{ ($res_certamen->finalizado == true || !$certamen->disponibilidad) ? 'disabled' : '' }}"
                                     href="{{ route('certamenes.resolucion', ['token' => $res_certamen->token]) }}"
                                     role="button">{{ $res_certamen->finalizado == true ? 'Has finalizado la evaluación' : 'Volver a la Evaluación' }}</a>
                             @else
                                 @if (!empty($certamen->password))
-                                    <button type="button" class="btn btn-primary text-nowrap btn-block {{ $certamen->disponibilidad ? '' : 'disabled' }}"
+                                    <button type="button" class="btn btn-primary text-wrap {{ $certamen->disponibilidad ? '' : 'disabled' }}"
                                         @if($certamen->disponibilidad) data-bs-toggle="modal" data-bs-target="#modalPasswordCertamen" @else disabled @endif>
                                         <i class="fa fa-lock me-1"></i> Resolver Evaluación
                                     </button>
                                 @else
-                                    <a class="btn btn-primary text-nowrap btn-block {{ $certamen->disponibilidad ? '' : 'disabled' }}"
+                                    <a class="btn btn-primary text-wrap {{ $certamen->disponibilidad ? '' : 'disabled' }}"
                                         href="{{ route('certamenes.iniciar_resolucion', ['id_certamen' => $certamen->id]) }}"
                                         role="button">{{ $certamen->disponibilidad ? 'Resolver Evaluación' : 'Evaluación No Disponible' }}</a>
                                 @endif
                             @endif
-                        </div>
-                        @can('ver informe del certamen')
-                            <div class="row px-5 mt-2 mb-2">
-                                <a class="btn btn-outline-secondary text-nowrap btn-sm btn-block" href="{{ route('informe.certamen', ['id_certamen' => $certamen->id]) }}"
+                            @can('ver informe del certamen')
+                                <a class="btn btn-outline-secondary text-wrap btn-sm" href="{{ route('informe.certamen', ['id_certamen' => $certamen->id]) }}"
                                     role="button">Ver Informe de la Evaluación</a>
-                            </div>
-                        @endcan
-                        @can('editar certamen')
-                            <div class="row px-5 mt-2 mb-2">
-                                <a class="btn btn-outline-secondary text-nowrap btn-sm btn-block"
+                            @endcan
+                            @can('editar certamen')
+                                <a class="btn btn-outline-secondary text-wrap btn-sm"
                                     href="{{ route('certamen.editar', ['id' => $certamen->id]) }}" role="button">Editar Evaluación</a>
-                            </div>
-                        @endcan
+                            @endcan
+                        </div>
                         <hr>
-                        <h6 class="ms-3 mt-3"><strong>Información:</strong></h6>
+                        <h6 class="ms-2 mt-3"><strong>Información:</strong></h6>
                         <ul class="list-group mt-3">
                             <li class="list-group-item"><strong>Curso:</strong>
                                 {{ $certamen->curso->nombre }}
@@ -101,7 +116,7 @@
                                     </li>
                                 @endif
                             @endif
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
                                 <strong>Acceso:</strong>
                                 @if(!empty($certamen->password))
                                     <span class="badge bg-warning text-dark"><i class="fa fa-lock me-1"></i>Requiere Contraseña</span>
@@ -110,7 +125,7 @@
                                 @endif
                             </li>
                             @if($certamen->restriccion_red)
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
                                     <strong>Red:</strong>
                                     <span class="badge bg-danger"><i class="fa fa-university me-1"></i>Red Institucional Requerida</span>
                                 </li>
@@ -120,7 +135,7 @@
                 </div>
             </div>
             @if (isset($res_certamen) && $res_certamen->finalizado == true)
-                <div class="col">
+                <div class="col-12">
                     <div class="card border-danger mt-3" style="height:auto">
                         <div class="card-header">
                             Resultado
@@ -189,15 +204,31 @@
 
 @push('js')
     <script>
-        var table = document.querySelector("#body_markdown table")
-        if (table != null) {
-            var table_body = table.querySelector("tbody")
-            table.classList.add("table")
-            table.classList.add("table-bordered")
-            table.classList.add("table-hover")
-            table.classList.add("mt-3")
-            table.style.width = "auto"
-            table_body.classList.add("table-group-divider")
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            var container = document.querySelector('#body_markdown');
+            var tables = document.querySelectorAll("#body_markdown table");
+            if (tables != null) {
+                for (var i = 0; i < tables.length; i++) {
+                    var table_body = tables[i].querySelector("tbody");
+                    if (table_body) {
+                        tables[i].classList.add("table", "table-bordered", "table-hover", "mt-3");
+                        tables[i].style.width = "auto";
+                        table_body.classList.add("table-group-divider");
+                    }
+                }
+            }
+            if (container) {
+                container.querySelectorAll('pre > code.language-katex, pre > code.language-math, pre > code.language-latex').forEach(function(codeEl) {
+                    var pre = codeEl.parentElement;
+                    var div = document.createElement('div');
+                    div.className = 'katex-block my-3';
+                    div.textContent = '$$' + (codeEl.textContent || '').trim() + '$$';
+                    pre.replaceWith(div);
+                });
+            }
+            if (typeof window.renderFormulas === 'function') {
+                window.renderFormulas(container || document.body);
+            }
+        });
     </script>
 @endpush

@@ -21,7 +21,10 @@
                                         <div class="alert alert-warning text-white text-xs mb-3" role="alert">
                                             <i class="fa fa-exclamation-triangle me-1"></i> Este enlace de recuperación no es válido o ya expiró. Solicita un nuevo correo de recuperación.
                                         </div>
-                                    @endif
+                                        <div class="text-center mt-3">
+                                            <a href="{{ route('password.request') }}" class="btn btn-lg btn-primary w-100 mb-0">Solicitar nuevo enlace</a>
+                                        </div>
+                                    @else
                                     <form role="form" method="POST" action="{{ route('password.update') }}" onsubmit="const btn = this.querySelector('button[type=submit]'); if (btn.disabled) { return false; } btn.disabled = true;">
                                         @csrf
                                         <input type="hidden" name="token" value="{{$token}}">
@@ -31,7 +34,7 @@
                                         </div>
                                         <div class="flex flex-col mb-3">
                                             <div class="input-group">
-                                                <input type="password" name="password" id="reset_password" class="form-control form-control-lg" placeholder="Nueva Contraseña (mín. 8 caracteres)" aria-label="Contraseña" autocomplete="new-password" maxlength="255" minlength="8" required>
+                                                <input type="password" name="password" id="reset_password" class="form-control form-control-lg" placeholder="Nueva clave (mín. 8 car.)" aria-label="Contraseña" autocomplete="new-password" maxlength="255" minlength="8" required>
                                                 <button class="btn btn-outline-secondary mb-0 px-3" type="button" aria-label="Mostrar u ocultar nueva contraseña"
                                                     onclick="const inp = document.getElementById('reset_password'); const icon = this.querySelector('i'); const isPwd = inp.type === 'password'; inp.type = isPwd ? 'text' : 'password'; icon.className = isPwd ? 'fa fa-eye-slash' : 'fa fa-eye';">
                                                     <i class="fa fa-eye" aria-hidden="true"></i>
@@ -53,6 +56,7 @@
                                             <button type="submit" class="btn btn-lg btn-primary btn-lg w-100 mt-4 mb-0">Restaurar Contraseña</button>
                                         </div>
                                     </form>
+                                    @endif
                                     <div class="card-footer text-center pt-3 px-1 pb-0">
                                         <p class="mb-0 text-sm mx-auto">
                                             <a href="{{ route('login') }}" class="text-primary font-weight-bold"><i class="fa fa-arrow-left me-1"></i> Volver al Inicio de Sesión</a>

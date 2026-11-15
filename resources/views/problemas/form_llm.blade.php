@@ -2,13 +2,13 @@
     <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-robot text-info me-2"></i>Configuración de la Inteligencia Artificial (LLM)</h6>
 </div>
 <div class="row d-flex justify-content-start align-items-center">
-    <div class="col">
+    <div class="col-12 col-md-6 mb-2 mb-md-0">
         <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" id="habilitar_llm" name="habilitar_llm" value="{{true}}" @if(isset($problema) && $problema->habilitar_llm==true)checked @elseif(old('habilitar_llm')) checked @endif>
             <label class="form-check-label" for="habilitar_llm">Habilitar Large Language Model</label>
         </div>
     </div>
-    <div class="col">
+    <div class="col-12 col-md-6">
         <div class="form-group has-danger">
             <label for="limite_llm" class="form-control-label">Límite de uso de LLM</label>
             <div class="input-group mb-3">

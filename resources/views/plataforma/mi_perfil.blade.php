@@ -1,6 +1,6 @@
 @extends('layout_plataforma.app', ['title_html' => 'Mi Perfil', 'title' => 'Mi Perfil', 'breadcrumbs' => [['nombre' => 'Mi Perfil']]])
 @section('content')
-    <div class="container-fluid py-3 px-5">
+    <div class="container-fluid py-3 px-2 px-md-5">
         <div id="alert">
         @include('components.alert')
         </div>
@@ -8,15 +8,15 @@
             <div class="card-header">
                 <strong>Información Personal</strong>
             </div>
-            <div class="card-body px-5">
+            <div class="card-body px-3 px-md-5">
                 <p class="text-sm text-danger">* Obligatorio</p>
                 <form action="{{ route('perfil.update') }}" method="POST" id="editForm"
                     onsubmit="event.preventDefault();submitFormEditar()">
                     @csrf
-                    <div class="row">
-                        <div class="col">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
                             <label for="username" class="form-label">Nombre de Usuario*</label>
-                            <div class="input-group mb-3">
+                            <div class="input-group mb-1">
                                 <input type="text" class="form-control @error('username') is-invalid @enderror"
                                     id="username" name="username" maxlength="255" required autocomplete="username" value="{{ old('username', $info->username) }}">
                             </div>
@@ -24,9 +24,9 @@
                                 <p class="text-danger text-xs pt-1"> {{ $message }} </p>
                             @enderror
                         </div>
-                        <div class="col">
+                        <div class="col-12 col-md-6">
                             <label for="email" class="form-label">Correo Electrónico*</label>
-                            <div class="input-group mb-3">
+                            <div class="input-group mb-1">
                                 <input type="email" class="form-control @error('email') is-invalid @enderror"
                                     placeholder="Ej. test@tutorbot.com" id="email" name="email" maxlength="255" required autocomplete="email"
                                     value="{{ old('email', $info->email) }}">
@@ -37,10 +37,10 @@
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col">
+                    <div class="row g-3 mt-1 mb-2">
+                        <div class="col-12 col-md-6">
                             <label for="firstname" class="form-label">Nombre*</label>
-                            <div class="input-group mb-3">
+                            <div class="input-group mb-1">
                                 <input type="text" id="firstname" name="firstname" maxlength="100" required autocomplete="given-name"
                                     class="form-control @error('firstname') is-invalid @enderror"
                                     value="{{ old('firstname', $info->firstname) }}">
@@ -49,9 +49,9 @@
                                 <p class="text-danger text-xs pt-1"> {{ $message }} </p>
                             @enderror
                         </div>
-                        <div class="col">
+                        <div class="col-12 col-md-6">
                             <label for="lastname" class="form-label">Apellido*</label>
-                            <div class="input-group mb-3">
+                            <div class="input-group mb-1">
                                 <input type="text" id="lastname" name="lastname" maxlength="100" required autocomplete="family-name"
                                     class="form-control @error('lastname') is-invalid @enderror"
                                     value="{{ old('lastname', $info->lastname) }}">

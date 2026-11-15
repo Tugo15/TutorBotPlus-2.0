@@ -96,6 +96,17 @@ class EvaluacionSolucionController extends Controller
                 return response('El envio no existe', 400);
             }
 
+            $esDocenteOAdmin = auth()->check() && (
+                auth()->user()->hasRole('administrador') ||
+                auth()->user()->hasRole('profesor') ||
+                auth()->user()->can('ver informe del certamen') ||
+                auth()->user()->can('ver informe del curso') ||
+                auth()->user()->can('ver informe del problema')
+            );
+            if (!$esDocenteOAdmin && (!isset($envio->usuario) || $envio->usuario->id !== auth()->id())) {
+                return response('No tienes permiso para visualizar este envío.', 403);
+            }
+
             // Si al consultar vía AJAX existen evaluaciones pendientes, forzar actualización sincrónica
             if ($envio->evaluaciones()->where('estado', '=', 'En Proceso')->exists()) {
                 Artisan::call('app:evaluar-envios');

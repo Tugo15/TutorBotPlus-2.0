@@ -168,5 +168,7 @@ return [
         'roles'                 => 'roles',
         'lenguajes'             => 'lenguajes',
         'csvFile'               => 'archivo CSV',
+        'name'                  => 'nombre',
+        'extension'             => 'extensión',
     ],
 ];

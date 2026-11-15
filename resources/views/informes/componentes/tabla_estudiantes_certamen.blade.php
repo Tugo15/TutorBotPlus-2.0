@@ -23,16 +23,16 @@
                     <table class="table align-items-center mb-0" id="tabla_estudiantes">
                         <thead>
                             <tr>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center" data-priority="1">
                                     Nombre Completo
                                 </th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center" data-priority="4">
                                     Rut
                                 </th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center" data-priority="3">
                                     Resueltos
                                 </th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center" data-priority="5">
                                     Estado
                                 </th>
                                 @for ($i = 1; $i <= $certamen_estadistica->cantidad_problemas; $i++)
@@ -41,7 +41,7 @@
                                     </th>
                                 @endfor
                                 @canany(['ver informe del problema'])
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" data-priority="2">
                                         Acción
                                     </th>
                                 @endcanany
@@ -215,23 +215,31 @@
             var tablaEst = new DataTable('#tabla_estudiantes', Object.assign({
                 language: typeof espaniol !== 'undefined' ? espaniol : {},
                 responsive: true,
+                autoWidth: false,
                 stateSave: true,
                 order: [
                     [0, 'ASC']
                 ],
                 dom: typeof responsiveDomLayout !== 'undefined' ? responsiveDomLayout : "<'row mx-0 px-2 px-md-4 pb-2 pt-1 align-items-center gy-2'<'col-12 col-md-6 d-flex align-items-center flex-wrap'l><'col-12 col-md-6 d-flex align-items-center justify-content-md-end justify-content-start'f>>" +
                      "<'row mx-0'<'col-12 px-0 table-responsive'tr>>" +
-                     "<'row mx-0 px-2 px-md-4 pt-3 pb-4 align-items-center gy-2'<'col-12 col-md-5 text-center text-md-start'i><'col-12 col-md-7 d-flex justify-content-center justify-content-md-end'p>>"
-            }, stateExtraEst));
-
-            // Al cambiar de página, evitar saltar al fondo y subir suavemente al encabezado de la tabla
-            tablaEst.on('page.dt', function () {
-                var el = document.getElementById('tabla_estudiantes');
-                if (el) {
-                    var card = el.closest('.card') || el;
-                    var offset = card.getBoundingClientRect().top + window.pageYOffset - 80;
-                    window.scrollTo({ top: offset, behavior: 'smooth' });
+                     "<'row mx-0 px-2 px-md-4 pt-3 pb-4 align-items-center gy-2'<'col-12 col-md-5 text-center text-md-start'i><'col-12 col-md-7 d-flex justify-content-center justify-content-md-end'p>>",
+                initComplete: function() {
+                    var api = this.api();
+                    setTimeout(function() {
+                        try {
+                            api.columns.adjust();
+                            if (api.responsive && typeof api.responsive.recalc === 'function') api.responsive.recalc();
+                        } catch (e) {}
+                    }, 150);
                 }
+            }, stateExtraEst));
+            window.addEventListener('load', function() {
+                setTimeout(function() {
+                    try {
+                        tablaEst.columns.adjust();
+                        if (tablaEst.responsive && typeof tablaEst.responsive.recalc === 'function') tablaEst.responsive.recalc();
+                    } catch (e) {}
+                }, 150);
             });
         });
     </script>

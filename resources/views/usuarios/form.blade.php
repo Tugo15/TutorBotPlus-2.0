@@ -92,12 +92,12 @@ $old_roles = old('roles')? old('roles') : [];
     <div class="col-12">
         <div class="card border shadow-xs">
             <div class="card-body p-3">
-                <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                     <div>
                         <h6 class="mb-0 text-sm font-weight-bold"><i class="fa fa-graduation-cap text-warning me-2"></i>Asignar Cursos</h6>
                         <p class="text-xs text-secondary mb-0">Haga clic en los cursos para inscribir al usuario:</p>
                     </div>
-                    <div>
+                    <div class="d-flex flex-wrap gap-1">
                         <button type="button" class="btn btn-xs btn-outline-secondary mb-0 me-1" onclick="toggleSelectionCards('user-cursos-container', true)">Seleccionar Todos</button>
                         <button type="button" class="btn btn-xs btn-outline-secondary mb-0" onclick="toggleSelectionCards('user-cursos-container', false)">Desmarcar Todos</button>
                     </div>
@@ -109,7 +109,7 @@ $old_roles = old('roles')? old('roles') : [];
                                 ? in_array($curso->id, $old_cursos)
                                 : (isset($user) && $user->cursos->contains('id', $curso->id));
                         @endphp
-                        <div class="col-md-4 col-sm-6">
+                        <div class="col-12 col-sm-6 col-lg-4">
                             <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif" for="curso_{{ $curso->id }}">
                                 <input type="checkbox" id="curso_{{ $curso->id }}" name="cursos[]" value="{{ $curso->id }}" @if($isChecked) checked @endif onchange="this.closest('.selection-card').classList.toggle('checked', this.checked)">
                                 <div class="selection-card-content">

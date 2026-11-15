@@ -27,14 +27,27 @@
                 @else
                     @php
                         $bodyEditorialSanitized = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $problema->body_editorial ?? '');
-                        $bodyEditorialSanitized = preg_replace_callback('/```[\s\S]*?```|`[^`]*`|(?<![\*\s\\\\])\*(?![\*\s])/u', function ($m) {
-                            return $m[0] === '*' ? '\\*' : $m[0];
+                        $mathBlocks = [];
+                        $bodyEditorialSanitized = preg_replace_callback('/```[\s\S]*?```|`[^`\r\n]*`|\$\$[\s\S]+?\$\$|(?<!\$)\$(?!\$)([^\$\r\n]+?)\$(?!\$)|(?<=[\p{L}\p{N}])\*(?=[\p{L}\p{N}])/u', function ($m) use (&$mathBlocks) {
+                            if ($m[0] === '*') {
+                                return '\\*';
+                            }
+                            if (str_starts_with($m[0], '$')) {
+                                $key = 'TBMATHPLACEHOLDER' . count($mathBlocks) . 'END';
+                                $mathBlocks[$key] = e($m[0]);
+                                return $key;
+                            }
+                            return $m[0];
                         }, $bodyEditorialSanitized);
+                        $renderedEditorialHtml = Str::markdown($bodyEditorialSanitized, [
+                            'html_input' => 'strip',
+                            'allow_unsafe_links' => false
+                        ]);
+                        if (!empty($mathBlocks)) {
+                            $renderedEditorialHtml = strtr($renderedEditorialHtml, $mathBlocks);
+                        }
                     @endphp
-                    {!! Str::markdown($bodyEditorialSanitized, [
-                        'html_input' => 'strip',
-                        'allow_unsafe_links' => false
-                    ])!!}
+                    {!! $renderedEditorialHtml !!}
                 @endif
             </div>
         </div>
@@ -43,17 +56,29 @@
 @push('js')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        var table = document.querySelector("#body_markdown table");
-        if(table != null){
-            var table_body = table.querySelector("tbody");
-            if (table_body) {
-                table.classList.add("table", "table-bordered", "table-hover", "mt-3");
-                table.style.width = "auto";
-                table_body.classList.add("table-group-divider");
+        var container = document.querySelector('#body_markdown');
+        var tables = document.querySelectorAll("#body_markdown table");
+        if (tables != null) {
+            for (var i = 0; i < tables.length; i++) {
+                var table_body = tables[i].querySelector("tbody");
+                if (table_body) {
+                    tables[i].classList.add("table", "table-bordered", "table-hover", "mt-3");
+                    tables[i].style.width = "auto";
+                    table_body.classList.add("table-group-divider");
+                }
             }
         }
+        if (container) {
+            container.querySelectorAll('pre > code.language-katex, pre > code.language-math, pre > code.language-latex').forEach(function(codeEl) {
+                var pre = codeEl.parentElement;
+                var div = document.createElement('div');
+                div.className = 'katex-block my-3';
+                div.textContent = '$$' + (codeEl.textContent || '').trim() + '$$';
+                pre.replaceWith(div);
+            });
+        }
         if (typeof window.renderFormulas === 'function') {
-            window.renderFormulas(document.querySelector('#body_markdown') || document.body);
+            window.renderFormulas(container || document.body);
         }
     });
 </script>

@@ -11,17 +11,21 @@
                     <div class="d-none d-lg-block" style="flex: 1;"></div>
                 </div>
             </div>
-            <div class="card-body px-0 pt-0 pb-2">
-                <div class="row">
+            <div class="card-body px-3 pt-3 pb-3">
+                <div class="row g-3">
                     @if(!empty($lenguajes_estadistica) || !empty($estadistica_estados))
                         @if(!empty($estadistica_estados))
-                            <div class="col">
-                                <canvas id="estadistica_estado" height="400"></canvas>
+                            <div class="col-12 col-md-6">
+                                <div style="position: relative; height: 340px;">
+                                    <canvas id="estadistica_estado"></canvas>
+                                </div>
                             </div>
                         @endif
                         @if(!empty($lenguajes_estadistica))
-                            <div class="col">
-                                <canvas id="lenguajes_estadistica" height="400"></canvas>
+                            <div class="col-12 col-md-6">
+                                <div style="position: relative; height: 340px;">
+                                    <canvas id="lenguajes_estadistica"></canvas>
+                                </div>
                             </div>
                         @endif
                     @else
@@ -36,7 +40,9 @@
     </div>
 </div>
 @push('js')
-    <script src="{{ asset('assets/js/plugins/chartjs.min.js') }}"></script>
+    @once('chartjs')
+        <script src="{{ asset('assets/js/plugins/chartjs.min.js') }}"></script>
+    @endonce
     <script>
         const cant_lenguajes = @json(sizeof($lenguajes_estadistica));
         const estadistica_estado_key = @json(array_keys($estadistica_estados));

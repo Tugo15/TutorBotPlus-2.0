@@ -1,8 +1,8 @@
-@extends('layouts.app', ['class' => 'g-sidenav-show bg-gray-100', 'title_url' => 'Envios del Certamen'])
+@extends('layouts.app', ['class' => 'g-sidenav-show bg-gray-100', 'title_url' => 'Envíos del Certamen'])
 
 @section('content')
     @include('layouts.navbars.auth.topnav', [
-        'title' => 'Envios realizado en la Evaluación "' . $certamen->nombre . '"',
+        'title' => 'Envíos realizados en la Evaluación "' . $certamen->nombre . '"',
     ])
     <div class="row mt-4 mx-4">
         <div class="col-12">

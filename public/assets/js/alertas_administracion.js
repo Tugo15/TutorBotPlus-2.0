@@ -39,6 +39,48 @@ function validarFormularioAdmin(form) {
             return false;
         }
     }
+    var groups = form.querySelectorAll('.form-group');
+    for (var g = 0; g < groups.length; g++) {
+        var grp = groups[g];
+        if (grp.closest('.d-none') || grp.offsetParent === null) continue;
+        if (grp.querySelector('input[type="hidden"][data-required-label]')) continue;
+        var lbl = grp.querySelector('label');
+        if (!lbl) continue;
+        var lblTxt = (lbl.textContent || '').replace(/\s+/g, ' ').trim();
+        if (lblTxt.indexOf('*') === -1) continue;
+        var ctrl = grp.querySelector('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([disabled]), textarea:not([disabled]), select:not([disabled])');
+        if (ctrl && ctrl.offsetParent !== null && !ctrl.closest('.toastui-editor-defaultUI') && (!ctrl.value || ctrl.value.trim() === '')) {
+            var cleanName = lblTxt.replace(/\*/g, '').trim();
+            try { ctrl.focus(); } catch (e) {}
+            Swal.fire({
+                icon: 'warning',
+                title: 'Campo obligatorio faltante',
+                text: 'Por favor complete el campo: ' + cleanName + '.',
+                confirmButtonText: 'Entendido'
+            });
+            return false;
+        }
+    }
+    var roleChecks = form.querySelectorAll('input[type="checkbox"][name="roles[]"]');
+    if (roleChecks.length > 0 && form.querySelectorAll('input[type="checkbox"][name="roles[]"]:checked').length === 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Campo obligatorio faltante',
+            text: 'Por favor seleccione al menos un rol para el usuario.',
+            confirmButtonText: 'Entendido'
+        });
+        return false;
+    }
+    var permContainer = form.querySelector('#roles-permisos-container');
+    if (permContainer && permContainer.querySelectorAll('input[type="checkbox"]:checked').length === 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Campo obligatorio faltante',
+            text: 'Por favor seleccione al menos un permiso para el rol.',
+            confirmButtonText: 'Entendido'
+        });
+        return false;
+    }
     return true;
 }
 

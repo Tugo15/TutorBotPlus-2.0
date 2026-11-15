@@ -40,13 +40,13 @@
                         <table class="table align-items-center mb-0" id="table">
                             <thead>
                                 <tr class="border-bottom">
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Código Juez</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Nombre</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Abreviatura</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Extensión</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Creado</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7" data-priority="3">Código Juez</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7" data-priority="1">Nombre</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7" data-priority="4">Abreviatura</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7" data-priority="5">Extensión</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7" data-priority="6">Creado</th>
                                     @canany(['editar lenguaje de programación', 'eliminar lenguaje de programación'])
-                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Acciones</th>
+                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7" data-priority="2">Acciones</th>
                                     @endcanany
                                 </tr>
                             </thead>

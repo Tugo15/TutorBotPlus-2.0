@@ -43,12 +43,12 @@
 
 <div class="row mb-3">
     <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <div>
                 <label class="form-control-label font-weight-bold text-sm">Permisos del Rol*</label>
                 <p class="text-xs text-secondary mb-0">Seleccione los permisos agrupados por módulo:</p>
             </div>
-            <div>
+            <div class="d-flex flex-wrap gap-1">
                 <button type="button" class="btn btn-xs btn-outline-secondary mb-0 me-1" onclick="toggleSelectionCards('roles-permisos-container', true)">Seleccionar Todos</button>
                 <button type="button" class="btn btn-xs btn-outline-secondary mb-0" onclick="toggleSelectionCards('roles-permisos-container', false)">Desmarcar Todos</button>
             </div>
@@ -72,7 +72,7 @@
                                         ? in_array($permiso->name, (array) $old_permisos)
                                         : (isset($rol) && $rol->hasPermissionTo($permiso->name));
                                 @endphp
-                                <div class="col-md-3 col-sm-6">
+                                <div class="col-12 col-sm-6 col-lg-3">
                                     <label class="selection-card w-100 mb-0 @if($isChecked) checked @endif" for="permiso_{{ $permiso->id }}">
                                         <input type="checkbox" id="permiso_{{ $permiso->id }}" name="permisos[]" value="{{ $permiso->name }}" @if($isChecked) checked @endif onchange="this.closest('.selection-card').classList.toggle('checked', this.checked)">
                                         <div class="selection-card-content">

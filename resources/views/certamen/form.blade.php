@@ -86,7 +86,7 @@
     <div class="col-md-3 mb-3">
         <div class="form-group has-danger">
             <label for="penalizacion_error" class="form-control-label font-weight-bold text-sm @error('penalizacion_error') is-invalid @enderror">Penalización por Error</label>
-            <input class="form-control" type="number" id="penalizacion_error" name="penalizacion_error" placeholder="Ej. 0.5" min="0" step="0.01"
+            <input class="form-control" type="number" id="penalizacion_error" name="penalizacion_error" placeholder="Ej. 0.5" min="0" max="1000" step="0.01"
                 value="{{ isset($certamen) ? old('penalizacion_error', round((float) $certamen->penalizacion_error, 2)) : old('penalizacion_error', 0) }}">
             @error('penalizacion_error')
                 <p class="text-danger text-xs pt-1 mb-0"> {{ $message }} </p>
@@ -229,14 +229,14 @@
                             Indique cuántas preguntas tendrá la evaluación. Para cada pregunta, configure su banco (categoría o variantes) desde el cual el sistema asignará <strong>1 ejercicio al azar</strong> para cada estudiante.
                         </p>
                     </div>
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex align-items-center flex-wrap gap-2">
                         <span class="text-xs font-weight-bold text-secondary me-1">Cantidad de Preguntas:</span>
                         <div class="input-group input-group-sm" style="width: 140px;">
                             <button class="btn btn-outline-secondary mb-0 px-2.5" type="button" onclick="modificarCantidadPreguntas(-1)"><i class="fa fa-minus"></i></button>
                             <input type="number" id="input_cant_preguntas" name="cantidad_problemas" class="form-control text-center font-weight-bold" min="1" max="25" value="{{ old('cantidad_problemas', count($bancos_preguntas ?? [1])) }}" onchange="onManualCantidadChange(this.value)">
                             <button class="btn btn-outline-secondary mb-0 px-2.5" type="button" onclick="modificarCantidadPreguntas(1)"><i class="fa fa-plus"></i></button>
                         </div>
-                        <button type="button" class="btn btn-sm btn-dark mb-0 ms-1" onclick="agregarNuevaPregunta()">
+                        <button type="button" class="btn btn-sm btn-dark mb-0" onclick="agregarNuevaPregunta()">
                             <i class="fa fa-plus me-1"></i> Agregar Pregunta
                         </button>
                     </div>
@@ -485,14 +485,14 @@
 
             var cardHtml = `
                 <div class="card border shadow-xs pregunta-card" id="card_pregunta_${idx}">
-                    <div class="card-header bg-gray-100 py-2.5 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <div class="d-flex align-items-center gap-2">
+                    <div class="card-header bg-gray-100 py-2.5 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2" style="height: auto;">
+                        <div class="d-flex align-items-center flex-wrap gap-2">
                             <span class="badge bg-primary text-xs px-2.5 py-1">Pregunta #${num}</span>
                             <span class="text-xs font-weight-bold text-dark banco-titulo-label" id="label_titulo_${idx}">
                                 <i class="fa fa-layer-group text-danger me-1"></i> Banco: ${tituloBanco}
                             </span>
                         </div>
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center flex-wrap gap-2">
                             <span class="badge ${badgeClase} text-xxs px-2 py-1 banco-contador-badge" id="badge_count_${idx}">
                                 ${probCount} Variante(s) en Banco
                             </span>
@@ -538,7 +538,7 @@
                                             : `<span class="badge bg-light text-secondary border text-xxs"><i class="fa fa-list me-1"></i> Todas las categorías</span>`}
                                     </span>
                                 </div>
-                                <div class="d-flex align-items-center gap-1">
+                                <div class="d-flex align-items-center flex-wrap gap-1">
                                     <button type="button" id="btn_toggle_cat_${idx}" class="btn btn-xxs btn-outline-info mb-0 py-0.5 px-2 ${(banco.id_categoria !== null && banco.id_categoria !== undefined) ? '' : 'd-none'}" onclick="toggleVerTodasCategorias(${idx})" title="Alternar entre ver solo esta categoría o todas">
                                         <i class="fa fa-globe me-1"></i> Mostrar todas las categorías
                                     </button>

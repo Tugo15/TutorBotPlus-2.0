@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{{ $title_html ? $title_html . ' - ' : '' }}Tutorbot+</title>
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('tutorbot_theme') === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    document.documentElement.classList.add('dark-mode');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -16,6 +26,8 @@
     <link rel="stylesheet" href="{{ asset('assets/css/datatables_argon_fix.css') }}?v={{ @filemtime(public_path('assets/css/datatables_argon_fix.css')) ?: '1.0' }}">
     <script src="{{ mix('js/plataforma.js') }}" defer></script>
     <link rel="stylesheet" href="{{ mix('css/plataforma.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/dark_mode.css') }}?v={{ @filemtime(public_path('assets/css/dark_mode.css')) ?: '1.0' }}">
+    <script src="{{ asset('assets/js/theme_toggle.js') }}?v={{ @filemtime(public_path('assets/js/theme_toggle.js')) ?: '1.0' }}" defer></script>
     <style>
         /* roboto-regular - latin */
         @font-face {

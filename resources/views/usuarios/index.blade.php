@@ -50,7 +50,7 @@
 
                     <div id="custom-filters-src" class="d-none">
                         <div class="d-flex align-items-center">
-                            <label class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Rol:</label>
+                            <span class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Rol:</span>
                             <div class="dropdown">
                                 <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside" style="height: 32px; min-width: 120px;">
                                     <span class="lbl-rol-selected">Seleccionar...</span>
@@ -69,7 +69,7 @@
                         </div>
                         
                         <div class="d-flex align-items-center">
-                            <label class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Curso:</label>
+                            <span class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Curso:</span>
                             <div class="dropdown">
                                 <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside" style="height: 32px; min-width: 120px;">
                                     <span class="lbl-curso-selected">Seleccionar...</span>

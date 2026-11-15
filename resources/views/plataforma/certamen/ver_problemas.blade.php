@@ -41,11 +41,27 @@
                         <div id="enunciado">
                             @php
                                 $bodyProblemaSanitized = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $problemas[0]->body_problema ?? '');
+                                $mathBlocks = [];
+                                $bodyProblemaSanitized = preg_replace_callback('/```[\s\S]*?```|`[^`\r\n]*`|\$\$[\s\S]+?\$\$|(?<!\$)\$(?!\$)([^\$\r\n]+?)\$(?!\$)|(?<=[\p{L}\p{N}])\*(?=[\p{L}\p{N}])/u', function ($m) use (&$mathBlocks) {
+                                    if ($m[0] === '*') {
+                                        return '\\*';
+                                    }
+                                    if (str_starts_with($m[0], '$')) {
+                                        $key = 'TBMATHPLACEHOLDER' . count($mathBlocks) . 'END';
+                                        $mathBlocks[$key] = e($m[0]);
+                                        return $key;
+                                    }
+                                    return $m[0];
+                                }, $bodyProblemaSanitized);
+                                $renderedCertamenProblemaHtml = Str::markdown($bodyProblemaSanitized, [
+                                    'html_input' => 'strip',
+                                    'allow_unsafe_links' => false,
+                                ]);
+                                if (!empty($mathBlocks)) {
+                                    $renderedCertamenProblemaHtml = strtr($renderedCertamenProblemaHtml, $mathBlocks);
+                                }
                             @endphp
-                            {!! Str::markdown($bodyProblemaSanitized, [
-                                'html_input' => 'strip',
-                                'allow_unsafe_links' => true,
-                            ]) !!}
+                            {!! $renderedCertamenProblemaHtml !!}
 
                             @php
                                 $casos_ejemplo_0 = isset($problemas[0]->casos_de_prueba) ? $problemas[0]->casos_de_prueba : $problemas[0]->casos_de_prueba()->where('ejemplo', true)->orderBy('id', 'asc')->get();
@@ -176,12 +192,18 @@
                     table[i].classList.add("table-hover")
                     table[i].classList.add("mt-3")
                     table[i].style.width = "auto"
-                    table_body.classList.add("table-group-divider")
+                    if (table_body) {
+                        table_body.classList.add("table-group-divider")
+                    }
                 }
-
             }
         }
         style_table()
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof window.renderFormulas === 'function') {
+                window.renderFormulas(document.getElementById("enunciado") || document.body);
+            }
+        });
 
         function confirmarFinalizarCertamen() {
             const titulo = "¿Estás seguro de que deseas finalizar la evaluación?";
@@ -240,7 +262,20 @@
                 console.log(problemas[item])
                 let mdRaw = problemas[item]["body_problema"] || '';
                 let mdClean = mdRaw.replace(/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/g, '![$1]($2)');
+                let mathPlaceholders = {};
+                let mathIdx = 0;
+                mdClean = mdClean.replace(/```[\s\S]*?```|`[^`\r\n]*`|\$\$[\s\S]+?\$\$|(?<!\$)\$(?!\$)([^\$\r\n]+?)\$(?!\$)/g, function(m) {
+                    if (m.charAt(0) === '$') {
+                        let key = 'TBMATHPLACEHOLDER' + (mathIdx++) + 'END';
+                        mathPlaceholders[key] = escapeHtml(m);
+                        return key;
+                    }
+                    return m;
+                });
                 let htmlEnunciado = converter.makeHtml(mdClean);
+                Object.keys(mathPlaceholders).forEach(function(key) {
+                    htmlEnunciado = htmlEnunciado.split(key).join(mathPlaceholders[key]);
+                });
                 if (problemas[item]["casos_de_prueba"] && problemas[item]["casos_de_prueba"].length > 0) {
                     htmlEnunciado += '<div class="mt-4 pt-3 border-top"><h6 class="font-weight-bold text-primary mb-3"><i class="fa fa-vials me-2"></i>Ejemplos de Entrada y Salida</h6><div class="row">';
                     problemas[item]["casos_de_prueba"].forEach((caso, idx) => {

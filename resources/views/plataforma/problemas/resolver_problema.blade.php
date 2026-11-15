@@ -11,14 +11,14 @@
 @endphp
 @extends('layout_plataforma.app', ['title_html' => $problema->nombre, 'title' => 'Problema - ' . $problema->nombre . ' - Resolver', 'breadcrumbs' => $breadcrumbsResolver])
 @section('content')
-    <div class="container-fluid px-4 pb-4">
+    <div class="container-fluid px-2 px-md-4 pb-4">
         @include('components.alert')
-        <div class="row">
-            <div class="col-sm col-xs-12">
+        <div class="row g-3">
+            <div class="col-12 col-lg-8">
                 
                 @include('plataforma.problemas.componentes.card_editor')
             </div>
-            <div class="col-sm-4 col-xs-12">
+            <div class="col-12 col-lg-4">
                 @if(isset($res_certamen))
                 @include('plataforma.problemas.componentes.card_timer_certamen')
                 @endif

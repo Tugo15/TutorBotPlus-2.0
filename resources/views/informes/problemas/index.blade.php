@@ -52,13 +52,13 @@
                             <tbody>
                                 <tr class="bg-light">
                                     <td class="align-middle">
-                                        <div class="d-inline-flex px-3 py-1 align-items-center">
-                                            <div class="bg-primary text-white rounded-circle text-center d-flex align-items-center justify-content-center me-3 p-2" style="width: 36px; height: 36px;">
+                                        <div class="d-flex px-2 py-1 align-items-center gap-2 flex-wrap">
+                                            <div class="bg-primary text-white rounded-circle text-center d-flex align-items-center justify-content-center flex-shrink-0 p-2" style="width: 36px; height: 36px;">
                                                 <i class="fa fa-layer-group" style="top: 0; position: relative;"></i>
                                             </div>
                                             <div class="d-flex flex-column justify-content-center">
-                                                <h6 class="mb-0 text-sm font-weight-bold text-primary">Todos los Cursos Juntos (Consolidado)</h6>
-                                                <p class="text-xs text-secondary mb-0">Métricas acumuladas de todas las asignaturas</p>
+                                                <h6 class="mb-0 text-sm font-weight-bold text-primary text-wrap">Todos los Cursos Juntos (Consolidado)</h6>
+                                                <p class="text-xs text-secondary mb-0 text-wrap">Métricas acumuladas de todas las asignaturas</p>
                                             </div>
                                         </div>
                                     </td>
@@ -67,8 +67,8 @@
                                         <span class="badge badge-sm bg-gradient-success" title="Ejercicios Resueltos">Resueltos: {{ $cursos->sum('cantidad_resueltos') }}</span>
                                     </td>
                                     @canany(['ver informe del problema'])
-                                        <td class="align-middle text-end">
-                                            <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1">
+                                        <td class="align-middle text-center">
+                                            <div class="d-flex px-2 py-1 justify-content-center align-items-center flex-wrap gap-1">
                                                 @can('ver informe del problema')
                                                     <a class="btn btn-xs btn-outline-info mb-0" title="Ver Envíos de Todos los Cursos"
                                                         href="{{ route('informe.envios.problema', ['id_curso' => 'todos', 'id_problema' => $problema->id]) }}"><i class="fa fa-code me-1"></i> Envíos</a>
@@ -82,9 +82,9 @@
                                 @foreach ($cursos as $curso)
                                     <tr>
                                         <td class="align-middle">
-                                            <div class="d-inline-flex px-3 py-1">
+                                            <div class="d-flex px-2 py-1">
                                                 <div class="d-flex flex-column justify-content-center">
-                                                    <h6 class="mb-0 text-sm font-weight-bold">{{ $curso->nombre }}</h6>
+                                                    <h6 class="mb-0 text-sm font-weight-bold text-wrap">{{ $curso->nombre }}</h6>
                                                     <p class="text-xs text-secondary mb-0">Código: <span class="badge bg-gradient-primary text-xxs">{{ $curso->codigo }}</span></p>
                                                 </div>
                                             </div>
@@ -94,8 +94,8 @@
                                             <span class="badge badge-sm bg-gradient-success" title="Ejercicios Resueltos">Resueltos: {{ $curso->cantidad_resueltos }}</span>
                                         </td>
                                         @canany(['ver informe del problema'])
-                                            <td class="align-middle text-end">
-                                                <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1">
+                                            <td class="align-middle text-center">
+                                                <div class="d-flex px-2 py-1 justify-content-center align-items-center flex-wrap gap-1">
                                                     @can('ver informe del problema')
                                                         <a class="btn btn-xs btn-outline-info mb-0" title="Ver Envíos del Curso"
                                                             href="{{ route('informe.envios.problema', ['id_curso' => $curso->id_curso, 'id_problema' => $problema->id]) }}"><i class="fa fa-code me-1"></i> Envíos</a>

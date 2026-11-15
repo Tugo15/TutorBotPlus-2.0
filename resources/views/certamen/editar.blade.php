@@ -12,15 +12,15 @@
             <input type="hidden" name="id" value="{{ $certamen->id }}">
             <div class="card shadow-xs border">
                 <div class="card-header pb-0 border-bottom mb-0">
-                    <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
-                        <div class="d-none d-lg-block" style="flex: 1;">
+                    <div class="row align-items-center pb-2 gy-2 w-100 mx-0">
+                        <div class="col-12 col-lg-3 text-start px-0">
                             <a href="{{ route('certamen.index', ['id_curso' => $certamen->id_curso]) }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                         </div>
-                        <div class="text-center" style="flex: 2;">
+                        <div class="col-12 col-lg-6 text-center px-0">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-calendar-check me-2 text-warning"></i>Editar Evaluación: {{ $certamen->nombre }}</h6>
                             <p class="text-xs text-secondary mb-0">Modifique los parámetros y configuración de esta evaluación.</p>
                         </div>
-                        <div class="d-none d-lg-block" style="flex: 1;"></div>
+                        <div class="d-none d-lg-block col-lg-3 px-0"></div>
                     </div>
                 </div>
                 <div class="card-body pt-3">
@@ -63,7 +63,7 @@
         const editor = new Editor({
             el: document.querySelector('#editor'),
             height: '600px',
-            initialEditType: 'wysiwyg',
+            initialEditType: 'markdown',
             previewStyle: 'vertical',
             placeholder: 'Ingrese la descripción o instrucciones de la evaluación',
             initialValue: @json(old('descripcion', $certamen->descripcion ?? '')),
@@ -119,19 +119,28 @@
             window.attachImageUploadToEditor(editor, '#editor', '{{ route('problemas.upload_imagen') }}', '{{ csrf_token() }}');
         }
 
+        function getSanitizedMarkdown() {
+            let md = editor.getMarkdown();
+            md = md.replace(/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/g, '![$1]($2)');
+            md = md.replace(/\$\$[\s\S]+?\$\$|(?<!\$)\$(?!\$)([^\$\r\n]+?)\$(?!\$)/g, (match) => {
+                return match.replace(/\\([_*])/g, '$1');
+            });
+            return md;
+        }
+
         window.syncAdminEditors = function() {
             var desc = document.querySelector('#descripcion');
             if (desc && typeof editor !== 'undefined') {
-                desc.value = editor.getMarkdown();
+                desc.value = getSanitizedMarkdown();
             }
         };
 
         editor.on('change', () => {
-            document.querySelector('#descripcion').value = editor.getMarkdown();
+            document.querySelector('#descripcion').value = getSanitizedMarkdown();
         });
 
         document.querySelector('#editarForm').addEventListener('submit', e => {
-            document.querySelector('#descripcion').value = editor.getMarkdown();
+            document.querySelector('#descripcion').value = getSanitizedMarkdown();
         });
 
         // Asegurar que antes de confirmar en el modal de SweetAlert, la descripción esté copiada
@@ -140,7 +149,7 @@
             window.submitFormEditar = function(item) {
                 var desc = document.querySelector('#descripcion');
                 if (desc && typeof editor !== 'undefined') {
-                    desc.value = editor.getMarkdown();
+                    desc.value = getSanitizedMarkdown();
                 }
                 origSubmitAlert(item);
             };

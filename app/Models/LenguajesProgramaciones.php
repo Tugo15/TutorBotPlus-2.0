@@ -24,7 +24,7 @@ class LenguajesProgramaciones extends Model
     ];
     public static $createRules = [
         'nombre' => ['required', 'string', 'max:255'],
-        'codigo' => ['required', 'integer', 'unique:lenguajes_programaciones,codigo'],
+        'codigo' => ['required', 'integer', 'min:1', 'unique:lenguajes_programaciones,codigo'],
         'abreviatura' => ['required', 'string', 'max:255'],
         'extension' => ['required', 'string', 'max:15'], 
     ];
@@ -32,7 +32,7 @@ class LenguajesProgramaciones extends Model
     public static function updateRules($id){
         return [
             'nombre' => ['required', 'string', 'max:255'],
-            'codigo' => ['required', 'integer', Rule::unique('lenguajes_programaciones')->ignore($id)],
+            'codigo' => ['required', 'integer', 'min:1', Rule::unique('lenguajes_programaciones')->ignore($id)],
             'abreviatura' => ['required', 'string', 'max:255'],
             'extension' => ['required', 'string', 'max:15'], 
         ];

@@ -25,14 +25,14 @@ class Cursos extends Model
 
     public static $createRules = [
         "nombre" => ["required","string","max:255"],
-        "descripcion" => ["string","max:500"],
+        "descripcion" => ["nullable","string","max:500"],
         "codigo" => ["required","string","unique:cursos,codigo"],
     ];
 
     public static function updateRules($id){
         return [
             "nombre" => ["required","string","max:255"],
-            "descripcion" => ["string","max:500"],
+            "descripcion" => ["nullable","string","max:500"],
             "codigo" => ["required","string", Rule::unique('cursos')->ignore($id)],
         ];
     }

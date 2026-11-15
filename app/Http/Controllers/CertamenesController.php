@@ -785,6 +785,17 @@ class CertamenesController extends Controller
     public function obtener_ultimos_envios_json(Request $request){
         try{
             $res_certamen = ResolucionCertamenes::with(['certamen', 'ProblemasSeleccionadas'])->where('token', '=', $request->token)->first();
+            if (!isset($res_certamen)) {
+                return response()->json(['error' => 'El intento de evaluación no existe.'], 404);
+            }
+            $esDocenteOAdmin = auth()->check() && (
+                auth()->user()->hasRole('administrador') ||
+                auth()->user()->hasRole('profesor') ||
+                auth()->user()->can('ver informe del certamen')
+            );
+            if (!$esDocenteOAdmin && (int)$res_certamen->id_usuario !== (int)auth()->id()) {
+                return response()->json(['error' => 'No tienes permiso para acceder a esta evaluación.'], 403);
+            }
             $problemas = $this->get_ultimos_envios($res_certamen);
         }catch(\PDOException $e){
             return response($e->getMessage(), 500);
@@ -821,13 +832,21 @@ class CertamenesController extends Controller
     }
 
     public function finalizar_certamen(Request $request){
+        $res_certamen = null;
         try{
             $res_certamen = ResolucionCertamenes::where('token', '=', $request->token)->first();
-            if ($res_certamen) {
-                $res_certamen->finalizar_certamen();
+            if (!$res_certamen) {
+                return redirect()->route('certamenes.listado')->with("error", "El intento de evaluación no existe.");
             }
+            if ((int)$res_certamen->id_usuario !== (int)auth()->id() && !auth()->user()->hasRole('administrador')) {
+                return redirect()->route('certamenes.listado')->with("error", "No tienes permiso para finalizar esta evaluación.");
+            }
+            $res_certamen->finalizar_certamen();
         }catch(\PDOException $e){
-            return redirect()->route('certamenes.ver', ['id_certamen'=>$res_certamen->id_certamen])->with("error", $e->getMessage());
+            if ($res_certamen) {
+                return redirect()->route('certamenes.ver', ['id_certamen'=>$res_certamen->id_certamen])->with("error", $e->getMessage());
+            }
+            return redirect()->route('certamenes.listado')->with("error", $e->getMessage());
         }
         return redirect()->route('certamenes.ver', ['id_certamen'=>$res_certamen->id_certamen])->with("success", "Has finalizado la evaluación con éxito.");
     }
@@ -881,7 +900,7 @@ class CertamenesController extends Controller
                 $last_envio = $query->orderBy('created_at', 'DESC')->first();
             }
 
-            if ($last_envio) {
+            if ($last_envio && $last_envio->usuario && (int)$last_envio->usuario->id === (int)auth()->id()) {
                 $last_envio->codigo = $request->codigo_save ?? '';
 
                 if ($request->filled('lenguaje_save') && $request->filled('id_problema')) {

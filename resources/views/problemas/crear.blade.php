@@ -16,15 +16,15 @@
             @endif
             <div class="card shadow-xs border">
                 <div class="card-header pb-0 border-bottom mb-0">
-                    <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
-                        <div class="d-none d-lg-block" style="flex: 1;">
+                    <div class="row align-items-center pb-2 gy-2 w-100 mx-0">
+                        <div class="col-12 col-lg-3 text-start px-0">
                             <a href="{{ $idCursoVolver ? route('problemas.index', ['id_curso' => $idCursoVolver]) : route('problemas.index') }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                         </div>
-                        <div class="text-center" style="flex: 2;">
+                        <div class="col-12 col-lg-6 text-center px-0">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-plus-circle me-2 text-primary"></i>Crear Nuevo Problema</h6>
                             <p class="text-xs text-secondary mb-0">Configure los detalles, enunciado y condiciones del problema.</p>
                         </div>
-                        <div class="d-none d-lg-block" style="flex: 1;"></div>
+                        <div class="d-none d-lg-block col-lg-3 px-0"></div>
                     </div>
                 </div>
                 <div class="card-body pt-3">
@@ -59,7 +59,10 @@
             defaultDate: fIniOld ? fIniOld : null,
             minDate: new Date(),
             onReady: function(dObj, dStr, fp) {
-                if (fp.altInput) fp.altInput.id = 'fecha_inicio_visible';
+                if (fp.altInput) {
+                    fp.altInput.id = 'fecha_inicio_visible';
+                    fp.altInput.disabled = fp.input.disabled;
+                }
             }
         });
         const fecha_termino = flatpickr("#fecha_termino", {
@@ -70,13 +73,16 @@
             defaultDate: fTerOld ? fTerOld : null,
             minDate: new Date(),
             onReady: function(dObj, dStr, fp) {
-                if (fp.altInput) fp.altInput.id = 'fecha_termino_visible';
+                if (fp.altInput) {
+                    fp.altInput.id = 'fecha_termino_visible';
+                    fp.altInput.disabled = fp.input.disabled;
+                }
             }
         });
         const editor = new Editor({
             el: document.querySelector('#editor'),
             height: '600px',
-            initialEditType: 'wysiwyg',
+            initialEditType: 'markdown',
             previewStyle: 'vertical',
             autofocus: false,
             placeholder: 'Ingrese el enunciado del problema',
@@ -137,6 +143,10 @@
             let md = editor.getMarkdown();
             // Corrige saltos de línea accidentales entre ![] y (url o data:image...)
             md = md.replace(/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/g, '![$1]($2)');
+            // Restaura _ y * escapados por WYSIWYG dentro de bloques matemáticos $...$ y $$...$$
+            md = md.replace(/\$\$[\s\S]+?\$\$|(?<!\$)\$(?!\$)([^\$\r\n]+?)\$(?!\$)/g, (match) => {
+                return match.replace(/\\([_*])/g, '$1');
+            });
             return md;
         }
 
@@ -181,35 +191,31 @@
             }
         });
 
+        const syncFechaState = (fpInstance, inputId, checked) => {
+            const inputEl = document.getElementById(inputId);
+            if (inputEl) inputEl.disabled = !checked;
+            if (fpInstance && fpInstance.altInput) {
+                fpInstance.altInput.disabled = !checked;
+            }
+        };
+        syncFechaState(fecha_inicio, 'fecha_inicio', checkbox_fecha_inicio.checked);
+        syncFechaState(fecha_termino, 'fecha_termino', checkbox_fecha_termino.checked);
+
         checkbox_fecha_inicio.addEventListener('change', (event) => {
-            if (event.currentTarget.checked) {
-                document.getElementById('fecha_inicio').disabled = false;
-                let elementos = document.querySelectorAll('.fecha_inicio_class')
-                for (var i = 0; i < elementos.length; ++i) {
-                    elementos[i].classList.remove('d-none');
-                }
-            } else {
-                let elementos = document.querySelectorAll('.fecha_inicio_class')
-                for (var i = 0; i < elementos.length; ++i) {
-                    elementos[i].classList.add('d-none');
-                }
-                document.getElementById('fecha_inicio').disabled = true;
+            const isChecked = event.currentTarget.checked;
+            syncFechaState(fecha_inicio, 'fecha_inicio', isChecked);
+            let elementos = document.querySelectorAll('.fecha_inicio_class');
+            for (var i = 0; i < elementos.length; ++i) {
+                elementos[i].classList.toggle('d-none', !isChecked);
             }
         })
 
         checkbox_fecha_termino.addEventListener('change', (event) => {
-            if (event.currentTarget.checked) {
-                document.getElementById('fecha_termino').disabled = false;
-                let elementos = document.querySelectorAll('.fecha_termino_class')
-                for (var i = 0; i < elementos.length; ++i) {
-                    elementos[i].classList.remove('d-none');
-                }
-            } else {
-                document.getElementById('fecha_termino').disabled = true;
-                let elementos = document.querySelectorAll('.fecha_termino_class')
-                for (var i = 0; i < elementos.length; ++i) {
-                    elementos[i].classList.add('d-none');
-                }
+            const isChecked = event.currentTarget.checked;
+            syncFechaState(fecha_termino, 'fecha_termino', isChecked);
+            let elementos = document.querySelectorAll('.fecha_termino_class');
+            for (var i = 0; i < elementos.length; ++i) {
+                elementos[i].classList.toggle('d-none', !isChecked);
             }
         })
     </script>

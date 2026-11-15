@@ -1,14 +1,36 @@
 @extends('layout_plataforma.app', ['title_html' => 'Retroalimentación para Envío #' . $retroalimentacion->id_envio, 'title' => 'Retroalimentación - Envío #' . $retroalimentacion->id_envio, "breadcrumbs"=>[["nombre"=>"Envíos", "route"=>route("envios.listado")], ["nombre"=>"Envío #".$envios->id, "route"=>route('envios.ver', ['token'=>$envios->token])], ["nombre"=>"Retroalimentación"]]])
 @section('content')
-    <div class="container-fluid py-3 px-3 px-md-4">
-        <div class="row gy-3">
+    <div class="container-fluid py-3 px-2 px-md-4">
+        <div class="row g-3 align-items-stretch">
             <div class="col-md-8 col-12">
-                <div class="card border-danger overflow-auto" style="min-height: 20rem; max-height: 35rem;">
+                <div class="card border-danger h-100">
                     <div class="card-header">
                         Retroalimentación
                     </div>
-                    <div class="card-body">
-                        {!! Str::markdown($retroalimentacion->retroalimentacion) !!}
+                    <div class="card-body overflow-auto" id="body_markdown" style="max-height: 35rem;">
+                        @php
+                            $raSanitized = $retroalimentacion->retroalimentacion ?? '';
+                            $mathBlocks = [];
+                            $raSanitized = preg_replace_callback('/```[\s\S]*?```|`[^`\r\n]*`|\$\$[\s\S]+?\$\$|(?<!\$)\$(?!\$)([^\$\r\n]+?)\$(?!\$)|(?<=[\p{L}\p{N}])\*(?=[\p{L}\p{N}])/u', function ($m) use (&$mathBlocks) {
+                                if ($m[0] === '*') {
+                                    return '\\*';
+                                }
+                                if (str_starts_with($m[0], '$')) {
+                                    $key = 'TBMATHPLACEHOLDER' . count($mathBlocks) . 'END';
+                                    $mathBlocks[$key] = e($m[0]);
+                                    return $key;
+                                }
+                                return $m[0];
+                            }, $raSanitized);
+                            $renderedRaHtml = Str::markdown($raSanitized, [
+                                'html_input' => 'strip',
+                                'allow_unsafe_links' => false,
+                            ]);
+                            if (!empty($mathBlocks)) {
+                                $renderedRaHtml = strtr($renderedRaHtml, $mathBlocks);
+                            }
+                        @endphp
+                        {!! $renderedRaHtml !!}
                     </div>
                 </div>
             </div>
@@ -27,15 +49,15 @@
                 </div>
             </div>
         </div>
-    </div>
-    <div class="row mt-3 mx-2">
-        <div class="col">
-            <div class="card border-danger overflow-auto mb-5" style="height: 15rem;">
-                <div class="card-header">
-                    Código Fuente
-                </div>
-                <div class="card-body">
-                    <pre style="height: 100%"><code class="{{ $highlightjs_choice }}-html" >{{ $envios->codigo }}</code></pre>
+        <div class="row g-3 mt-1">
+            <div class="col-12">
+                <div class="card border-danger overflow-auto mb-5" style="max-height: 18rem;">
+                    <div class="card-header">
+                        Código Fuente
+                    </div>
+                    <div class="card-body">
+                        <pre class="mb-0 pb-2"><code class="{{ $highlightjs_choice }}-html">{{ $envios->codigo }}</code></pre>
+                    </div>
                 </div>
             </div>
         </div>
@@ -47,5 +69,10 @@
     <script src="{{ asset('assets/js/highlightjs/highlight.min.js') }}" type="text/javascript"></script>
     <script>
         hljs.highlightAll();
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof window.renderFormulas === 'function') {
+                window.renderFormulas(document.querySelector('#body_markdown') || document.body);
+            }
+        });
     </script>
 @endpush

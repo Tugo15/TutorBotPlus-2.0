@@ -22,12 +22,12 @@
                 </div>
                 @forelse ($cursos as $curso)
                     <a href="{{ route('problemas.listado', ['id' => $curso->id]) }}" style="text-decoration: none;">
-                        <div class="card rounded mb-3 mx-1 ms-md-5 me-md-4">
-                            <div class="row g-0">
-                                <div class="col-sm-3">
-                                    <div class="curso_image rounded"></div>
+                        <div class="card rounded overflow-hidden mb-3 mx-1 ms-md-5 me-md-4">
+                            <div class="row g-0 align-items-stretch">
+                                <div class="col-12 col-sm-4 col-md-3">
+                                    <div class="curso_image"></div>
                                 </div>
-                                <div class="col-md-8">
+                                <div class="col-12 col-sm-8 col-md-9">
                                     <div class="card-body">
                                         <h5 class="card-title">{{ $curso->nombre }}</h5>
                                         <p class="card-text mt-3">{{ $curso->descripcion }}</p>

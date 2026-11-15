@@ -44,10 +44,14 @@ class UserController extends Controller
     }
     public function bulk_insertion_example(Request $request)
     {
-        if (!Storage::exists('public/examples/ejemplo_bulk_usuarios.csv')) {
-            return back()->with('error', 'El archivo de ejemplo no se encuentra disponible.');
+        if (Storage::exists('public/examples/ejemplo_bulk_usuarios.csv')) {
+            return Storage::download("public/examples/ejemplo_bulk_usuarios.csv");
         }
-        return Storage::download("public/examples/ejemplo_bulk_usuarios.csv");
+        $publicPath = public_path('examples/ejemplo_bulk_usuarios.csv');
+        if (file_exists($publicPath)) {
+            return response()->download($publicPath, 'ejemplo_bulk_usuarios.csv');
+        }
+        return back()->with('error', 'El archivo de ejemplo no se encuentra disponible.');
     }
     
     public function actualizar_informacion(Request $request){
@@ -86,7 +90,7 @@ class UserController extends Controller
     public function bulk_insertion(Request $request)
     {
         $validated = $request->validate([
-            'csvFile' => 'required|mimes:csv,txt',
+            'csvFile' => 'required|file|mimes:csv,txt|extensions:csv,txt',
         ]);
         $contenido = file_get_contents($request->file('csvFile')->getRealPath());
         //remover caracteres especiales y nulos

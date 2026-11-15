@@ -80,7 +80,7 @@
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-3">
                 <div>
                     <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                        <span class="badge bg-gradient-primary text-white font-monospace">Envío #{{ $envio->id }}</span>
+                        <span class="badge bg-primary text-white font-monospace">Envío #{{ $envio->id }}</span>
                         <h4 class="mb-0 text-dark font-weight-bold">{{ $problema->nombre }}</h4>
                         <span class="badge bg-light text-secondary border font-monospace">{{ $problema->codigo }}</span>
                     </div>
@@ -286,12 +286,28 @@
                     {{-- CUERPO DEL ENUNCIADO EN MARKDOWN --}}
                     @php
                         $bodyProblemaSanitized = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $problema->body_problema ?? '');
+                        $mathBlocks = [];
+                        $bodyProblemaSanitized = preg_replace_callback('/```[\s\S]*?```|`[^`\r\n]*`|\$\$[\s\S]+?\$\$|(?<!\$)\$(?!\$)([^\$\r\n]+?)\$(?!\$)|(?<=[\p{L}\p{N}])\*(?=[\p{L}\p{N}])/u', function ($m) use (&$mathBlocks) {
+                            if ($m[0] === '*') {
+                                return '\\*';
+                            }
+                            if (str_starts_with($m[0], '$')) {
+                                $key = 'TBMATHPLACEHOLDER' . count($mathBlocks) . 'END';
+                                $mathBlocks[$key] = e($m[0]);
+                                return $key;
+                            }
+                            return $m[0];
+                        }, $bodyProblemaSanitized);
+                        $renderedResultadoMd = Str::markdown($bodyProblemaSanitized, [
+                            'html_input' => 'strip',
+                            'allow_unsafe_links' => false,
+                        ]);
+                        if (!empty($mathBlocks)) {
+                            $renderedResultadoMd = strtr($renderedResultadoMd, $mathBlocks);
+                        }
                     @endphp
                     <div class="markdown-content text-dark" style="line-height: 1.65; font-size: 0.95rem;">
-                        {!! Str::markdown($bodyProblemaSanitized, [
-                            'html_input' => 'strip',
-                            'allow_unsafe_links' => true,
-                        ]) !!}
+                        {!! $renderedResultadoMd !!}
                     </div>
 
                     {{-- CASOS DE PRUEBA DE EJEMPLO --}}
@@ -361,7 +377,7 @@
                     </button>
                 </div>
                 <div class="card-body p-0">
-                    <pre class="mb-0 p-3" style="max-height: 420px; overflow-y: auto; background: #282c34; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"><code class="{{ $highlightjs_choice }}-html" id="codigo_estudiante">{{ $envio->codigo }}</code></pre>
+                    <pre class="mb-0 px-3 pt-3 pb-4" style="max-height: 440px; overflow: auto; background: #282c34; line-height: 1.5; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"><code class="{{ $highlightjs_choice }}-html p-0 bg-transparent d-block" id="codigo_estudiante">{{ $envio->codigo }}</code></pre>
                 </div>
             </div>
 
@@ -388,9 +404,9 @@
                             <span class="text-dark font-weight-bold">{{ $problema->restricciones }}</span>
                         </div>
                         @if(isset($envio->verificacion_restricciones))
-                            <div class="p-2 rounded bg-gray-100 border text-dark" style="white-space: pre-wrap; font-size: 0.82rem; line-height: 1.45;">
+                            <div class="p-2 rounded bg-gray-100 border text-dark" style="font-size: 0.82rem; line-height: 1.45;">
                                 <strong class="d-block mb-1 text-primary"><i class="fa fa-comment-dots me-1"></i> Evaluación del Bot:</strong>
-                                {!! e($envio->verificacion_restricciones) !!}
+                                <div style="white-space: pre-wrap;">{!! trim(e($envio->verificacion_restricciones)) !!}</div>
                             </div>
                         @else
                             <p class="text-muted text-xs mb-0">Aún no se ha verificado si el código cumple con las restricciones.</p>
@@ -559,10 +575,33 @@
 <script>
     hljs.highlightAll();
 
-    // Renderizar Fórmulas Matemáticas con KaTeX si está disponible
-    if (typeof window.renderFormulas === 'function') {
-        window.renderFormulas(document.querySelector('#body_markdown') || document.body);
-    }
+    // Estilizar tablas y renderizar Fórmulas Matemáticas con KaTeX si está disponible
+    document.addEventListener('DOMContentLoaded', function() {
+        var container = document.querySelector('#body_markdown');
+        var tables = document.querySelectorAll('#body_markdown table');
+        if (tables != null) {
+            for (var i = 0; i < tables.length; i++) {
+                var table_body = tables[i].querySelector('tbody');
+                if (table_body) {
+                    tables[i].classList.add('table', 'table-bordered', 'table-hover', 'mt-3');
+                    tables[i].style.width = 'auto';
+                    table_body.classList.add('table-group-divider');
+                }
+            }
+        }
+        if (container) {
+            container.querySelectorAll('pre > code.language-katex, pre > code.language-math, pre > code.language-latex').forEach(function(codeEl) {
+                var pre = codeEl.parentElement;
+                var div = document.createElement('div');
+                div.className = 'katex-block my-3';
+                div.textContent = '$$' + (codeEl.textContent || '').trim() + '$$';
+                pre.replaceWith(div);
+            });
+        }
+        if (typeof window.renderFormulas === 'function') {
+            window.renderFormulas(container || document.body);
+        }
+    });
 
     // Cálculo y formateo del tiempo de desarrollo
     const tiempo_desarrollo = Math.max(0, {{ (int)$diferencia }});

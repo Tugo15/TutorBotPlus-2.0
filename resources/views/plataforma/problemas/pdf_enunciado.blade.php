@@ -182,7 +182,13 @@
     <h3>Enunciado</h3>
     @php
         $bodySanitized = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $problema->body_problema ?? '');
-        $renderedHtml = Str::markdown($bodySanitized);
+        $bodySanitized = preg_replace_callback('/```[\s\S]*?```|`[^`\r\n]*`|(?<=[\p{L}\p{N}])\*(?=[\p{L}\p{N}])/u', function ($m) {
+            return $m[0] === '*' ? '\\*' : $m[0];
+        }, $bodySanitized);
+        $renderedHtml = Str::markdown($bodySanitized, [
+            'html_input' => 'strip',
+            'allow_unsafe_links' => false,
+        ]);
         $renderedHtml = str_replace('src="/storage/', 'src="' . public_path('storage/') . '/', $renderedHtml);
     @endphp
     {!! $renderedHtml !!}

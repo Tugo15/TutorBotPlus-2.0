@@ -16,11 +16,11 @@
 
                 <!-- Filtros de Búsqueda Avanzados -->
                 <div class="row g-2 pb-3 pt-2 bg-light rounded px-2 align-items-end border mb-0 mt-3">
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-12 col-sm-6 col-lg-3">
                         <label for="filtroEstadoEnvio" class="form-label text-xs font-weight-bold text-dark mb-1">
                             <i class="fa fa-filter text-primary me-1"></i>Estado del Envío:
                         </label>
-                        <select id="filtroEstadoEnvio" class="form-select form-select-sm">
+                        <select id="filtroEstadoEnvio" class="form-select form-select-sm" style="height: 34px;">
                             <option value="">Todos los Estados</option>
                             <option value="Aceptado">Aceptado / Accepted</option>
                             <option value="Aceptado (Variación de Formato)">Aceptado (Variación de Formato)</option>
@@ -31,11 +31,11 @@
                     </div>
 
                     @if(count($problemas_unicos) > 1)
-                    <div class="col-md-4 col-sm-6">
+                    <div class="col-12 col-sm-6 col-lg-4">
                         <label for="filtroProblemaEnvio" class="form-label text-xs font-weight-bold text-dark mb-1">
                             <i class="fa fa-puzzle-piece text-info me-1"></i>Filtrar por Problema:
                         </label>
-                        <select id="filtroProblemaEnvio" class="form-select form-select-sm">
+                        <select id="filtroProblemaEnvio" class="form-select form-select-sm" style="height: 34px;">
                             <option value="">Todos los Problemas</option>
                             @foreach($problemas_unicos as $probNombre)
                                 <option value="{{ $probNombre }}">{{ $probNombre }}</option>
@@ -44,15 +44,15 @@
                     </div>
                     @endif
 
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-12 col-sm-6 col-lg-3">
                         <label for="filtroEstudianteEnvio" class="form-label text-xs font-weight-bold text-dark mb-1">
                             <i class="fa fa-user text-success me-1"></i>Estudiante / RUT:
                         </label>
-                        <input type="text" id="filtroEstudianteEnvio" class="form-control form-control-sm" placeholder="Buscar Estudiante o RUT...">
+                        <input type="text" id="filtroEstudianteEnvio" class="form-control form-control-sm" style="height: 34px;" placeholder="Buscar Estudiante o RUT...">
                     </div>
 
-                    <div class="col-md-2 col-sm-6">
-                        <button type="button" id="btnLimpiarFiltrosEnvio" class="btn btn-xs btn-outline-secondary w-100 mb-0">
+                    <div class="col-12 col-sm-6 col-lg-2">
+                        <button type="button" id="btnLimpiarFiltrosEnvio" class="btn btn-sm btn-outline-secondary w-100 mb-0" style="height: 34px;">
                             <i class="fa fa-sync-alt me-1"></i> Limpiar
                         </button>
                     </div>
@@ -227,12 +227,30 @@
                 var tableEnvios = $('#tabla_envios_list').DataTable(Object.assign({
                     language: typeof espaniol !== 'undefined' ? espaniol : {},
                     responsive: true,
+                    autoWidth: false,
                     stateSave: true,
                     order: [[6, 'desc']],
                     dom: typeof responsiveDomLayout !== 'undefined' ? responsiveDomLayout : "<'row mx-0 px-2 px-md-4 pb-2 pt-1 align-items-center gy-2'<'col-12 col-md-6 d-flex align-items-center flex-wrap'l><'col-12 col-md-6 d-flex align-items-center justify-content-md-end justify-content-start'f>>" +
                          "<'row mx-0'<'col-12 px-0 table-responsive'tr>>" +
-                         "<'row mx-0 px-2 px-md-4 pt-3 pb-4 align-items-center gy-2'<'col-12 col-md-5 text-center text-md-start'i><'col-12 col-md-7 d-flex justify-content-center justify-content-md-end'p>>"
+                         "<'row mx-0 px-2 px-md-4 pt-3 pb-4 align-items-center gy-2'<'col-12 col-md-5 text-center text-md-start'i><'col-12 col-md-7 d-flex justify-content-center justify-content-md-end'p>>",
+                    initComplete: function() {
+                        var api = this.api();
+                        setTimeout(function() {
+                            try {
+                                api.columns.adjust();
+                                if (api.responsive && typeof api.responsive.recalc === 'function') api.responsive.recalc();
+                            } catch (e) {}
+                        }, 150);
+                    }
                 }, stateExtraEnvios));
+                window.addEventListener('load', function() {
+                    setTimeout(function() {
+                        try {
+                            tableEnvios.columns.adjust();
+                            if (tableEnvios.responsive && typeof tableEnvios.responsive.recalc === 'function') tableEnvios.responsive.recalc();
+                        } catch (e) {}
+                    }, 150);
+                });
 
                 var storageKeyEnvios = typeof window.getTutorBotFilterKey === 'function'
                     ? window.getTutorBotFilterKey('envios_filters')
@@ -265,16 +283,6 @@
                     }
                     saveEnviosFilters();
                 }
-
-                // Al cambiar de página, desplazarse suavemente al encabezado de la tabla de envíos
-                tableEnvios.on('page.dt', function () {
-                    var el = document.getElementById('tabla_envios_list');
-                    if (el) {
-                        var card = el.closest('.card') || el;
-                        var offset = card.getBoundingClientRect().top + window.pageYOffset - 80;
-                        window.scrollTo({ top: offset, behavior: 'smooth' });
-                    }
-                });
 
                 try {
                     var savedEnviosRaw = localStorage.getItem(storageKeyEnvios);

@@ -6,7 +6,7 @@
                     <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-chart-line me-2 text-primary"></i>Estadísticas de Problemas del Curso</h6>
                 </div>
             </div>
-            <div class="card-body px-5 pt-3 pb-2">
+            <div class="card-body px-3 px-md-5 pt-3 pb-3">
                 <div class="row">
                     @if ((!empty($lenguajes_estadistica) || !empty($estadistica_estados)) && isset($problema_mas_resuelto) && isset($problema_mas_intentado))
                         <span><strong>Problema más resuelto:</strong></span>
@@ -19,7 +19,11 @@
                             class="mb-3">{{ $problema_mas_intentado->nombre }}
                             ({{ $problema_mas_intentado->cantidad_resueltos }} soluciones y
                             {{ $problema_mas_intentado->cantidad_intentos }} intentos)</a>
-                        <canvas id="grafica_problemas" width="300" height="100"></canvas>
+                        <div class="col-12 mt-2">
+                            <div style="position: relative; height: 300px;">
+                                <canvas id="grafica_problemas"></canvas>
+                            </div>
+                        </div>
                     @else
                         <div class="col-12 text-center py-4">
                             <i class="fa fa-chart-bar text-muted opacity-5 fa-3x mb-3"></i>
@@ -33,7 +37,9 @@
 </div>
 
 @push('js')
-    <script src="{{ asset('assets/js/plugins/chartjs.min.js') }}"></script>
+    @once('chartjs')
+        <script src="{{ asset('assets/js/plugins/chartjs.min.js') }}"></script>
+    @endonce
     <script>
         var grafica_problemas = document.getElementById("grafica_problemas");
         const datos_cantidad_resueltos = @json($dataset_problemas->pluck('cantidad_resueltos')->toArray());
@@ -66,6 +72,8 @@
         };
 
         var chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
             scales: {
                 xAxes: [{
                     barPercentage: 1,

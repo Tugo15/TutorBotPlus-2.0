@@ -2,15 +2,15 @@
     <div class="col-12">
         <div class="card shadow-xs border mb-4">
             <div class="card-header pb-0 border-bottom mb-0">
-                <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
-                    <div class="d-none d-lg-block" style="flex: 1;">
+                <div class="row align-items-center pb-2 gy-2 w-100 mx-0">
+                    <div class="col-12 col-lg-3 text-start px-0">
                         <a href="{{route('cursos.index')}}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver a Cursos</a>
                     </div>
-                    <div class="text-center" style="flex: 2;">
+                    <div class="col-12 col-lg-6 text-center px-0">
                         <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-users me-2 text-primary"></i>Informe de Estudiantes</h6>
                         <p class="text-xs text-secondary mb-0">Rendimiento de los estudiantes en este curso.</p>
                     </div>
-                    <div class="d-none d-lg-block" style="flex: 1;"></div>
+                    <div class="d-none d-lg-block col-lg-3 px-0"></div>
                 </div>
             </div>
 
@@ -45,9 +45,9 @@
                             @foreach ($listado_estudiantes as $item)
                                 <tr>
                                     <td>
-                                        <div class="d-flex px-3 py-1">
+                                        <div class="d-flex px-2 py-1">
                                             <div class="d-flex flex-column justify-content-center">
-                                                <h6 class="mb-0 text-sm font-weight-bold">{{ $item->firstname }} {{ $item->lastname }}
+                                                <h6 class="mb-0 text-sm font-weight-bold text-wrap">{{ $item->firstname }} {{ $item->lastname }}
                                                 </h6>
                                             </div>
                                         </div>
@@ -108,13 +108,5 @@
                  "<'row mx-0'<'col-12 px-0 table-responsive'tr>>" +
                  "<'row mx-0 px-2 px-md-4 pt-3 pb-4 align-items-center gy-2'<'col-12 col-md-5 text-center text-md-start'i><'col-12 col-md-7 d-flex justify-content-center justify-content-md-end'p>>"
         }, stateExtraEstCurso));
-        tablaEstCurso.on('page.dt', function () {
-            var el = document.getElementById('tabla_estudiantes');
-            if (el) {
-                var card = el.closest('.card') || el;
-                var offset = card.getBoundingClientRect().top + window.pageYOffset - 80;
-                window.scrollTo({ top: offset, behavior: 'smooth' });
-            }
-        });
     </script>
 @endpush

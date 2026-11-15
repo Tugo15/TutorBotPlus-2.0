@@ -8,6 +8,16 @@
     <title>
         @if(isset($title_url)){{$title_url}} - @endif TutorBot+
     </title>
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('tutorbot_theme') === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    document.documentElement.classList.add('dark-mode');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <!--     Fonts and icons     -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,6 +33,8 @@
     <link rel="stylesheet" href="{{ asset('assets/css/argon-dashboard.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/datatables_argon_fix.css') }}?v={{ @filemtime(public_path('assets/css/datatables_argon_fix.css')) ?: '1.0' }}">
     <link rel="stylesheet" href="{{ asset('assets/css/selection_cards.css') }}?v={{ @filemtime(public_path('assets/css/selection_cards.css')) ?: '1.0' }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/dark_mode.css') }}?v={{ @filemtime(public_path('assets/css/dark_mode.css')) ?: '1.0' }}">
+    <script src="{{ asset('assets/js/theme_toggle.js') }}?v={{ @filemtime(public_path('assets/js/theme_toggle.js')) ?: '1.0' }}" defer></script>
     <style>
         .card-body > .alert.alert-success.alert-dismissible,
         .card-body > .alert.alert-danger.alert-dismissible,
@@ -37,6 +49,16 @@
 <body class="{{ $class ?? '' }}">
 
     @guest
+        <button type="button"
+            class="btn btn-sm btn-outline-secondary bg-white shadow-xs rounded-pill px-3 py-1 mb-0 tb-theme-toggle-btn tb-theme-toggle-btn-guest"
+            data-theme-toggle
+            title="Cambiar a modo oscuro"
+            aria-label="Cambiar a modo oscuro"
+            aria-pressed="false"
+            style="position: fixed; top: 1rem; left: 1rem; z-index: 1050;">
+            <i class="fa fa-moon" data-theme-icon aria-hidden="true"></i>
+            <span class="ms-1 text-xs d-none d-sm-inline" data-theme-label>Oscuro</span>
+        </button>
         @yield('content')
     @endguest
 
@@ -182,7 +204,7 @@
             padding-right: 42px !important; /* Huge 42px right padding */
             min-width: 95px !important;
             width: 95px !important;
-            height: 38px !important;
+            height: 34px !important;
             line-height: 1.5 !important;
             border-radius: 0.5rem !important;
             border: 1px solid #d2d6da !important;
@@ -209,14 +231,18 @@
 
         .dataTables_filter input,
         div.dataTables_filter input,
-        .dataTables_wrapper .dataTables_filter input {
-            padding: 0.375rem 0.75rem !important;
+        .dataTables_wrapper .dataTables_filter input,
+        div.dt-container div.dt-search input {
+            padding: 0.25rem 0.65rem !important;
             font-size: 0.875rem !important;
             border-radius: 0.5rem !important;
             border: 1px solid #d2d6da !important;
             margin-left: 0.5rem !important;
             outline: none !important;
-            height: 38px !important;
+            height: 34px !important;
+            min-height: 34px !important;
+            max-height: 34px !important;
+            box-sizing: border-box !important;
         }
 
         /* DataTables Header Sorting Arrows Fix */

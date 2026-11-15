@@ -44,7 +44,7 @@
     <div class="col-md-6">
         <div class="form-group has-danger mb-3">
             <label for="codigo" class="form-control-label font-weight-bold text-sm @error('codigo') is-invalid @enderror">ID Judge0 (Código)*</label>
-            <input class="form-control" type="text" id="codigo" name="codigo" placeholder="Ej. 71 para Python, 91 para Java"
+            <input class="form-control" type="number" min="1" step="1" id="codigo" name="codigo" placeholder="Ej. 71 para Python, 91 para Java"
                 value="{{ isset($lenguaje) ? old('codigo', $lenguaje->codigo) : old('codigo') }}">
             <p class="text-xs text-secondary mt-1 mb-0"><small>Es el ID numérico del lenguaje en la API del Juez Virtual.</small></p>
             @error('codigo')

@@ -435,35 +435,113 @@ html body .dataTables_wrapper .row:first-child {
 }
 
 html body div.dataTables_wrapper div.dataTables_length,
-html body div.dataTables_wrapper div.dataTables_filter {
+html body div.dataTables_wrapper div.dataTables_filter,
+html body div.dt-container div.dt-length,
+html body div.dt-container div.dt-search {
     margin-top: 0 !important;
     margin-bottom: 0 !important;
     padding-top: 0 !important;
     padding-bottom: 0 !important;
     display: flex !important;
     align-items: center !important;
-    height: 32px !important;
+    flex-wrap: wrap !important;
+    min-height: 34px !important;
+    height: auto !important;
 }
 
-html body div.dataTables_wrapper div.dataTables_filter label {
+html body div.dataTables_wrapper div.dataTables_filter label,
+html body div.dt-container div.dt-search label,
+html body div.dt-container div.dt-length label {
     margin-bottom: 0 !important;
     display: inline-flex !important;
     align-items: center !important;
-    height: 32px !important;
-    line-height: 1 !important;
+    min-height: 34px !important;
+    height: auto !important;
+    line-height: 1.2 !important;
 }
 
-html body div.dataTables_wrapper div.dataTables_filter input {
-    height: 32px !important;
-    max-height: 32px !important;
-    min-height: 32px !important;
+html body div.dataTables_wrapper div.dataTables_filter input,
+html body div.dt-container div.dt-search input,
+html body div.dt-container div.dt-search input.form-control {
+    height: 34px !important;
+    max-height: 34px !important;
+    min-height: 34px !important;
     line-height: 1.2 !important;
-    padding: 0.25rem 0.5rem !important;
+    padding: 0.25rem 0.6rem !important;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
-    margin-left: 0.35rem !important;
+    margin-left: 0.4rem !important;
     box-sizing: border-box !important;
     vertical-align: middle !important;
+}
+
+html body div.dt-container div.dt-length select,
+html body div.dt-container div.dt-length select.form-select {
+    height: 34px !important;
+    max-height: 34px !important;
+    min-height: 34px !important;
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    box-sizing: border-box !important;
+}
+
+/* Mobile DataTables Responsive compactness so Primary + Acciones always fit cleanly */
+@media (max-width: 767.98px) {
+    html body table.dataTable > thead > tr > th,
+    html body table.dataTable > tbody > tr > td {
+        padding: 0.45rem 0.3rem !important;
+        font-size: 0.78rem !important;
+        white-space: normal !important;
+    }
+    html body table.dataTable > tbody > tr > td.dtr-control,
+    html body table.dataTable > tbody > tr > th.dtr-control {
+        padding-left: 1.55rem !important;
+    }
+    html body table.dataTable > tbody > tr > td.dtr-control::before {
+        left: 0.35rem !important;
+    }
+    html body table.dataTable > tbody > tr > td .px-3,
+    html body table.dataTable > tbody > tr > td .px-2 {
+        padding-left: 0.15rem !important;
+        padding-right: 0.15rem !important;
+    }
+    html body table.dataTable > tbody > tr > td.dt-col-primary,
+    html body table.dataTable > tbody > tr > td:first-child {
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+        max-width: 145px !important;
+    }
+    html body table.dataTable > tbody > tr > td.dt-col-acciones {
+        white-space: normal !important;
+    }
+    html body table.dataTable > tbody > tr > td.dt-col-acciones .d-flex,
+    html body table.dataTable > tbody > tr > td:last-child .d-flex {
+        flex-wrap: wrap !important;
+        gap: 0.25rem !important;
+        justify-content: center !important;
+    }
+    html body table.dataTable > tbody > tr > td.dt-col-acciones .btn,
+    html body table.dataTable > tbody > tr > td:last-child .btn-sm,
+    html body table.dataTable > tbody > tr > td:last-child .btn-xs {
+        padding: 0.28rem 0.42rem !important;
+    }
+}
+
+/* Uniform small filter controls height inside report/list filter bars */
+html body .form-select-sm,
+html body .input-group-sm > .form-control,
+html body .input-group-sm > .form-select,
+html body .input-group-sm > .btn,
+html body .input-group-sm > .input-group-text {
+    min-height: 34px !important;
+}
+
+/* Form control lg inside input-group consistency */
+html body .input-group .form-control.form-control-lg {
+    padding: 0.75rem 0.75rem !important;
+    font-size: 0.875rem !important;
+    min-height: 46px !important;
 }
 
 html body .table-responsive {
@@ -665,4 +743,31 @@ html body div.dataTables_wrapper > .row {
         transform: translateX(0) !important;
         box-shadow: 0 20px 27px 0 rgba(0, 0, 0, 0.18) !important;
     }
+}
+
+/* Light Modal Close Button Visibility (Argon sets white SVG by default) */
+.modal-header:not(.bg-dark):not(.bg-primary):not(.bg-danger):not(.bg-success):not(.bg-warning):not(.bg-info):not(.text-white) .btn-close,
+.modal-header.bg-white .btn-close,
+.modal-header.bg-light .btn-close {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23344767'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e") !important;
+    opacity: 0.75 !important;
+    color: #344767 !important;
+}
+
+.modal-header:not(.bg-dark):not(.bg-primary):not(.bg-danger):not(.bg-success):not(.bg-warning):not(.bg-info):not(.text-white) .btn-close:hover,
+.modal-header.bg-white .btn-close:hover,
+.modal-header.bg-light .btn-close:hover {
+    opacity: 1 !important;
+}
+
+/* ToastUI Editor Placeholder vs Bootstrap .placeholder Skeleton Fix */
+.toastui-editor-contents .placeholder,
+.ProseMirror .placeholder {
+    background-color: transparent !important;
+    opacity: 1 !important;
+    cursor: text !important;
+    color: #8392ab !important;
+    display: inline !important;
+    min-height: 0 !important;
+    vertical-align: baseline !important;
 }

@@ -19,13 +19,14 @@
                                     @include('components.alert')
                                 </div>
                                 <div class="card-body">
-                                    <form role="form" method="POST" action="{{ route('login.perform') }}" onsubmit="const btn = this.querySelector('button[type=submit]'); if (btn.disabled) { return false; } btn.disabled = true;">
+                                    <form role="form" method="POST" action="{{ route('login.perform') }}" onsubmit="if (this.dataset.submitting === '1') { event.preventDefault(); return false; } this.dataset.submitting = '1'; const btn = this.querySelector('button[type=submit]'); if (btn) { btn.disabled = true; }">
                                         @csrf
                                         @method('post')
                                         <div class="flex flex-col mb-3">
                                             <input type="email" name="email" class="form-control form-control-lg"
-                                                value="{{ old('email') ?? '' }}" aria-label="Email"
-                                                placeholder="Ej estudiante@tutorbot.com" autocomplete="email" maxlength="255">
+                                                value="{{ old('email') ?? '' }}" aria-label="Correo Electrónico"
+                                                placeholder="Ej estudiante@tutorbot.com" autocomplete="email" maxlength="255"
+                                                oninput="this.closest('.flex').querySelectorAll('.text-danger').forEach(function(el){ el.remove(); });">
                                             @error('email')
                                                 <p class="text-danger text-xs pt-1"> {{ $message }} </p>
                                             @enderror
@@ -33,7 +34,8 @@
                                         <div class="flex flex-col mb-3">
                                             <div class="input-group">
                                                 <input type="password" name="password" id="login_password" class="form-control form-control-lg"
-                                                    aria-label="Password" placeholder="Introduzca su contraseña" autocomplete="current-password" maxlength="255">
+                                                    aria-label="Contraseña" placeholder="Introduzca su contraseña" autocomplete="current-password" maxlength="255"
+                                                    oninput="this.closest('.flex').querySelectorAll('.text-danger').forEach(function(el){ el.remove(); });">
                                                 <button class="btn btn-outline-secondary mb-0 px-3" type="button" aria-label="Mostrar u ocultar contraseña"
                                                     onclick="const inp = document.getElementById('login_password'); const icon = this.querySelector('i'); const isPwd = inp.type === 'password'; inp.type = isPwd ? 'text' : 'password'; icon.className = isPwd ? 'fa fa-eye-slash' : 'fa fa-eye';">
                                                     <i class="fa fa-eye" aria-hidden="true"></i>
@@ -79,4 +81,19 @@
             </div>
         </section>
     </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('form input[name="email"], form input[name="password"]').forEach(function (inp) {
+                var clearErr = function () {
+                    inp.classList.remove('is-invalid');
+                    var box = inp.closest('.mb-3');
+                    if (box) {
+                        box.querySelectorAll('p.text-danger').forEach(function (el) { el.remove(); });
+                    }
+                };
+                inp.addEventListener('input', clearErr);
+                inp.addEventListener('change', clearErr);
+            });
+        });
+    </script>
 @endsection

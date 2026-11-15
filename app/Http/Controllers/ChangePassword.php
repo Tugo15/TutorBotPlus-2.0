@@ -15,16 +15,25 @@ class ChangePassword extends Controller
 
     public function show(Request $request, $token)
     {
-        $tokenInvalido = false;
-        if (strlen((string) $token) < 20) {
-            $tokenInvalido = true;
-        } elseif ($request->filled('email')) {
-            $user = User::where('email', $request->query('email'))->first();
-            if (!$user || !Password::tokenExists($user, $token)) {
-                $tokenInvalido = true;
+        $tokenInvalido = true;
+        $tokenStr = (string) $token;
+
+        if ($tokenStr !== '') {
+            if ($request->filled('email')) {
+                $user = User::where('email', $request->query('email'))->first();
+                if ($user && Password::tokenExists($user, $tokenStr)) {
+                    $tokenInvalido = false;
+                }
+            } else {
+                $records = \Illuminate\Support\Facades\DB::table('password_reset_tokens')->get();
+                foreach ($records as $record) {
+                    $user = User::where('email', $record->email)->first();
+                    if ($user && Password::tokenExists($user, $tokenStr)) {
+                        $tokenInvalido = false;
+                        break;
+                    }
+                }
             }
-        } elseif (!\Illuminate\Support\Facades\DB::table('password_reset_tokens')->exists()) {
-            $tokenInvalido = true;
         }
 
         return response()

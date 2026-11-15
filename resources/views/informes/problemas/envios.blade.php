@@ -1,7 +1,7 @@
-@extends('layouts.app', ['class' => 'g-sidenav-show bg-gray-100', 'title_url' => 'Envios del Problema'])
+@extends('layouts.app', ['class' => 'g-sidenav-show bg-gray-100', 'title_url' => 'Envíos del Problema'])
 
 @section('content')
-    @include('layouts.navbars.auth.topnav', ['title' => 'Envios del Problema "'.$problema->nombre.'"'])
+    @include('layouts.navbars.auth.topnav', ['title' => 'Envíos del Problema "'.$problema->nombre.'"'])
     <div class="row mt-4 mx-4">
         <div class="col-12">
             <div class="card shadow-xs border mb-4">

@@ -17,6 +17,17 @@
                     </span>
                 </li>
                 <li class="nav-item d-flex align-items-center">
+                    <button type="button"
+                        class="btn btn-link nav-link text-white font-weight-bold px-2 mb-0 tb-theme-toggle-btn"
+                        data-theme-toggle
+                        title="Cambiar a modo oscuro"
+                        aria-label="Cambiar a modo oscuro"
+                        aria-pressed="false">
+                        <i class="fa fa-moon" data-theme-icon aria-hidden="true"></i>
+                        <span class="d-none d-md-inline text-xs" data-theme-label>Oscuro</span>
+                    </button>
+                </li>
+                <li class="nav-item d-flex align-items-center">
                     <form role="form" method="post" action="{{ route('logout') }}" id="logout-form">
                         @csrf
                         <a href="{{ route('logout') }}"

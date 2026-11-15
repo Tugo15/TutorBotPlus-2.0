@@ -518,6 +518,15 @@
                     $(document).on('change', '.filter-curso-chk, .filter-categoria-chk', function() {
                         applyProblemasFilters(true);
                     });
+
+                    $(document).on('click', '#btnLimpiarFiltrosProblemas', function() {
+                        $('#filterEstado').val('');
+                        $('.filter-curso-chk, .filter-categoria-chk').prop('checked', false);
+                        table.search('');
+                        $('.dataTables_filter input, .dt-search input').val('');
+                        try { localStorage.removeItem(storageKeyProblemas); } catch (e) {}
+                        applyProblemasFilters(true);
+                    });
                 }
             }, 500);
         });

@@ -11,15 +11,20 @@
             @endif
             <div class="card mb-4">
                 <div class="card-header pb-0 border-bottom mb-3">
-                    <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
-                        <div class="d-none d-lg-block" style="flex: 1;">
+                    <div class="row align-items-center pb-2 gy-2 w-100 mx-0">
+                        <div class="col-6 col-lg-3 text-start px-0">
                             <a href="{{ $urlRetorno ?? ((isset($id_curso) && $id_curso) || request('id_curso') ? route('problemas.index', ['id_curso' => $id_curso ?? request('id_curso')]) : route('problemas.index')) }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                         </div>
-                        <div class="text-center" style="flex: 2;">
+                        <div class="col-6 d-lg-none text-end px-0">
+                            <button type="button" class="btn btn-xs btn-outline-info mb-0" data-bs-toggle="modal" data-bs-target="#ejemplo_modal">
+                                <i class="fa fa-question-circle me-1"></i> Guía y Ejemplos
+                            </button>
+                        </div>
+                        <div class="col-12 col-lg-6 text-center px-0">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-database me-2 text-warning"></i>Evaluación SQL: {{ $problema->nombre }}</h6>
                             <p class="text-xs text-secondary mb-0">Configuración para Consultas (SELECT), Vistas (VIEW), Triggers y Funciones.</p>
                         </div>
-                        <div class="d-none d-lg-flex justify-content-end" style="flex: 1;">
+                        <div class="d-none d-lg-flex justify-content-end col-lg-3 px-0">
                             <button type="button" class="btn btn-xs btn-outline-info mb-0" data-bs-toggle="modal" data-bs-target="#ejemplo_modal">
                                 <i class="fa fa-question-circle me-1"></i> Guía y Ejemplos
                             </button>
@@ -68,11 +73,11 @@
                         <div class="row mx-3 mt-3">
                             <div class="col-md-8">
                                 <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-1 mb-1">
                                         <label for="entradas" class="form-label font-weight-bold text-xs text-dark mb-0">
                                             Consulta / Script de Verificación (Entrada)
                                         </label>
-                                        <span class="badge bg-secondary text-xxs font-weight-normal">Opcional para SELECT / Requerido para Vistas o Triggers</span>
+                                        <span class="badge bg-secondary text-xxs font-weight-normal text-wrap text-start" style="white-space: normal;">Opcional para SELECT / Requerido para Vistas o Triggers</span>
                                     </div>
                                     <textarea class="form-control font-monospace text-xs @error('entradas') is-invalid @enderror" id="entradas" name="entradas" rows="3" placeholder="-- Para SELECT normal: DEJAR EN BLANCO&#10;-- Para VIEW: SELECT * FROM nombre_vista;&#10;-- Para TRIGGER: INSERT INTO t VALUES(...); SELECT campo FROM t;">{{ isset($caso) ? old('entradas', $caso->entradas) : old('entradas') }}</textarea>
                                     @error('entradas')

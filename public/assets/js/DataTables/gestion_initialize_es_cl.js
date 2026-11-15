@@ -298,17 +298,61 @@ window.tutorBotStateCallbacks = function (scope) {
 };
 
 if (typeof jQuery !== 'undefined' && jQuery.fn && jQuery.fn.dataTable) {
-    jQuery('table thead th').each(function() {
-        var txt = (jQuery(this).text() || '').trim().toLowerCase();
-        if (txt === 'acción' || txt === 'acciones' || txt === 'accion' || txt === 'opciones') {
-            jQuery(this).addClass('no-sort');
-        }
-    });
+    function tagTableResponsiveColumns(root) {
+        jQuery(root || document).find('table thead th').each(function() {
+            var txt = (jQuery(this).text() || '').replace(/\s+/g, ' ').trim().toLowerCase();
+            if (txt === 'acción' || txt === 'acciones' || txt === 'accion' || txt === 'opciones') {
+                jQuery(this).addClass('no-sort dt-col-acciones');
+                if (!jQuery(this).attr('data-priority')) {
+                    jQuery(this).attr('data-priority', '2');
+                }
+            } else if (
+                txt === 'nombre' ||
+                txt === 'nombre completo' ||
+                txt === 'problema' ||
+                txt === 'entradas' ||
+                txt === 'usuario' ||
+                txt === 'evaluación' ||
+                txt === 'evaluacion' ||
+                txt === 'curso' ||
+                txt === 'categoría' ||
+                txt === 'categoria' ||
+                txt === 'rol'
+            ) {
+                jQuery(this).addClass('dt-col-primary');
+                if (!jQuery(this).attr('data-priority')) {
+                    jQuery(this).attr('data-priority', '1');
+                }
+            }
+        });
+    }
+    tagTableResponsiveColumns(document);
     if (typeof DataTable !== 'undefined' && DataTable.defaults) {
         DataTable.defaults.columnDefs = DataTable.defaults.columnDefs || [];
-        DataTable.defaults.columnDefs.push({ orderable: false, targets: 'no-sort' });
+        DataTable.defaults.columnDefs.push(
+            { orderable: false, targets: 'no-sort' },
+            { responsivePriority: 1, className: 'dt-col-primary', targets: 'dt-col-primary' },
+            { responsivePriority: 2, className: 'dt-col-acciones', targets: 'dt-col-acciones' }
+        );
         DataTable.defaults.searchDelay = 200;
+        DataTable.defaults.autoWidth = false;
     }
+    jQuery(document).on('preInit.dt', function(e, settings) {
+        if (settings && settings.nTable) {
+            tagTableResponsiveColumns(settings.nTable);
+        }
+    });
+    jQuery(document).on('init.dt', function(e, settings) {
+        var api = new jQuery.fn.dataTable.Api(settings);
+        setTimeout(function() {
+            try {
+                api.columns.adjust();
+                if (api.responsive && typeof api.responsive.recalc === 'function') {
+                    api.responsive.recalc();
+                }
+            } catch (err) {}
+        }, 120);
+    });
     jQuery(document).on('draw.dt init.dt', function(e, settings) {
         var wrapper = settings && settings.nTableWrapper ? settings.nTableWrapper : document;
         var map = { 'First': 'Primera', 'Previous': 'Anterior', 'Next': 'Siguiente', 'Last': 'Última' };
@@ -343,6 +387,52 @@ if (typeof jQuery !== 'undefined' && jQuery.fn && jQuery.fn.dataTable) {
                 }
             }
         }
+
+        // Mantener estabilidad vertical en tablas paginadas para evitar saltos de scroll o colapso de altura al cambiar de página
+        if (wrapper && wrapper !== document && settings && settings.nTable) {
+            try {
+                var apiPage = new jQuery.fn.dataTable.Api(settings);
+                var info = apiPage.page.info();
+                var tblContainer = wrapper.querySelector('.table-responsive') || settings.nTable.parentElement;
+                if (tblContainer && info) {
+                    var prevLen = tblContainer.dataset.dtPageLen ? parseInt(tblContainer.dataset.dtPageLen, 10) : info.length;
+                    if (prevLen !== info.length) {
+                        delete tblContainer.dataset.dtMaxH;
+                        tblContainer.style.minHeight = '';
+                        tblContainer.dataset.dtPageLen = String(info.length);
+                    } else if (!tblContainer.dataset.dtPageLen) {
+                        tblContainer.dataset.dtPageLen = String(info.length);
+                    }
+
+                    if (info.pages > 1 && info.length > 0) {
+                        var shownRows = info.end - info.start;
+                        var tableH = Math.ceil(settings.nTable.getBoundingClientRect().height);
+                        var storedMax = tblContainer.dataset.dtMaxH ? parseInt(tblContainer.dataset.dtMaxH, 10) : 0;
+
+                        if (shownRows >= info.length) {
+                            storedMax = Math.max(storedMax, tableH);
+                            tblContainer.dataset.dtMaxH = String(storedMax);
+                        } else if (!storedMax && shownRows > 0) {
+                            var theadEl = settings.nTable.querySelector('thead');
+                            var tbodyRows = settings.nTable.querySelectorAll('tbody tr');
+                            var theadH = theadEl ? theadEl.getBoundingClientRect().height : 42;
+                            var avgRowH = tbodyRows.length ? ((tableH - theadH) / tbodyRows.length) : 52;
+                            storedMax = Math.ceil(theadH + avgRowH * info.length);
+                            tblContainer.dataset.dtMaxH = String(storedMax);
+                        }
+
+                        if (storedMax > 0) {
+                            tblContainer.style.minHeight = storedMax + 'px';
+                        } else {
+                            tblContainer.style.minHeight = '';
+                        }
+                    } else {
+                        delete tblContainer.dataset.dtMaxH;
+                        tblContainer.style.minHeight = '';
+                    }
+                }
+            } catch (err) {}
+        }
     });
 }
 
@@ -376,12 +466,6 @@ if ($('#table').length > 0) {
             }
         }
     });
-    $('#table').on('page.dt', function() {
-        var wrapper = document.getElementById('table_wrapper') || document.getElementById('table');
-        if (wrapper) {
-            wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    });
 }
 
 if ($('#table_evaluaciones').length > 0) {
@@ -411,12 +495,6 @@ if ($('#table_evaluaciones').length > 0) {
             if (dtEval.responsive && typeof dtEval.responsive.recalc === 'function') {
                 dtEval.responsive.recalc();
             }
-        }
-    });
-    $('#table_evaluaciones').on('page.dt', function() {
-        var wrapper = document.getElementById('table_evaluaciones_wrapper') || document.getElementById('table_evaluaciones');
-        if (wrapper) {
-            wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     });
 }

@@ -364,7 +364,7 @@ class ProblemasController extends Controller
             if (!$problema) {
                 return redirect()->route('problemas.index')->with('error', 'El problema solicitado no existe.');
             }
-            $problema->body_editorial = $request->input('body_editorial');
+            $problema->body_editorial = self::almacenarImagenesBase64($request->input('body_editorial'));
             $problema->save();
         } catch (\PDOException $e) {
             DB::rollBack();
@@ -737,7 +737,7 @@ class ProblemasController extends Controller
                     ->orderBy('created_at', 'DESC')->first();
             }
 
-            if ($last_envio) {
+            if ($last_envio && $last_envio->usuario && (int)$last_envio->usuario->id === (int)auth()->id()) {
                 $last_envio->codigo = $request->codigo_save ?? '';
 
                 if($request->filled('lenguaje_save') && $request->filled('id_problema')){

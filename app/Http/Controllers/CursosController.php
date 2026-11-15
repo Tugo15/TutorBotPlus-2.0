@@ -44,7 +44,7 @@ class CursosController extends Controller
         try{
             $curso = new Cursos;
             $curso->nombre = $request->input('nombre');
-            $curso->descripcion = $request->input('descripcion');
+            $curso->descripcion = $request->input('descripcion') ?? '';
             $curso->codigo = $request->input('codigo');
             $curso->save();
             DB::commit();
@@ -66,7 +66,7 @@ class CursosController extends Controller
         try{
             DB::beginTransaction();
             $curso->nombre = $request->input('nombre');
-            $curso->descripcion = $request->input('descripcion');
+            $curso->descripcion = $request->input('descripcion') ?? '';
             $curso->codigo = $request->input('codigo');
             $curso->save();
             DB::commit();

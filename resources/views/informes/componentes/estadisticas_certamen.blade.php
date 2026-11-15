@@ -1,5 +1,5 @@
-<div class="row mx-3 d-flex align-items-stretch">
-    <div class="col-xl-2 col-sm-6 mb-xl-0 mb-4">
+<div class="row mx-3 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3 align-items-stretch">
+    <div class="col">
         <div class="card shadow-xs border h-100">
             <div class="card-body p-3 d-flex flex-column justify-content-between">
                 <p class="text-xs mb-2 text-uppercase font-weight-bold text-secondary">Soluciones Enviadas</p>
@@ -9,7 +9,7 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-2 col-sm-6 mb-xl-0 mb-4">
+    <div class="col">
         <div class="card shadow-xs border h-100">
             <div class="card-body p-3 d-flex flex-column justify-content-between">
                 <p class="text-xs mb-2 text-uppercase font-weight-bold text-secondary">Cantidad de Intentos</p>
@@ -19,7 +19,7 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-2 col-sm-6 mb-xl-0 mb-4">
+    <div class="col">
         <div class="card shadow-xs border h-100">
             <div class="card-body p-3 d-flex flex-column justify-content-between">
                 <p class="text-xs mb-2 text-uppercase font-weight-bold text-secondary">Evaluaciones Aceptadas</p>
@@ -29,7 +29,7 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+    <div class="col">
         <div class="card shadow-xs border h-100">
             <div class="card-body p-3 d-flex flex-column justify-content-between">
                 <p class="text-xs mb-2 text-uppercase font-weight-bold text-secondary">Promedio Resueltos</p>
@@ -39,7 +39,7 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-sm-12 mb-xl-0 mb-4">
+    <div class="col">
         <div class="card shadow-xs border h-100">
             <div class="card-body p-3 d-flex flex-column justify-content-between">
                 <p class="text-xs mb-2 text-uppercase font-weight-bold text-secondary">Puntaje Promedio</p>

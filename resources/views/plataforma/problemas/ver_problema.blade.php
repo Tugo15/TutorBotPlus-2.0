@@ -1,10 +1,10 @@
 @extends('layout_plataforma.app', ['title_html' => $problema->nombre, 'title' => 'Problema - ' . $problema->nombre, 'breadcrumbs' => [['nombre' => 'Cursos', 'route' => route('cursos.listado')], ['nombre' => 'Problemas', 'route' => route('problemas.listado', ['id' => $id_curso])], ['nombre' => $problema->nombre]]])
 @section('content')
-    <div class="container-fluid py-3 px-4">
+    <div class="container-fluid py-3 px-2 px-md-4">
         @include('components.alert')
-        <div class="row mb-3">
-            <div class="col-sm-8 col-xs-12">
-                <div class="card border-danger shadow-sm h-100" style="min-height:40rem">
+        <div class="row g-3 mb-3">
+            <div class="col-12 col-lg-8">
+                <div class="card border-danger shadow-sm certamen-desktop-card">
                     <div class="card-header">
                         Enunciado
                     </div>
@@ -19,14 +19,27 @@
                         @endif
                         @php
                             $bodyProblemaSanitized = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $problema->body_problema ?? '');
-                            $bodyProblemaSanitized = preg_replace_callback('/```[\s\S]*?```|`[^`]*`|(?<![\*\s\\\\])\*(?![\*\s])/u', function ($m) {
-                                return $m[0] === '*' ? '\\*' : $m[0];
+                            $mathBlocks = [];
+                            $bodyProblemaSanitized = preg_replace_callback('/```[\s\S]*?```|`[^`\r\n]*`|\$\$[\s\S]+?\$\$|(?<!\$)\$(?!\$)([^\$\r\n]+?)\$(?!\$)|(?<=[\p{L}\p{N}])\*(?=[\p{L}\p{N}])/u', function ($m) use (&$mathBlocks) {
+                                if ($m[0] === '*') {
+                                    return '\\*';
+                                }
+                                if (str_starts_with($m[0], '$')) {
+                                    $key = 'TBMATHPLACEHOLDER' . count($mathBlocks) . 'END';
+                                    $mathBlocks[$key] = e($m[0]);
+                                    return $key;
+                                }
+                                return $m[0];
                             }, $bodyProblemaSanitized);
+                            $renderedProblemaHtml = Str::markdown($bodyProblemaSanitized, [
+                                'html_input' => 'strip',
+                                'allow_unsafe_links' => false,
+                            ]);
+                            if (!empty($mathBlocks)) {
+                                $renderedProblemaHtml = strtr($renderedProblemaHtml, $mathBlocks);
+                            }
                         @endphp
-                        {!! Str::markdown($bodyProblemaSanitized, [
-                            'html_input' => 'strip',
-                            'allow_unsafe_links' => true,
-                        ]) !!}
+                        {!! $renderedProblemaHtml !!}
 
                         @php
                             $casos_ejemplo = $problema->casos_de_prueba()->where('ejemplo', true)->orderBy('id', 'asc')->get();
@@ -70,9 +83,9 @@
                     </div>
                 </div>
             </div>
-            <div class="col-sm-4 col-xs-12">
-                <div class="card border-danger shadow-sm mb-3" style="min-height:40rem;">
-                    <div class="card-body p-3.5 d-flex flex-column justify-content-between">
+            <div class="col-12 col-lg-4">
+                <div class="card border-danger shadow-sm certamen-desktop-card mb-3">
+                    <div class="card-body p-3 d-flex flex-column justify-content-between">
                         <div>
                             <div class="d-grid gap-2 px-1">
                                 <a class="btn btn-primary text-wrap {{ $problema->disponible ? '' : 'disabled' }}"
@@ -102,31 +115,31 @@
                             <hr class="my-3">
                             <h6 class="px-1 font-weight-bold text-dark mb-2" style="font-size: 0.95rem;"><i class="fa fa-info-circle me-1 text-primary"></i> Información:</h6>
                             <ul class="list-group list-group-flush border rounded shadow-none" style="font-size: 0.875rem;">
-                                <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-1 py-2 px-3">
                                     <strong>Puntos:</strong>
                                     <span class="badge bg-primary rounded-pill" style="font-size: 0.8rem;">{{ $problema->casos_de_prueba()->sum('puntos') }}</span>
                                 </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-1 py-2 px-3">
                                     <strong>Límite Tiempo:</strong>
                                     <span>{{ $problema->tiempo_limite ? $problema->tiempo_limite . ' s' : 'No definido' }}</span>
                                 </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-1 py-2 px-3">
                                     <strong>Límite Memoria:</strong>
                                     <span>{{ $problema->memoria_limite ? $problema->memoria_limite . ' KB' : 'No definido' }}</span>
                                 </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-1 py-2 px-3">
                                     <strong>Curso(s):</strong>
                                     <span class="text-secondary text-end ms-2">{{ implode(', ', $problema->cursos()->where('cursos.id', '=', $id_curso)->pluck('nombre')->toArray()) }}</span>
                                 </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-1 py-2 px-3">
                                     <strong>Estado:</strong>
                                     <span class="badge {{ $problema->estado ? 'bg-success' : 'bg-secondary' }}" style="font-size: 0.8rem;">{{ $problema->estado ? (!empty($problema->variacion_formato) ? 'Aceptado (Variación de Formato)' : 'Resuelto') : 'No Resuelto' }}</span>
                                 </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-1 py-2 px-3">
                                     <strong>Categorías:</strong>
                                     <span class="text-secondary text-end ms-2">{{ implode(', ', $problema->categorias()->get()->pluck('nombre')->toArray()) }}</span>
                                 </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-1 py-2 px-3">
                                     <strong>Lenguajes:</strong>
                                     <div class="d-flex flex-wrap gap-1 justify-content-end ms-2">
                                         @foreach($problema->lenguajes()->get()->pluck('abreviatura')->unique() as $item) 
@@ -135,13 +148,13 @@
                                     </div>
                                 </li>
                                 @if (isset($problema->fecha_inicio))
-                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-1 py-2 px-3">
                                         <strong>Fecha Inicio:</strong>
                                         <span class="text-secondary">{{ $problema->fecha_inicio }}</span>
                                     </li>
                                 @endif
                                  @if (isset($problema->fecha_termino))
-                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-1 py-2 px-3">
                                         <strong>Fecha Término:</strong>
                                         <span class="text-secondary">{{ $problema->fecha_termino }}</span>
                                     </li>
@@ -165,6 +178,7 @@
 @push('js')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            var container = document.querySelector('#body_markdown');
             var table = document.querySelectorAll("#body_markdown table");
             if (table != null) {
                 for(var i = 0; i < table.length; i++){
@@ -176,8 +190,17 @@
                     }
                 }
             }
+            if (container) {
+                container.querySelectorAll('pre > code.language-katex, pre > code.language-math, pre > code.language-latex').forEach(function(codeEl) {
+                    var pre = codeEl.parentElement;
+                    var div = document.createElement('div');
+                    div.className = 'katex-block my-3';
+                    div.textContent = '$$' + (codeEl.textContent || '').trim() + '$$';
+                    pre.replaceWith(div);
+                });
+            }
             if (typeof window.renderFormulas === 'function') {
-                window.renderFormulas(document.querySelector('#body_markdown') || document.body);
+                window.renderFormulas(container || document.body);
             }
         });
     </script>

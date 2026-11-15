@@ -18,19 +18,19 @@
             @endif
             <div class="card shadow-xs border">
                 <div class="card-header pb-0 border-bottom mb-0">
-                    <div class="d-flex justify-content-between align-items-center pb-2 w-100 flex-wrap gap-3">
-                        <div class="d-none d-lg-block" style="flex: 1;">
+                    <div class="row align-items-center pb-2 gy-2 w-100 mx-0">
+                        <div class="col-12 col-lg-3 text-start px-0">
                             <a href="{{ (isset($id_curso) && $id_curso) || request('id_curso') ? route('problemas.index', ['id_curso' => $id_curso ?? request('id_curso')]) : route('problemas.index') }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                         </div>
-                        <div class="text-center" style="flex: 2;">
+                        <div class="col-12 col-lg-6 text-center px-0">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-book me-2 text-warning"></i>Pistas del Problema: {{ $problema->nombre }}</h6>
                             <p class="text-xs text-secondary mb-0">Redacte las pistas o guía explicativa para orientar al estudiante.</p>
                         </div>
-                        <div class="d-none d-lg-block" style="flex: 1;"></div>
+                        <div class="d-none d-lg-block col-lg-3 px-0"></div>
                     </div>
                 </div>
                 <div class="card-body pt-3">
-                    <input type="hidden" name="body_editorial" id="body_editorial">
+                    <input type="hidden" name="body_editorial" id="body_editorial" value="{{ old('body_editorial', $problema->body_editorial ?? '') }}">
                     <label for="editor" class="form-control-label font-weight-bold text-sm mb-2">Contenido de las Pistas</label>
                     <div class="flex flex-col space-y-2 mb-3">
                         <div id="editor" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" style="position: relative; z-index: 9999;"></div>
@@ -51,7 +51,7 @@
         const editor = new Editor({
             el: document.querySelector('#editor'),
             height: '600px',
-            initialEditType: 'wysiwyg',
+            initialEditType: 'markdown',
             previewStyle: 'vertical',
             placeholder: "Las pistas son una forma para ayudar al estudiante para que pueda comprender el problema.",
             initialValue: @json($problema->body_editorial ?? ''),
@@ -107,13 +107,23 @@
             window.attachImageUploadToEditor(editor, '#editor', '{{ route('problemas.upload_imagen') }}', '{{ csrf_token() }}');
         }
 
+        const getSanitizedMarkdown = () => {
+            let md = editor.getMarkdown().replace(/!\[(.*?)\]\s*\n\s*\((.*?)\)/g, '![$1]($2)');
+            md = md.replace(/\$\$[\s\S]+?\$\$|(?<!\$)\$(?!\$)([^\$\r\n]+?)\$(?!\$)/g, (match) => {
+                return match.replace(/\\([_*])/g, '$1');
+            });
+            return md;
+        };
+
+        document.querySelector('#body_editorial').value = getSanitizedMarkdown();
+
         editor.on('change', () => {
-            document.querySelector('#body_editorial').value = editor.getMarkdown();
+            document.querySelector('#body_editorial').value = getSanitizedMarkdown();
         });
 
         document.querySelector('#editorial_form').addEventListener('submit', e => {
             e.preventDefault();
-            document.querySelector('#body_editorial').value = editor.getMarkdown();
+            document.querySelector('#body_editorial').value = getSanitizedMarkdown();
             e.target.submit();
         });
 

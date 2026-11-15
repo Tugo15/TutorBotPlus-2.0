@@ -42,8 +42,11 @@ window.attachKaTeXToEditor = function(editorInstance, containerQuery = '#editor'
         if (isRendering) return;
         isRendering = true;
 
-        const previewEls = editorElement.querySelectorAll('.toastui-editor-contents');
+        const previewEls = editorElement.querySelectorAll('.toastui-editor-md-preview .toastui-editor-contents');
         previewEls.forEach(el => {
+            if (el.closest('.toastui-editor-ww-container') || el.classList.contains('ProseMirror')) {
+                return;
+            }
             if (window.renderFormulas) {
                 window.renderFormulas(el);
             }
@@ -52,13 +55,20 @@ window.attachKaTeXToEditor = function(editorInstance, containerQuery = '#editor'
         isRendering = false;
     }
 
-    const observer = new MutationObserver(() => {
+    const previewContainer = editorElement.querySelector('.toastui-editor-md-preview') || editorElement;
+
+    const observer = new MutationObserver((mutations) => {
         if (isRendering) return;
+        const hasPreviewMutation = mutations.some(m => {
+            const targetEl = m.target && m.target.nodeType === 1 ? m.target : (m.target ? m.target.parentElement : null);
+            return targetEl && targetEl.closest('.toastui-editor-md-preview') && !targetEl.closest('.toastui-editor-ww-container');
+        });
+        if (!hasPreviewMutation) return;
         observer.disconnect();
         renderPreview();
         setTimeout(() => {
-            if (editorElement) {
-                observer.observe(editorElement, {
+            if (previewContainer) {
+                observer.observe(previewContainer, {
                     childList: true,
                     subtree: true,
                     characterData: true
@@ -67,7 +77,7 @@ window.attachKaTeXToEditor = function(editorInstance, containerQuery = '#editor'
         }, 100);
     });
 
-    observer.observe(editorElement, {
+    observer.observe(previewContainer, {
         childList: true,
         subtree: true,
         characterData: true

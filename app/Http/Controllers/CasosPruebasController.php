@@ -34,7 +34,7 @@ class CasosPruebasController extends Controller
 
         $prevUrl = url()->previous();
         $currentUrl = $request->fullUrl();
-        $isInternal = !$prevUrl || $prevUrl === $currentUrl || str_contains($prevUrl, '/casos') || str_contains($prevUrl, '/casos_pruebas') || str_contains($prevUrl, '/login');
+        $isInternal = !$prevUrl || $prevUrl === $currentUrl || str_contains($prevUrl, '/casos') || str_contains($prevUrl, '/casos_pruebas') || str_contains($prevUrl, '/login') || str_contains($prevUrl, '/problemas/crear') || str_contains($prevUrl, '/problemas/editar');
 
         if (!$isInternal && $prevUrl !== url('/')) {
             session(['url_retorno_casos_problema_' . $problema->id => $prevUrl]);
