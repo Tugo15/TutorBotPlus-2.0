@@ -122,7 +122,7 @@
                                             <span class="badge bg-success text-xxs"><i class="fa fa-check-circle me-1"></i> {{ !empty($envio->variacion_formato) ? 'Aceptado (Variación de Formato)' : 'Aceptado' }}</span>
                                         @elseif($esError)
                                             <span class="d-none">{{ $envio->estado ?? 'Rechazado' }} Rechazado Wrong Answer Error</span>
-                                            <span class="badge bg-danger text-xxs"><i class="fa fa-times-circle me-1"></i> {{ $envio->resultado ?? $envio->estado ?? 'Rechazado' }}</span>
+                                            <span class="badge bg-danger text-xxs"><i class="fa fa-times-circle me-1"></i> {{ \App\Support\Judge0StatusHelper::traducir($envio->resultado ?? $envio->estado ?? 'Rechazado') }}</span>
                                         @elseif(isset($envio->estado) && $envio->estado == 'En Proceso')
                                             <span class="d-none">En Proceso In Process</span>
                                             <span class="badge bg-warning text-xxs"><i class="fa fa-clock me-1"></i> En Proceso</span>

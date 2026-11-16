@@ -85,7 +85,7 @@ class SqlEvaluationService
                     $isAccepted = $exactMatch || $flexMatch;
 
                     $evaluacion->estado = $isAccepted ? 'Aceptado' : 'Rechazado';
-                    $evaluacion->resultado = $exactMatch ? 'Accepted' : ($flexMatch ? 'Aceptado (Variación de Formato)' : 'Wrong Answer');
+                    $evaluacion->resultado = $exactMatch ? 'Aceptado' : ($flexMatch ? 'Aceptado (Variación de Formato)' : 'Respuesta Incorrecta');
                     $evaluacion->stout = base64_encode($salidaObtenida);
 
                     if ($isAccepted) {

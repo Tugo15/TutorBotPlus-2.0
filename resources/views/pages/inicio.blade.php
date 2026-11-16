@@ -472,7 +472,7 @@
                                                     </span>
                                                 @elseif($esError)
                                                     <span class="badge bg-danger text-xxs">
-                                                        {{ $uEnv->resultado ?? $uEnv->estado ?? 'Rechazado' }}
+                                                        {{ \App\Support\Judge0StatusHelper::traducir($uEnv->resultado ?? $uEnv->estado ?? 'Rechazado') }}
                                                     </span>
                                                 @else
                                                     <span class="badge bg-warning text-xxs">En Proceso</span>

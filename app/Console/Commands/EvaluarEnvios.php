@@ -84,7 +84,7 @@ class EvaluarEnvios extends Command
                     }
 
                     $evaluacion = $evaluacion_arr[$item["token"]];
-                    $evaluacion->resultado = $item['status']["description"] ?? 'Error';
+                    $evaluacion->resultado = \App\Support\Judge0StatusHelper::traducir($item['status']["description"] ?? 'Error');
                     
                     if (isset($item['status']["id"]) && $item['status']["id"] != 1 && $item['status']["id"] != 2) {
                         $evaluacion->tiempo = $item['time'] ?? null;

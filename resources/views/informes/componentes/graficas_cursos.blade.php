@@ -70,14 +70,20 @@
                     break;
                 case "Internal Error":
                 case "Error Interno":
+                case "Error Interno del Juez":
                 case "Error de Ejecución":
                     rgb_estados_envios.push('rgb(255,193,29)')
                     break;
                 case "Exec Format Error":
+                case "Error de Formato de Ejecución":
                     rgb_estados_envios.push('rgb(39,246,243)')
                     break;
                 default:
-                    rgb_estados_envios.push('rgb(255, ' + Math.random() * 255 + ', ' + Math.random() * 255 +')');
+                    if (element && element.startsWith("Error de Ejecución")) {
+                        rgb_estados_envios.push('rgb(255,193,29)');
+                    } else {
+                        rgb_estados_envios.push('rgb(255, ' + Math.random() * 255 + ', ' + Math.random() * 255 +')');
+                    }
             }
         });
         const data_1 = {

@@ -114,6 +114,7 @@ class EvaluacionSolucionController extends Controller
             }
 
             $evaluaciones = $envio->evaluaciones()->with('casos_pruebas')->get()->map(function($item){
+                $item->resultado = \App\Support\Judge0StatusHelper::traducir($item->resultado);
                 $item->stout = $item->salida_texto;
                 $item->error_compilacion = $item->error_compilacion_texto;
                 return $item;

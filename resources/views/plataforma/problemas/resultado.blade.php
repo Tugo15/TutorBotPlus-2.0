@@ -96,8 +96,9 @@
                 {{-- BADGE DE ESTADO GENERAL --}}
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     @if($envio->solucionado)
+                        @php $tuvoVariacionFormato = $evaluaciones->contains('resultado', 'Aceptado (Variación de Formato)'); @endphp
                         <span class="badge bg-success fs-6 py-2 px-3">
-                            <i class="fa fa-check-circle me-1"></i> ACEPTADO ({{ $envio->puntaje ?? 0 }} pts)
+                            <i class="fa fa-check-circle me-1"></i> {{ $tuvoVariacionFormato ? 'ACEPTADO (VARIACIÓN DE FORMATO)' : 'ACEPTADO' }} ({{ $envio->puntaje ?? 0 }} pts)
                         </span>
                     @elseif($evaluaciones->contains('estado', '=', 'En Proceso'))
                         <span class="badge bg-warning text-dark fs-6 py-2 px-3">
@@ -105,7 +106,7 @@
                         </span>
                     @else
                         <span class="badge bg-danger fs-6 py-2 px-3">
-                            <i class="fa fa-times-circle me-1"></i> {{ $envio->resultado ?? 'RECHAZADO' }} ({{ $envio->puntaje ?? 0 }} pts)
+                            <i class="fa fa-times-circle me-1"></i> {{ \App\Support\Judge0StatusHelper::traducir($envio->resultado ?? 'Rechazado') }} ({{ $envio->puntaje ?? 0 }} pts)
                         </span>
                     @endif
                 </div>
@@ -473,7 +474,7 @@
                                 $esEjemplo = (bool)($ev->casos_pruebas->ejemplo ?? false);
                                 $estado = $ev->estado ?? 'Pendiente';
                                 $esAceptado = ($estado === 'Aceptado');
-                                $resultadoLabel = $ev->resultado ?? $estado;
+                                $resultadoLabel = \App\Support\Judge0StatusHelper::traducir($ev->resultado ?? $estado);
                                 $badgeClass = $esAceptado ? 'bg-success' : ($estado === 'En Proceso' ? 'bg-warning text-dark' : 'bg-danger');
                                 $borderClass = $esAceptado ? 'border-success' : ($estado === 'En Proceso' ? 'border-warning' : 'border-danger');
                             @endphp

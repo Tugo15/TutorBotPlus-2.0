@@ -1,66 +1,96 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# TutorBot+ 2.0 (UCSC)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Plataforma de juez en línea (*Online Judge*), evaluación automatizada de código (C, C++, Python, Java, SQL) y tutoría inteligente asistida por Modelos de Lenguaje (LLM) para la **Universidad Católica de la Santísima Concepción (UCSC)**.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Requisitos Previos
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **PHP 8.2+** (en Windows/XAMPP: `C:\xampp\php\php.exe`)
+- **MySQL / MariaDB**
+- **Composer** y **Node.js (v18+ / v20+)**
+- **Docker + Docker Compose** (opcional en local si usas evaluación local/SQL, obligatorio en producción para **Judge0 v1.13.0**)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Cómo Iniciar el Programa (Entorno Local / XAMPP en Windows)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 1. Instalación de dependencias (primera vez)
+```bash
+composer install
+npm install
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 2. Configurar variables de entorno y base de datos
+1. Copia `.env.example` a `.env` (si aún no existe) y configura `DB_DATABASE=tutorbotplus`, `DB_USERNAME`, `DB_PASSWORD` y la clave de tu proveedor LLM si corresponde.
+2. Crea la base de datos `tutorbotplus` en MySQL / phpMyAdmin.
+3. Ejecuta las migraciones (y seeders si es una instalación nueva):
+```bash
+# Instalación nueva con datos iniciales:
+C:\xampp\php\php.exe artisan migrate --seed
+C:\xampp\php\php.exe artisan storage:link
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+# Si actualizas un servidor ya existente con datos:
+C:\xampp\php\php.exe artisan migrate --force
+C:\xampp\php\php.exe artisan optimize:clear
+```
 
-## Laravel Sponsors
+### 3. Iniciar el Servidor Web (Terminal 1)
+```bash
+C:\xampp\php\php.exe artisan serve --host=127.0.0.1 --port=8000
+```
+Abre en tu navegador: **http://127.0.0.1:8000**
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+### 4. Iniciar el Procesador de Evaluaciones (Terminal 2)
+Necesario para procesar en segundo plano las colas de envíos con Judge0 y cerrar certámenes expirados:
+```bash
+C:\xampp\php\php.exe artisan schedule:work
+```
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+## Cómo Iniciar en Servidor Linux (Ubuntu + Nginx + Docker Judge0)
 
-## Contributing
+El proyecto incluye el instalador automatizado `install_ubuntu.sh` (seguro e idempotente):
+```bash
+sudo chmod +x install_ubuntu.sh
+sudo ./install_ubuntu.sh
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Opciones útiles del instalador:
+- `--fresh-db`: reinicia la base de datos desde cero (`migrate:fresh --seed`).
+- `--force-env`: regenera el archivo `.env` (guardando respaldo `.env.bak.*`).
+- `--skip-judge0`: omite la instalación/inicio de Judge0 en Docker.
+- `--help`: muestra todas las opciones.
 
-## Code of Conduct
+Comandos útiles en producción:
+```bash
+# Ver estado del evaluador en segundo plano (Scheduler)
+sudo systemctl status tutorbot-scheduler.service
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Ver logs del evaluador en tiempo real
+sudo journalctl -u tutorbot-scheduler.service -f
 
-## Security Vulnerabilities
+# Verificar contenedores de Judge0 y levantarlos manualmente si hace falta
+docker ps
+cd judge0-v1.13.0 && sudo docker compose up -d
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## Cuentas de Prueba (Seeder por defecto)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Rol | Correo | Contraseña |
+| :--- | :--- | :--- |
+| **Administrador** | `admin@tutorbot.com` | `12345678` *(o `admin` según seeder)* |
+| **Profesor** | `profesor@tutorbot.com` | `12345678` *(o `profesor` según seeder)* |
+| **Estudiante** | `estudiante@tutorbot.com` | `12345678` *(o `estudiante` según seeder)* |
+
+---
+
+## Pruebas Automatizadas
+
+Para ejecutar la suite de pruebas PHPUnit:
+```bash
+vendor/bin/phpunit
+```

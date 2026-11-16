@@ -389,7 +389,7 @@ class EnvioSolucionProblemaController extends Controller
                     $isAccepted = $exactMatch || $flexMatch;
 
                     $evaluacion->estado = $isAccepted ? 'Aceptado' : 'Rechazado';
-                    $evaluacion->resultado = $exactMatch ? 'Accepted' : ($flexMatch ? 'Aceptado (Variación de Formato)' : 'Wrong Answer');
+                    $evaluacion->resultado = $exactMatch ? 'Aceptado' : ($flexMatch ? 'Aceptado (Variación de Formato)' : 'Respuesta Incorrecta');
                     $evaluacion->stout = base64_encode($salidaObtenida);
                     $evaluacion->tiempo = $tiempo;
                     $evaluacion->memoria = '1500';
@@ -494,7 +494,7 @@ class EnvioSolucionProblemaController extends Controller
 
                 if (!empty($stderr) && empty($salidaObtenida)) {
                     $evaluacion->estado = 'Error';
-                    $evaluacion->resultado = 'Runtime Error';
+                    $evaluacion->resultado = 'Error de Ejecución';
                     $evaluacion->error_compilacion = base64_encode($stderr);
                     $evaluacion->stout = base64_encode('');
                 } else {
@@ -504,7 +504,7 @@ class EnvioSolucionProblemaController extends Controller
                     $isAccepted = $exactMatch || $flexMatch;
 
                     $evaluacion->estado = $isAccepted ? 'Aceptado' : 'Rechazado';
-                    $evaluacion->resultado = $exactMatch ? 'Accepted' : ($flexMatch ? 'Aceptado (Variación de Formato)' : 'Wrong Answer');
+                    $evaluacion->resultado = $exactMatch ? 'Aceptado' : ($flexMatch ? 'Aceptado (Variación de Formato)' : 'Respuesta Incorrecta');
                     $evaluacion->stout = base64_encode($salidaObtenida);
 
                     if ($isAccepted) {

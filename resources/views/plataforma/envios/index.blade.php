@@ -29,11 +29,11 @@
                                     <td><a href="{{route('problemas.listado', ["id"=>$envio->id_curso])}}">{{$envio->nombre_curso}}</a></td>
                                     <td>
                                         @if($envio->solucionado == true)
-                                            <span class="badge text-bg-success">{{ !empty($envio->variacion_formato) ? 'Aceptado (Variación de Formato)' : 'Accepted' }}</span>
+                                            <span class="badge text-bg-success">{{ !empty($envio->variacion_formato) ? 'Aceptado (Variación de Formato)' : 'Aceptado' }}</span>
                                         @elseif($envio->estado == "Error" || $envio->estado == "Rechazado")
-                                            <span class="badge text-bg-danger">{{ $envio->resultado ?? $envio->estado }}</span>
+                                            <span class="badge text-bg-danger">{{ \App\Support\Judge0StatusHelper::traducir($envio->resultado ?? $envio->estado) }}</span>
                                         @elseif($envio->estado == "En Proceso")
-                                            <span class="badge text-bg-warning">In Process</span>
+                                            <span class="badge text-bg-warning">En Proceso</span>
                                         @else
                                             <span class="badge text-bg-secondary">Sin Evaluación</span>
                                         @endif
