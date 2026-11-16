@@ -69,7 +69,9 @@ class UserController extends Controller
             $user = User::find(auth()->user()->id);
             if ($request->filled('password') || $request->filled('password_actual')) {
                 if (!Hash::check($request->password_actual ?? '', $user->password)) {
-                    return back()->withInput()->with("error", "Contraseña actual incorrecta");
+                    return back()->withInput()->withErrors([
+                        'password_actual' => 'Contraseña actual incorrecta.',
+                    ])->with("error", "Contraseña actual incorrecta");
                 }
                 if ($request->filled('password')) {
                     $user->password = $request->password;

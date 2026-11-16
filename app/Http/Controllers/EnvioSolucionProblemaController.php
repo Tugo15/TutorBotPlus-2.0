@@ -60,6 +60,40 @@ class EnvioSolucionProblemaController extends Controller
     public function enviar_solucion(Request $request)
     {
         $validated = $request->validate(EnvioSolucionProblema::$rules);
+
+        $resolverCheck = Resolver::find($request->id_resolver);
+        if (!$resolverCheck || ($request->filled('id_problema') && (int) $resolverCheck->id_problema !== (int) $request->id_problema)) {
+            abort(403, 'El problema o lenguaje seleccionado no es válido.');
+        }
+
+        if (isset($request->id_certamen)) {
+            $resCertCheck = \App\Models\ResolucionCertamenes::find($request->id_certamen);
+            if (!$resCertCheck || (int) $resCertCheck->id_usuario !== (int) auth()->id()) {
+                abort(403, 'No tienes permiso para enviar soluciones en esta evaluación.');
+            }
+            if (!auth()->user()->hasRole('administrador') && !$resCertCheck->ProblemasSeleccionadas()->where('id_problema', $resolverCheck->id_problema)->exists()) {
+                abort(403, 'El problema no pertenece a esta evaluación.');
+            }
+        } else {
+            $cursaCheck = \App\Models\Cursa::where('id', $request->id_cursa)
+                ->where('id_usuario', auth()->id())
+                ->first();
+            if (!$cursaCheck) {
+                abort(403, 'No tienes permiso para enviar soluciones en este curso.');
+            }
+            if (!auth()->user()->hasRole('administrador')) {
+                $problemaPermitido = Problemas::where('id', $resolverCheck->id_problema)
+                    ->where('visible', true)
+                    ->whereHas('cursos', function ($q) use ($cursaCheck) {
+                        $q->where('cursos.id', $cursaCheck->id_curso)
+                          ->where('disponible.visible', true);
+                    })->exists();
+                if (!$problemaPermitido) {
+                    abort(403, 'No tienes acceso a este problema.');
+                }
+            }
+        }
+
         //Escoge un juez virtual de manera aleatoria si el usuario escogió eso.
         if ($request->juez_virtual == "0" || empty($request->juez_virtual)) {
             $juezDef = JuecesVirtuales::first();

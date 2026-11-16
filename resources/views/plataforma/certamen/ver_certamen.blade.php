@@ -75,9 +75,14 @@
                                         <i class="fa fa-lock me-1"></i> Resolver Evaluación
                                     </button>
                                 @else
-                                    <a class="btn btn-primary text-wrap {{ $certamen->disponibilidad ? '' : 'disabled' }}"
-                                        href="{{ route('certamenes.iniciar_resolucion', ['id_certamen' => $certamen->id]) }}"
-                                        role="button">{{ $certamen->disponibilidad ? 'Resolver Evaluación' : 'Evaluación No Disponible' }}</a>
+                                    <form action="{{ route('certamenes.iniciar_resolucion', ['id_certamen' => $certamen->id]) }}" method="POST" class="d-grid">
+                                        @csrf
+                                        <button type="submit"
+                                            class="btn btn-primary text-wrap {{ $certamen->disponibilidad ? '' : 'disabled' }}"
+                                            @if(!$certamen->disponibilidad) disabled @endif>
+                                            {{ $certamen->disponibilidad ? 'Resolver Evaluación' : 'Evaluación No Disponible' }}
+                                        </button>
+                                    </form>
                                 @endif
                             @endif
                             @can('ver informe del certamen')

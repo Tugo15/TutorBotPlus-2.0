@@ -280,6 +280,9 @@ class CertamenesController extends Controller
             }
 
             DB::commit();
+        }catch(\Symfony\Component\HttpKernel\Exception\HttpException $e){
+            DB::rollback();
+            throw $e;
         }catch(\PDOException $e){
             DB::rollBack();
             return back()->withInput()->with("error", $e->getMessage());
@@ -397,6 +400,9 @@ class CertamenesController extends Controller
             }
 
             DB::commit();
+        }catch(\Symfony\Component\HttpKernel\Exception\HttpException $e){
+            DB::rollback();
+            throw $e;
         }catch(\PDOException $e){
             DB::rollBack();
             return back()->withInput()->with("error", $e->getMessage());
@@ -415,6 +421,9 @@ class CertamenesController extends Controller
             $idCurso = $certamen->id_curso;
             $certamen->delete();
             DB::commit();
+        }catch(\Symfony\Component\HttpKernel\Exception\HttpException $e){
+            DB::rollback();
+            throw $e;
         }catch(\PDOException $e){
             DB::rollBack();
             return back()->with("error", $e->getMessage());
@@ -567,6 +576,9 @@ class CertamenesController extends Controller
                 return $item;
             });
             
+        }catch(\Symfony\Component\HttpKernel\Exception\HttpException $e){
+            DB::rollback();
+            throw $e;
         }catch(\PDOException $e){
             return redirect()->route('cursos.listado')->with("error", $e->getMessage());
         }
@@ -640,6 +652,9 @@ class CertamenesController extends Controller
             
             $certamen->fecha_inicio = Carbon::parse( $certamen->fecha_inicio)->locale('es_ES')->isoFormat('lll');
             $certamen->fecha_termino = Carbon::parse( $certamen->fecha_termino)->locale('es_ES')->isoFormat('lll');
+        }catch(\Symfony\Component\HttpKernel\Exception\HttpException $e){
+            DB::rollback();
+            throw $e;
         }catch(\PDOException $e){
             return redirect()->route('certamenes.listado')->with("error", $e->getMessage());
         }
@@ -658,6 +673,21 @@ class CertamenesController extends Controller
                 $certamen = Certamenes::find($request->id_certamen);
                 if (!$certamen) {
                     throw new \Exception("Error: La evaluación seleccionada no existe.");
+                }
+
+                if (!auth()->user()->hasRole('administrador')) {
+                    if (!auth()->user()->cursos()->where('cursos.id', $certamen->id_curso)->exists()) {
+                        abort(403, 'No tienes acceso al curso de esta evaluación.');
+                    }
+                    $now = Carbon::now();
+                    if ($certamen->fecha_inicio && $now->lt(Carbon::parse($certamen->fecha_inicio))) {
+                        return redirect()->route('certamenes.ver', ['id_certamen' => $certamen->id])
+                            ->with('error', 'La evaluación aún no ha comenzado.');
+                    }
+                    if ($certamen->fecha_termino && $now->gt(Carbon::parse($certamen->fecha_termino))) {
+                        return redirect()->route('certamenes.ver', ['id_certamen' => $certamen->id])
+                            ->with('error', 'El plazo para iniciar esta evaluación ha finalizado.');
+                    }
                 }
 
                 // Verificar contraseña si la evaluación está protegida
@@ -749,6 +779,9 @@ class CertamenesController extends Controller
                 $res_certamen->ProblemasSeleccionadas()->saveMany($problemas_seleccionados);
             }
             DB::commit();
+        }catch(\Symfony\Component\HttpKernel\Exception\HttpException $e){
+            DB::rollback();
+            throw $e;
         }catch(\PDOException $e){
             DB::rollback();
             return redirect()->route('certamenes.listado')->with("error", $e->getMessage());
@@ -797,6 +830,9 @@ class CertamenesController extends Controller
                 return response()->json(['error' => 'No tienes permiso para acceder a esta evaluación.'], 403);
             }
             $problemas = $this->get_ultimos_envios($res_certamen);
+        }catch(\Symfony\Component\HttpKernel\Exception\HttpException $e){
+            DB::rollback();
+            throw $e;
         }catch(\PDOException $e){
             return response($e->getMessage(), 500);
         }
@@ -819,6 +855,9 @@ class CertamenesController extends Controller
 
             $problemas = $this->get_ultimos_envios($res_certamen);
             
+        }catch(\Symfony\Component\HttpKernel\Exception\HttpException $e){
+            DB::rollback();
+            throw $e;
         }catch(\PDOException $e){
             return redirect()->route('certamenes.listado')->with("error", $e->getMessage());
         }catch(\Exception $e){
@@ -842,6 +881,9 @@ class CertamenesController extends Controller
                 return redirect()->route('certamenes.listado')->with("error", "No tienes permiso para finalizar esta evaluación.");
             }
             $res_certamen->finalizar_certamen();
+        }catch(\Symfony\Component\HttpKernel\Exception\HttpException $e){
+            DB::rollback();
+            throw $e;
         }catch(\PDOException $e){
             if ($res_certamen) {
                 return redirect()->route('certamenes.ver', ['id_certamen'=>$res_certamen->id_certamen])->with("error", $e->getMessage());

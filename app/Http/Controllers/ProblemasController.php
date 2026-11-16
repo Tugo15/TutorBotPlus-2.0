@@ -153,6 +153,9 @@ class ProblemasController extends Controller
             $problema->body_problema_resumido = $request->input('body_problema_resumido');
             $problema->restricciones = $request->input('restricciones');
             $problema->save();
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\PDOException $e) {
             DB::rollBack();
             return redirect()->route("problemas.configurar_llm", ["id" => $request->id])->with("error", $e->getMessage());
@@ -268,6 +271,9 @@ class ProblemasController extends Controller
             $problema = Problemas::find($request->id);
             $this->set_datos_problemas($problema, $request);
             DB::commit();
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\PDOException $e) {
             DB::rollBack();
             if ($id_curso) {
@@ -291,6 +297,9 @@ class ProblemasController extends Controller
             $problema = Problemas::find($request->id);
             $problema->delete();
             DB::commit();
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\PDOException $e) {
             DB::rollBack();
             if ($id_curso) {
@@ -366,6 +375,9 @@ class ProblemasController extends Controller
             }
             $problema->body_editorial = self::almacenarImagenesBase64($request->input('body_editorial'));
             $problema->save();
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\PDOException $e) {
             DB::rollBack();
             return redirect()->back()->withInput($request->input())->with('error', $e->getMessage());
@@ -387,6 +399,9 @@ class ProblemasController extends Controller
                 }
                 return redirect()->route('problemas.index')->with('error', 'El problema solicitado no existe.');
             }
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\PDOException $e) {
             DB::rollBack();
             if ($id_curso) {
@@ -487,6 +502,9 @@ class ProblemasController extends Controller
                 return $item;
             });
 
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\PDOException $e) {
             DB::rollBack();
             return redirect()->route('cursos.listado')->with('error', $e->getMessage());
@@ -556,6 +574,9 @@ class ProblemasController extends Controller
             } else {
                 $problema->fecha_termino = "No Definido";
             }
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\PDOException $e) {
             return redirect()->route('cursos.listado')->with('error', $e->getMessage());
         } catch (\Exception $e) {
@@ -588,6 +609,9 @@ class ProblemasController extends Controller
                     return redirect()->route('cursos.listado')->with('error', 'El problema ' . $problema->nombre . ' no está disponible');
                 }
             }
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\PDOException $e) {
             return redirect()->route('cursos.listado')->with('error', $e->getMessage());
         } catch (\Exception $e) {
@@ -607,10 +631,17 @@ class ProblemasController extends Controller
             $res_certamen = null;
             if (isset($request->token_certamen)) {
                 $res_certamen = ResolucionCertamenes::with('certamen')->where('token', '=', $request->token_certamen)->first();
-                if ($res_certamen && !$res_certamen->certamen) {
-                    $res_certamen = null;
+                if (!$res_certamen || !$res_certamen->certamen) {
+                    return redirect()->route('certamenes.listado')
+                        ->with('error', 'La evaluación solicitada no existe.');
                 }
-                if ($res_certamen && $res_certamen->finalizado) {
+                if ((int) $res_certamen->id_usuario !== (int) auth()->id() && !auth()->user()->hasRole('administrador')) {
+                    abort(403, 'No tienes permiso para acceder a esta evaluación.');
+                }
+                if (!auth()->user()->hasRole('administrador') && !$res_certamen->ProblemasSeleccionadas()->where('id_problema', $problema->id)->exists()) {
+                    abort(403, 'El problema no pertenece a esta evaluación.');
+                }
+                if ($res_certamen->finalizado) {
                     return redirect()->route('certamenes.ver', ['id_certamen' => $res_certamen->id_certamen])
                         ->with('error', 'No puedes acceder porque esta evaluación ya ha sido finalizada.');
                 }
@@ -685,6 +716,9 @@ class ProblemasController extends Controller
                 $last_envio = $envio;
                 DB::commit();
             }
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\PDOException $e) {
             DB::rollBack();
             return redirect()->route('cursos.listado')->with('error', $e->getMessage());
@@ -706,13 +740,36 @@ class ProblemasController extends Controller
         if (!$problema) {
             return redirect()->back()->with('error', 'El problema solicitado no fue encontrado.');
         }
+
+        $user = auth()->user();
+        $esGestor = $user && ($user->hasRole('administrador') || $user->hasRole('profesor') || $user->can('ver problemas'));
+        if (!$esGestor) {
+            $cursosUsuarioIds = $user ? $user->cursos()->pluck('cursos.id')->toArray() : [];
+            $visibleEnCurso = $problema->visible
+                && $problema->cursos()
+                    ->whereIn('cursos.id', $cursosUsuarioIds)
+                    ->wherePivot('visible', true)
+                    ->exists();
+            $enFecha = !$problema->fecha_inicio || Carbon::now()->gte(Carbon::parse($problema->fecha_inicio));
+
+            $enCertamenActivo = $user && ResolucionCertamenes::where('id_usuario', $user->id)
+                ->where('finalizado', false)
+                ->whereHas('ProblemasSeleccionadas', function ($q) use ($problema) {
+                    $q->where('id_problema', $problema->id);
+                })->exists();
+
+            if (!($visibleEnCurso && $enFecha) && !$enCertamenActivo) {
+                abort(403, 'No tienes permiso para descargar el enunciado de este problema.');
+            }
+        }
+
         $problema->puntaje_total = $problema->casos_de_prueba()->sum('puntos');
 
         $pdf = PDF::loadView('plataforma.problemas.pdf_enunciado', compact('problema'))
             ->setPaper('a4', 'portrait')
             ->setOptions([
                 'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled' => true,
+                'isRemoteEnabled' => false,
                 'defaultFont' => 'sans-serif',
             ]);
 
@@ -824,8 +881,13 @@ class ProblemasController extends Controller
 
     public function upload_imagen(Request $request)
     {
+        $user = auth()->user();
+        if (!$user || (!$user->can('crear problemas') && !$user->can('editar problemas') && !$user->hasRole('administrador'))) {
+            abort(403, 'No tienes permiso para subir imágenes.');
+        }
+
         $request->validate([
-            'image' => ['required', 'file', 'image', 'mimes:jpeg,png,jpg,gif,webp,svg', 'max:10240'],
+            'image' => ['required', 'file', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:10240'],
         ]);
 
         $file = $request->file('image');
@@ -860,10 +922,11 @@ class ProblemasController extends Controller
                     'png' => 'png',
                     'gif' => 'gif',
                     'webp' => 'webp',
-                    'svg+xml' => 'svg',
-                    'svg' => 'svg'
                 ];
-                $extension = $map[$rawExt] ?? 'png';
+                if (!isset($map[$rawExt])) {
+                    return $matches[0];
+                }
+                $extension = $map[$rawExt];
 
                 $cleanBase64 = preg_replace('/\s+/', '', $matches[2]);
                 $decoded = base64_decode($cleanBase64, true);
