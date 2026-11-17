@@ -194,6 +194,7 @@ Route::group(['middleware' => 'auth'], function () {
 		Route::get('/evaluacion/{id_certamen}', [InformeController::class, 'ver_informe_certamen'])->name('informe.certamen')->middleware('can:ver informe del certamen'); 
 		Route::get('/evaluacion/{id_certamen}/exportar', [InformeController::class, 'exportar_informe_certamen'])->name('informe.certamen.exportar')->middleware('can:ver informe del certamen'); 
 		Route::get('/evaluacion/{id_certamen}/detalle/{id_res_certamen}', [InformeController::class, 'ver_envios_certamen'])->name('informe.certamen.detalle')->middleware('can:ver informe del certamen'); 
+		Route::get('/envio/{token}/detalle', [EvaluacionSolucionController::class, 'ver_detalle_docente'])->name('informe.envio.detalle');
 
 
 	});

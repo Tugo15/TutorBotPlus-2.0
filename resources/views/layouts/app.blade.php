@@ -148,6 +148,16 @@
             display: inline-block !important;
         }
 
+        i.d-none {
+            display: none !important;
+        }
+        @media (min-width: 1200px) {
+            i.d-xl-none,
+            #iconSidenav.d-xl-none {
+                display: none !important;
+            }
+        }
+
         /* Control de tamaño para íconos SVG y botones (elimina íconos gigantes y desalineados) */
         svg.svg-inline--fa,
         .svg-inline--fa {

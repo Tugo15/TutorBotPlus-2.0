@@ -18,24 +18,19 @@ use Illuminate\Support\Facades\Artisan;
 class EvaluacionSolucionController extends Controller
 {
 
-    public function ver_evaluacion(Request $request)
+    private function esDocenteOAdmin(): bool
     {
-        $envio = EnvioSolucionProblema::with(['curso', 'problema.casos_de_prueba', 'usuario', 'lenguaje'])->where("token", "=", $request->token)->first();
-        if(!isset($envio)){
-            return redirect()->route('envios.listado')->with('error', 'El envio no existe');
-        }
-
-        $esDocenteOAdmin = auth()->check() && (
+        return auth()->check() && (
             auth()->user()->hasRole('administrador') ||
             auth()->user()->hasRole('profesor') ||
             auth()->user()->can('ver informe del certamen') ||
             auth()->user()->can('ver informe del curso') ||
             auth()->user()->can('ver informe del problema')
         );
-        if (!$esDocenteOAdmin && (!isset($envio->usuario) || $envio->usuario->id !== auth()->id())) {
-            return redirect()->route('envios.listado')->with('error', 'No tienes permiso para visualizar este envío.');
-        }
+    }
 
+    private function prepararEvaluacionData(EnvioSolucionProblema $envio): array
+    {
         // Si existen evaluaciones pendientes en proceso, evaluar de forma sincrónica con Judge0 inmediatamente
         if ($envio->evaluaciones()->where('estado', '=', 'En Proceso')->exists()) {
             try {
@@ -62,7 +57,6 @@ class EvaluacionSolucionController extends Controller
                 $highlightjs_choice = EnvioSolucionProblema::$higlightjs_language[$abrev];
             }
         }
-        $juez = $envio->juez_virtual;
         $evaluaciones = $envio->evaluaciones()->with('casos_pruebas')->get();
         //Calculo de intentos restante de retroalimentación
         $cant_retroalimentacion = 0;
@@ -79,15 +73,45 @@ class EvaluacionSolucionController extends Controller
         $tieneRetroalimentacion = SolicitudRaLlm::where('id_envio', '=', $envio->id)->exists();
         $pendientes = $envio->evaluaciones()->where('estado', '=', 'En Proceso')->count();
         $diferencia = 0;
-        if(isset($envio->termino) && isset($envio->inicio)){
+        if (isset($envio->termino) && isset($envio->inicio)) {
             $diferencia = Carbon::parse($envio->termino)->diffInSeconds(Carbon::parse($envio->inicio));
         }
         $res_certamen = null;
-        if(isset($envio->id_certamen)){
+        if (isset($envio->id_certamen)) {
             $res_certamen = ResolucionCertamenes::with('certamen.curso')->find($envio->id_certamen);
         }
-        return view('plataforma.problemas.resultado', compact('envio', 'evaluaciones', 'highlightjs_choice', 'cant_retroalimentacion', 'tieneRetroalimentacion', 'problema', 'diferencia', 'res_certamen', 'pendientes'));
+
+        return compact('envio', 'evaluaciones', 'highlightjs_choice', 'cant_retroalimentacion', 'tieneRetroalimentacion', 'problema', 'diferencia', 'res_certamen', 'pendientes');
     }
+
+    public function ver_evaluacion(Request $request)
+    {
+        $envio = EnvioSolucionProblema::with(['curso', 'problema.casos_de_prueba', 'usuario', 'lenguaje'])->where("token", "=", $request->token)->first();
+        if (!isset($envio)) {
+            return redirect()->route('envios.listado')->with('error', 'El envio no existe');
+        }
+
+        if (!$this->esDocenteOAdmin() && (!isset($envio->usuario) || $envio->usuario->id !== auth()->id())) {
+            return redirect()->route('envios.listado')->with('error', 'No tienes permiso para visualizar este envío.');
+        }
+
+        return view('plataforma.problemas.resultado', $this->prepararEvaluacionData($envio));
+    }
+
+    public function ver_detalle_docente(Request $request)
+    {
+        if (!$this->esDocenteOAdmin()) {
+            abort(403, 'No tienes permiso para visualizar el detalle de este envío.');
+        }
+
+        $envio = EnvioSolucionProblema::with(['curso', 'problema.casos_de_prueba', 'usuario', 'lenguaje'])->where("token", "=", $request->token)->first();
+        if (!isset($envio)) {
+            return redirect()->route('home')->with('error', 'El envío no existe');
+        }
+
+        return view('informes.componentes.detalle_envio', $this->prepararEvaluacionData($envio));
+    }
+
     //Retorna un JSON de los estados de evaluaciones de un envio, esto para utilizar en la vista de resultados de un envio, cuando las evaluaciones aun están en proceso y queremos una actualización de esos.
     public function obtener_status_evaluaciones(Request $request){
         try{
@@ -96,14 +120,7 @@ class EvaluacionSolucionController extends Controller
                 return response('El envio no existe', 400);
             }
 
-            $esDocenteOAdmin = auth()->check() && (
-                auth()->user()->hasRole('administrador') ||
-                auth()->user()->hasRole('profesor') ||
-                auth()->user()->can('ver informe del certamen') ||
-                auth()->user()->can('ver informe del curso') ||
-                auth()->user()->can('ver informe del problema')
-            );
-            if (!$esDocenteOAdmin && (!isset($envio->usuario) || $envio->usuario->id !== auth()->id())) {
+            if (!$this->esDocenteOAdmin() && (!isset($envio->usuario) || $envio->usuario->id !== auth()->id())) {
                 return response('No tienes permiso para visualizar este envío.', 403);
             }
 

@@ -483,7 +483,7 @@
                                             </td>
                                             <td class="text-center py-2">
                                                 @if(isset($uEnv->token))
-                                                    <a href="{{ route('envios.ver', ['token' => $uEnv->token]) }}" class="btn btn-xs btn-outline-info mb-0">Ver</a>
+                                                    <a href="{{ route('informe.envio.detalle', ['token' => $uEnv->token]) }}" class="btn btn-xs btn-outline-info mb-0">Ver</a>
                                                 @endif
                                             </td>
                                         </tr>

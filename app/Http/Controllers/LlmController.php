@@ -169,10 +169,11 @@ class LlmController extends Controller
         }
 
         $res = self::ejecutar_verificacion_restricciones($envio);
+        $targetRoute = $request->query('from') === 'detalle' ? 'informe.envio.detalle' : 'envios.ver';
         if ($res['estado']) {
-            return redirect()->route('envios.ver', ['token' => $request->token])->with('success', 'El bot ha verificado el cumplimiento de restricciones.');
+            return redirect()->route($targetRoute, ['token' => $request->token])->with('success', 'El bot ha verificado el cumplimiento de restricciones.');
         } else {
-            return redirect()->route('envios.ver', ['token' => $request->token])->with('error', $res['mensaje']);
+            return redirect()->route($targetRoute, ['token' => $request->token])->with('error', $res['mensaje']);
         }
     }
 

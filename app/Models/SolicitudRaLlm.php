@@ -48,6 +48,7 @@ class SolicitudRaLlm extends Model
         if ($esSql) {
             $prompt .= "3. REGLAS ESPECÍFICAS PARA CONSULTAS SQL:\n";
             $prompt .= "   - En SQLite / bases de datos, el operador LIKE es nativamente insensible a mayúsculas y minúsculas (case-insensitive) para caracteres ASCII.\n";
+            $prompt .= "   - La plataforma soporta sintaxis y funciones estándar de PostgreSQL sobre SQLite (como ILIKE, ::tipo, EXTRACT, DATE_TRUNC, INTERVAL, SPLIT_PART, STRING_AGG, FETCH FIRST, ANY/ALL, operadores regex ~ / ~*), por lo que su uso CUMPLE salvo que el profesor prohíba explícitamente alguna de esas funciones en particular.\n";
             $prompt .= "   - Si la restricción solicita considerar mayúsculas y minúsculas (por ejemplo buscar 'RPG' o 'rpg'), el uso de LIKE, ILIKE, LOWER() o UPPER() para buscar el término CUMPLE plenamente con la restricción.\n";
             $prompt .= "   - Filtros de datos o condiciones en WHERE/HAVING no son prohibiciones metodológicas: si no se utilizan funciones expresamente prohibidas por el profesor, DEBES responder 'Cumple'.\n";
         }

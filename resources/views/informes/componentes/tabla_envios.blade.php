@@ -98,7 +98,7 @@
                                             <div class="d-flex flex-column justify-content-center text-center">
                                                 <h6 class="mb-0 text-sm font-weight-bold">
                                                     @if(isset($envio->token))
-                                                        <a href="{{ route('envios.ver', ['token' => $envio->token]) }}" class="text-dark text-decoration-none text-primary-hover" title="Ver Enunciado y Detalle del Envío">
+                                                        <a href="{{ route('informe.envio.detalle', ['token' => $envio->token]) }}" class="text-dark text-decoration-none text-primary-hover" title="Ver Enunciado y Detalle del Envío">
                                                             {{ $nombreProb }}
                                                         </a>
                                                     @else
@@ -163,7 +163,7 @@
                                                 <i class="fa fa-code me-1"></i> Ver Código
                                             </button>
                                             @if(isset($envio->token))
-                                                <a class="btn btn-xs btn-outline-info mb-0" title="Ver Enunciado y Detalle del Envío" href="{{ route('envios.ver', ['token' => $envio->token]) }}">
+                                                <a class="btn btn-xs btn-outline-info mb-0" title="Ver Enunciado y Detalle del Envío" href="{{ route('informe.envio.detalle', ['token' => $envio->token]) }}">
                                                     <i class="fa fa-info-circle me-1"></i> Ver Detalle
                                                 </a>
                                             @endif
