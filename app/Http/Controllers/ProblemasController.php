@@ -983,7 +983,7 @@ class ProblemasController extends Controller
 
         return response()->json([
             'url' => asset('storage/' . $path),
-            'relative_url' => '/storage/' . $path,
+            'relative_url' => \App\Support\MarkdownRenderer::storageUrlPath($path),
             'filename' => $filename,
         ]);
     }
@@ -1024,7 +1024,7 @@ class ProblemasController extends Controller
 
                 Storage::disk('public')->put($relativePath, $decoded);
 
-                return '/storage/' . $relativePath;
+                return \App\Support\MarkdownRenderer::storageUrlPath($relativePath);
             },
             $contenido
         );

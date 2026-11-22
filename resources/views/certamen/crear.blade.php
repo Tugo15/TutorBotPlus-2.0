@@ -64,7 +64,7 @@
             initialEditType: 'markdown',
             previewStyle: 'vertical',
             placeholder: 'Ingrese la descripción o instrucciones de la evaluación',
-            initialValue: @json(old('descripcion', $certamen->descripcion ?? '')),
+            initialValue: @json(\App\Support\MarkdownRenderer::normalizeStorageUrls(old('descripcion', $certamen->descripcion ?? ''))),
             extendedAutolinks: true,
             hooks: {
                 addImageBlobHook: (blob, callback) => {

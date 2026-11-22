@@ -54,7 +54,7 @@
             initialEditType: 'markdown',
             previewStyle: 'vertical',
             placeholder: "Las pistas son una forma para ayudar al estudiante para que pueda comprender el problema.",
-            initialValue: @json($problema->body_editorial ?? ''),
+            initialValue: @json(\App\Support\MarkdownRenderer::normalizeStorageUrls($problema->body_editorial ?? '')),
             extendedAutolinks: true,
             hooks: {
                 addImageBlobHook: (blob, callback) => {

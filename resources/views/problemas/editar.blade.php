@@ -85,7 +85,7 @@
             previewStyle: 'vertical',
             autofocus: false,
             placeholder: 'Ingrese el enunciado del problema',
-            initialValue: @json(old('body_problema', $problema->body_problema ?? '')),
+            initialValue: @json(\App\Support\MarkdownRenderer::normalizeStorageUrls(old('body_problema', $problema->body_problema ?? ''))),
             extendedAutolinks: true,
             hooks: {
                 addImageBlobHook: (blob, callback) => {
