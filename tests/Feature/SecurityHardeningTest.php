@@ -250,4 +250,50 @@ class SecurityHardeningTest extends TestCase
             ]))
             ->assertStatus(403);
     }
+
+    public function test_non_admin_professor_cannot_access_other_courses_problems_or_certamenes(): void
+    {
+        Permission::firstOrCreate(['name' => 'editar certamen']);
+        $profRole = Role::firstOrCreate(['name' => 'profesor']);
+        $profRole->givePermissionTo(['editar problemas', 'editar certamen']);
+
+        $profA = User::factory()->create();
+        $profA->assignRole('profesor');
+
+        $cursoA = Cursos::create(['nombre' => 'Curso A', 'codigo' => 'CUR-A']);
+        $cursoB = Cursos::create(['nombre' => 'Curso B', 'codigo' => 'CUR-B']);
+        $profA->cursos()->attach($cursoA->id);
+
+        $problemaB = Problemas::create([
+            'codigo' => 'PROB-B',
+            'nombre' => 'Problema Curso B',
+            'body_problema' => 'Enunciado privado del curso B con suficientes caracteres.',
+            'dificultad' => 'Medio',
+            'visible' => true,
+        ]);
+        $cursoB->problemas()->attach($problemaB->id, ['visible' => true]);
+
+        $certamenB = Certamenes::create([
+            'nombre' => 'Certamen B',
+            'descripcion' => 'Descripción larga para certamen del curso B en pruebas.',
+            'fecha_inicio' => Carbon::now()->subHour(),
+            'fecha_termino' => Carbon::now()->addHour(),
+            'id_curso' => $cursoB->id,
+            'cantidad_problemas' => 1,
+            'restriccion_red' => false,
+        ]);
+
+        $this->actingAs($profA)->get(route('problemas.editar', ['id' => $problemaB->id]))->assertStatus(403);
+        $this->actingAs($profA)->get(route('problemas.editar_config_llm', ['id' => $problemaB->id]))->assertStatus(403);
+        $this->actingAs($profA)->get(route('certamen.editar', ['id' => $certamenB->id]))->assertStatus(403);
+        $this->actingAs($profA)->get(route('certamenes.ver', ['id_certamen' => $certamenB->id]))->assertStatus(403);
+    }
+
+    public function test_markdown_renderer_preserves_math_and_strips_unsafe_html(): void
+    {
+        $html = \App\Support\MarkdownRenderer::render("Calcula \$a_i * b_i\$ y <script>alert(1)</script>\n\n\$\$x^2 + y^2\$\$");
+        $this->assertStringContainsString('$a_i * b_i$', $html);
+        $this->assertStringContainsString('$$x^2 + y^2$$', $html);
+        $this->assertStringNotContainsString('<script>', $html);
+    }
 }

@@ -2,16 +2,17 @@
     <div class="col-12">
         <div class="card shadow-xs border mb-4">
             <div class="card-header pb-0 border-bottom mb-0">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 pb-3 w-100">
-                    <div class="text-center text-md-start">
+                <div class="tb-header-symmetric pb-2">
+                    <div class="tb-header-left"></div>
+                    <div class="tb-header-center text-center">
                         <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-users me-2 text-primary"></i>Informe de Estudiantes</h6>
                         <p class="text-xs text-secondary mb-0">Rendimiento de los estudiantes en este certamen. <span class="badge badge-sm bg-gradient-secondary ms-2 text-xxs">NR: No Resuelto</span></p>
                     </div>
-                    <div class="d-flex align-items-center gap-2 flex-wrap justify-content-center">
-                        <a href="{{ route('informe.certamen.exportar', ['id_certamen' => $certamen_estadistica->id]) }}" class="btn btn-sm btn-success mb-0">
+                    <div class="tb-header-right d-flex align-items-center gap-2 flex-wrap justify-content-center justify-content-xl-end">
+                        <a href="{{ route('informe.certamen.exportar', ['id_certamen' => $certamen_estadistica->id]) }}" class="btn btn-xs btn-success mb-0 text-nowrap">
                             <i class="fa fa-file-csv me-1"></i> Exportar CSV
                         </a>
-                        <a href="{{ route('certamen.index', request('id_curso') ? ['id_curso' => request('id_curso')] : []) }}" class="btn btn-sm btn-outline-secondary mb-0">
+                        <a href="{{ route('certamen.index', request('id_curso') ? ['id_curso' => request('id_curso')] : []) }}" class="btn btn-xs btn-outline-secondary mb-0 text-nowrap">
                             <i class="fa fa-arrow-left me-1"></i> Volver
                         </a>
                     </div>

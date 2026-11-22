@@ -25,29 +25,7 @@
                         <p class="mb-0">Aún no hay pistas disponibles para este problema.</p>
                     </div>
                 @else
-                    @php
-                        $bodyEditorialSanitized = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $problema->body_editorial ?? '');
-                        $mathBlocks = [];
-                        $bodyEditorialSanitized = preg_replace_callback('/```[\s\S]*?```|`[^`\r\n]*`|\$\$[\s\S]+?\$\$|(?<!\$)\$(?!\$)([^\$\r\n]+?)\$(?!\$)|(?<=[\p{L}\p{N}])\*(?=[\p{L}\p{N}])/u', function ($m) use (&$mathBlocks) {
-                            if ($m[0] === '*') {
-                                return '\\*';
-                            }
-                            if (str_starts_with($m[0], '$')) {
-                                $key = 'TBMATHPLACEHOLDER' . count($mathBlocks) . 'END';
-                                $mathBlocks[$key] = e($m[0]);
-                                return $key;
-                            }
-                            return $m[0];
-                        }, $bodyEditorialSanitized);
-                        $renderedEditorialHtml = Str::markdown($bodyEditorialSanitized, [
-                            'html_input' => 'strip',
-                            'allow_unsafe_links' => false
-                        ]);
-                        if (!empty($mathBlocks)) {
-                            $renderedEditorialHtml = strtr($renderedEditorialHtml, $mathBlocks);
-                        }
-                    @endphp
-                    {!! $renderedEditorialHtml !!}
+                    {!! \App\Support\MarkdownRenderer::render($problema->body_editorial ?? '') !!}
                 @endif
             </div>
         </div>

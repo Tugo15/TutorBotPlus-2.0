@@ -19,6 +19,17 @@ use Illuminate\Support\Str;
 
 class CertamenesController extends Controller
 {
+    private function usuarioTieneAccesoCurso(int $idCurso): bool
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+        if (auth()->user()->hasRole('administrador')) {
+            return true;
+        }
+        return auth()->user()->cursos()->where('cursos.id', $idCurso)->exists();
+    }
+
     public function index(Request $request){
         $esAdmin = auth()->user()->hasRole('administrador');
         if ($esAdmin) {
@@ -31,6 +42,9 @@ class CertamenesController extends Controller
         $curso_activo = null;
 
         if ($id_curso_activo) {
+            if (!$this->usuarioTieneAccesoCurso((int) $id_curso_activo)) {
+                abort(403, 'No tienes permiso para acceder a las evaluaciones de este curso.');
+            }
             $curso_activo = Cursos::find($id_curso_activo);
             $query = Certamenes::where('id_curso', $id_curso_activo);
         } else {
@@ -67,6 +81,9 @@ class CertamenesController extends Controller
         }
 
         if ($id_curso_preseleccionado) {
+            if (!$this->usuarioTieneAccesoCurso((int) $id_curso_preseleccionado)) {
+                abort(403, 'No tienes permiso para crear evaluaciones en este curso.');
+            }
             $curso_modelo = Cursos::find($id_curso_preseleccionado);
             $todos_problemas = $curso_modelo ? $curso_modelo->problemas()->with('categorias')->get() : collect();
         } else {
@@ -110,6 +127,9 @@ class CertamenesController extends Controller
         $certamen = Certamenes::find($request->id);
         if (!$certamen) {
             return redirect()->route('certamen.index')->with('error', 'La evaluación no existe.');
+        }
+        if (!$this->usuarioTieneAccesoCurso((int) $certamen->id_curso)) {
+            abort(403, 'No tienes permiso para editar esta evaluación.');
         }
 
         if (auth()->user()->hasRole('administrador')) {
@@ -187,6 +207,9 @@ class CertamenesController extends Controller
     }
     public function store(Request $request){
         $validated = $request->validate(Certamenes::$rules);
+        if (!$this->usuarioTieneAccesoCurso((int) $request->input('curso'))) {
+            abort(403, 'No tienes permiso para crear evaluaciones en este curso.');
+        }
         try{
             DB::beginTransaction();
             $certamen = new Certamenes;
@@ -296,6 +319,10 @@ class CertamenesController extends Controller
             DB::beginTransaction();
             $idCertamen = $request->input('id', $request->query('id', $request->id));
             $certamen = Certamenes::findOrFail($idCertamen);
+            if (!$this->usuarioTieneAccesoCurso((int) $certamen->id_curso)) {
+                DB::rollBack();
+                abort(403, 'No tienes permiso para modificar esta evaluación.');
+            }
             $certamen->nombre = $request->input("nombre");
             $certamen->descripcion = ProblemasController::almacenarImagenesBase64($request->input("descripcion"));
             $certamen->fecha_inicio = Carbon::parse($request->input("fecha_inicio"));
@@ -313,6 +340,10 @@ class CertamenesController extends Controller
             
             $nuevoCursoId = (int)$request->input('curso');
             if($nuevoCursoId && $certamen->id_curso != $nuevoCursoId){
+                if (!$this->usuarioTieneAccesoCurso($nuevoCursoId)) {
+                    DB::rollBack();
+                    abort(403, 'No tienes permiso para mover esta evaluación a ese curso.');
+                }
                 $certamen->id_curso = $nuevoCursoId;
             }
 
@@ -418,6 +449,10 @@ class CertamenesController extends Controller
             DB::beginTransaction();
             $idCertamen = $request->input('id', $request->query('id', $request->id));
             $certamen = Certamenes::findOrFail($idCertamen);
+            if (!$this->usuarioTieneAccesoCurso((int) $certamen->id_curso)) {
+                DB::rollBack();
+                abort(403, 'No tienes permiso para modificar esta evaluación.');
+            }
             $idCurso = $certamen->id_curso;
             $certamen->delete();
             DB::commit();
@@ -443,6 +478,10 @@ class CertamenesController extends Controller
             DB::beginTransaction();
             $original = Certamenes::with('categorias', 'curso')->findOrFail($request->id_certamen);
             $cursoDestino = Cursos::findOrFail($request->id_curso);
+            if (!$this->usuarioTieneAccesoCurso((int) $original->id_curso) || !$this->usuarioTieneAccesoCurso((int) $cursoDestino->id)) {
+                DB::rollBack();
+                abort(403, 'No tienes permiso para duplicar evaluaciones entre estos cursos.');
+            }
 
             $nuevo = new Certamenes();
             $nuevo->nombre = $original->nombre . ' (Copia)';
@@ -590,6 +629,9 @@ class CertamenesController extends Controller
             $certamen = Certamenes::find($request->id_certamen);
             if (!$certamen) {
                 return redirect()->route('certamenes.listado')->with('error', 'La evaluación solicitada no existe.');
+            }
+            if (!$this->usuarioTieneAccesoCurso((int) $certamen->id_curso)) {
+                abort(403, 'No perteneces al curso de esta evaluación.');
             }
             $_now = Carbon::now();
             $certamen->disponibilidad = true;

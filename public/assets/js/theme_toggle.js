@@ -90,11 +90,22 @@
     }
 
     function applyTheme(theme, persist) {
+        document.documentElement.classList.add('tb-theme-switching');
         if (theme === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark');
+            document.documentElement.classList.add('dark-mode');
         } else {
             document.documentElement.removeAttribute('data-theme');
+            document.documentElement.classList.remove('dark-mode');
             theme = 'light';
+        }
+        void document.documentElement.offsetHeight;
+        if (typeof window.requestAnimationFrame === 'function') {
+            window.requestAnimationFrame(function () {
+                document.documentElement.classList.remove('tb-theme-switching');
+            });
+        } else {
+            document.documentElement.classList.remove('tb-theme-switching');
         }
         if (persist !== false) {
             try {

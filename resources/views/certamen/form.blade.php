@@ -37,12 +37,12 @@
 </div>
 <div class="row">
     <div class="col-12 mb-3">
-        <div class="form-group" style="position: relative; z-index: 9999;">
+        <div class="form-group" style="position: relative; z-index: 1;">
             <label for="descripcion" class="form-control-label font-weight-bold text-sm">Descripción del Certamen*</label>
             <input type="hidden" id="descripcion" name="descripcion" data-required-label="Descripción de la Evaluación"
                 value="{{ isset($certamen) ? old('descripcion', $certamen->descripcion) : old('descripcion') }}">
             <div class="flex flex-col space-y-2">
-                <div id="editor" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" style="position: relative; z-index: 9999;"></div>
+                <div id="editor" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" style="position: relative; z-index: 1;"></div>
             </div>
         </div>
         @error('descripcion')
@@ -496,10 +496,10 @@
                             <span class="badge ${badgeClase} text-xxs px-2 py-1 banco-contador-badge" id="badge_count_${idx}">
                                 ${probCount} Variante(s) en Banco
                             </span>
-                            <button type="button" class="btn btn-xs btn-outline-primary mb-0 py-1 px-2" onclick="toggleDrawerPregunta(${idx})" title="Ver o ajustar las variantes exactas del banco">
+                            <button type="button" class="btn btn-xs btn-outline-primary mb-0 d-inline-flex align-items-center" style="height: 32px;" onclick="toggleDrawerPregunta(${idx})" title="Ver o ajustar las variantes exactas del banco">
                                 <i class="fa fa-sliders-h me-1"></i> Configurar Variantes
                             </button>
-                            <button type="button" class="btn btn-xs btn-outline-danger mb-0 py-1 px-2" onclick="eliminarPregunta(${idx})" title="Eliminar pregunta" ${disabledEliminar}>
+                            <button type="button" class="btn btn-xs btn-outline-danger mb-0 d-inline-flex align-items-center" style="height: 32px;" onclick="eliminarPregunta(${idx})" title="Eliminar pregunta" ${disabledEliminar}>
                                 <i class="fa fa-trash"></i>
                             </button>
                         </div>

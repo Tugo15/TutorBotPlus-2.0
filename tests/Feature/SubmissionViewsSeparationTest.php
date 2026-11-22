@@ -36,6 +36,9 @@ class SubmissionViewsSeparationTest extends TestCase
         $profesor = User::factory()->create();
         $profesor->assignRole('profesor');
 
+        $outsiderProf = User::factory()->create();
+        $outsiderProf->assignRole('profesor');
+
         $student = User::factory()->create();
         $student->assignRole('estudiante');
 
@@ -44,6 +47,10 @@ class SubmissionViewsSeparationTest extends TestCase
             'codigo' => 'TP2-01',
         ]);
 
+        Cursa::create([
+            'id_usuario' => $profesor->id,
+            'id_curso' => $curso->id,
+        ]);
         Cursa::create([
             'id_usuario' => $student->id,
             'id_curso' => $curso->id,
@@ -96,7 +103,12 @@ class SubmissionViewsSeparationTest extends TestCase
         $resStudentDetalle = $this->actingAs($student)->get(route('informe.envio.detalle', ['token' => $envio->token]));
         $resStudentDetalle->assertStatus(403);
 
-        // Professor accessing informe.envio.detalle sees the split view
+        // Outsider professor not enrolled in the course cannot access the submission detail
+        $this->actingAs($outsiderProf)
+            ->get(route('informe.envio.detalle', ['token' => $envio->token]))
+            ->assertStatus(403);
+
+        // Professor assigned to the course accessing informe.envio.detalle sees the split view
         $resProf = $this->actingAs($profesor)->get(route('informe.envio.detalle', ['token' => $envio->token]));
         $resProf->assertStatus(200);
         $resProf->assertSee('Vista Dividida');

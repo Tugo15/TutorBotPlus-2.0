@@ -119,12 +119,12 @@
 </div>
 <div class="row">
     <div class="col">
-        <div class="form-group" style="position: relative; z-index: 9999;">
+        <div class="form-group" style="position: relative; z-index: 1;">
             <span class="form-control-label d-block mb-1">Enunciado del Problema*</span>
             <input type="hidden" id="body_problema" name="body_problema" data-required-label="Enunciado del Problema"
                 value="{{ isset($problema) ? old('body_problema', $problema->body_problema) : old('body_problema') }}">
             <div class="flex flex-col space-y-2">
-                <div id="editor" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" style="position: relative; z-index: 9999;"></div>
+                <div id="editor" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" style="position: relative; z-index: 1;"></div>
             </div>
         </div>
         @error('body_problema')

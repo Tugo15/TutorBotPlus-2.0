@@ -5,10 +5,17 @@
         <div class="row">
             <div class="col-sm col-xs-12">
                 <div class="card border-danger" style="height:100%">
+                    @php
+                        $totalCasosEvaluacion = max(
+                            count($evaluaciones),
+                            isset($problema) && isset($problema->casos_de_prueba) ? $problema->casos_de_prueba->count() : 0,
+                            (int) ($envio->cant_casos_resuelto ?? 0)
+                        );
+                    @endphp
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span>Resultados de la Evaluación</span>
                         <span class="badge {{ $envio->solucionado ? 'bg-success' : 'bg-secondary' }}">
-                            Puntaje: {{ $envio->puntaje ?? 0 }} pts ({{ $envio->cant_casos_resuelto ?? 0 }}/{{ count($evaluaciones) }} casos)
+                            Puntaje: {{ $envio->puntaje ?? 0 }} pts ({{ $envio->cant_casos_resuelto ?? 0 }}/{{ $totalCasosEvaluacion }} casos)
                         </span>
                     </div>
                     <div class="card-body">
@@ -266,7 +273,7 @@
                     Código Fuente
                 </div>
                 <div class="card-body">
-                    <pre><code class="{{ $highlightjs_choice }}-html">{{ $envio->codigo }}</code></pre>
+                    <pre><code class="language-{{ $highlightjs_choice }}">{{ $envio->codigo }}</code></pre>
                 </div>
             </div>
         </div>

@@ -117,7 +117,7 @@
                     title: {
                         display: true,
                         text: 'Estados de los envíos',
-                        color: 'navy',
+                        color: '#344767',
                         position: 'bottom',
                         align: 'center',
                         font: {
@@ -140,7 +140,7 @@
                     title: {
                         display: true,
                         text: 'Lenguajes de Programación utilizados',
-                        color: 'navy',
+                        color: '#344767',
                         position: 'bottom',
                         align: 'center',
                         font: {

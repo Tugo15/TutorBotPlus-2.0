@@ -15,6 +15,7 @@ class SanitizeInputs
      */
     protected $except = [
         'codigo',
+        'codigo_save',
         'solucion',
         'body_problema',
         'body_editorial',

@@ -24,6 +24,32 @@ use PDF;
 
 class ProblemasController extends Controller
 {
+    private function usuarioTieneAccesoCurso(int $idCurso): bool
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+        if (auth()->user()->hasRole('administrador')) {
+            return true;
+        }
+        return auth()->user()->cursos()->where('cursos.id', $idCurso)->exists();
+    }
+
+    private function usuarioTieneAccesoProblema(Problemas $problema): bool
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+        if (auth()->user()->hasRole('administrador')) {
+            return true;
+        }
+        $userCursoIds = auth()->user()->cursos()->pluck('cursos.id')->toArray();
+        if (empty($userCursoIds)) {
+            return false;
+        }
+        return $problema->cursos()->whereIn('cursos.id', $userCursoIds)->exists();
+    }
+
     public function index(Request $request)
     {
         $id_curso_activo = $request->input('id_curso');
@@ -38,6 +64,9 @@ class ProblemasController extends Controller
 
         $problemas_disponibles_para_asignar = collect();
         if ($id_curso_activo) {
+            if (!$this->usuarioTieneAccesoCurso((int) $id_curso_activo)) {
+                abort(403, 'No tienes permiso para acceder a los problemas de este curso.');
+            }
             $curso_activo = Cursos::find($id_curso_activo);
             $query = Problemas::with(['cursos', 'categorias', 'lenguajes'])->whereHas('cursos', function (Builder $q) use ($id_curso_activo) {
                 $q->where('cursos.id', $id_curso_activo);
@@ -80,9 +109,6 @@ class ProblemasController extends Controller
             $cursos = Cursos::orderBy('nombre')->get();
         } else {
             $cursos = auth()->user()->cursos()->orderBy('nombre')->get();
-            if ($cursos->isEmpty()) {
-                $cursos = Cursos::orderBy('nombre')->get();
-            }
         }
 
         if ($cursos->isEmpty()) {
@@ -90,6 +116,9 @@ class ProblemasController extends Controller
         }
 
         $id_curso_preseleccionado = $request->input('id_curso', $request->input('curso'));
+        if ($id_curso_preseleccionado && !$this->usuarioTieneAccesoCurso((int) $id_curso_preseleccionado)) {
+            abort(403, 'No tienes permiso para crear problemas en este curso.');
+        }
 
         $lenguajes = LenguajesProgramaciones::where('abreviatura', 'NOT LIKE', '%sql%')->get();
         return view('problemas.crear', compact('categorias', 'cursos', 'lenguajes', 'id_curso_preseleccionado'))->with('accion', "crear");
@@ -104,6 +133,9 @@ class ProblemasController extends Controller
                 return redirect()->route('problemas.index', ['id_curso' => $id_curso])->with('error', 'El problema no existe.');
             }
             return redirect()->route('problemas.index')->with('error', 'El problema no existe.');
+        }
+        if (!$this->usuarioTieneAccesoProblema($problema)) {
+            abort(403, 'No tienes permiso para editar este problema.');
         }
         $problema->sql = $problema->lenguajes()->where('nombre', 'LIKE', '%sql%')->exists();
         if(isset($problema->fecha_inicio)){
@@ -120,12 +152,7 @@ class ProblemasController extends Controller
             $cursos = Cursos::orderBy('nombre')->get();
         } else {
             $misCursos = auth()->user()->cursos()->orderBy('nombre')->get();
-            $cursos = $misCursos->merge($problema->cursos)->unique('id');
-            if ($cursos->isEmpty()) {
-                $cursos = Cursos::orderBy('nombre')->get();
-            } else {
-                $cursos = $cursos->sortBy('nombre', SORT_NATURAL | SORT_FLAG_CASE)->values();
-            }
+            $cursos = $misCursos->merge($problema->cursos)->unique('id')->sortBy('nombre', SORT_NATURAL | SORT_FLAG_CASE)->values();
         }
         $lenguajes = LenguajesProgramaciones::where('abreviatura', 'NOT LIKE', '%sql%')->get();
         return view('problemas.editar', compact('problema', 'categorias', 'lenguajes', 'cursos', 'id_curso'))->with('accion', "editar");
@@ -136,6 +163,9 @@ class ProblemasController extends Controller
         if (!$problema) {
             return redirect()->route('problemas.index')->with('error', 'El problema solicitado no existe.');
         }
+        if (!$this->usuarioTieneAccesoProblema($problema)) {
+            abort(403, 'No tienes permiso para configurar la IA de este problema.');
+        }
         return view('problemas.llm_config', compact('problema'));
     }
 
@@ -144,6 +174,9 @@ class ProblemasController extends Controller
         $validated = $request->validate(Problemas::$llm_config_rules);
         try {
             $problema = Problemas::findOrFail($request->id);
+            if (!$this->usuarioTieneAccesoProblema($problema)) {
+                abort(403, 'No tienes permiso para configurar la IA de este problema.');
+            }
             if (isset($request->habilitar_llm)) {
                 $problema->habilitar_llm = true;
             } else {
@@ -158,14 +191,23 @@ class ProblemasController extends Controller
             throw $e;
         } catch (\PDOException $e) {
             DB::rollBack();
-            return redirect()->route("problemas.configurar_llm", ["id" => $request->id])->with("error", $e->getMessage());
+            return redirect()->route("problemas.editar_config_llm", ["id" => $request->id])->with("error", $e->getMessage());
         }
         return redirect()->route("problemas.index")->with("success", "Se ha configurado la Large Language Model en el problema " . $problema->codigo . " correctamente");
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate(Problemas::createRules(isset($request->fecha_inicio), isset($request->fecha_termino), null,$request->sql));
+        $validated = $request->validate(Problemas::createRules(isset($request->set_fecha_inicio) || isset($request->fecha_inicio), isset($request->set_fecha_termino) || isset($request->fecha_termino), null, $request->sql));
+        if (!auth()->user()->hasRole('administrador')) {
+            $cursosSolicitados = array_unique(array_map('intval', (array) $request->input('cursos', [])));
+            if (!empty($cursosSolicitados)) {
+                $autorizados = auth()->user()->cursos()->whereIn('cursos.id', $cursosSolicitados)->count();
+                if ($autorizados !== count($cursosSolicitados)) {
+                    abort(403, 'No tienes permiso para asignar problemas a uno o más cursos seleccionados.');
+                }
+            }
+        }
         try {
             DB::beginTransaction();
             $problema = new Problemas;
@@ -187,13 +229,13 @@ class ProblemasController extends Controller
     private static function set_datos_problemas(Problemas $problema, Request $request){
             $problema->nombre = $request->input('nombre');
             $problema->codigo = $request->input('codigo');
-            if(isset($request->set_fecha_inicio)){
-                $problema->fecha_inicio = Carbon::parse( $request->input('fecha_inicio'));
+            if(isset($request->set_fecha_inicio) && $request->filled('fecha_inicio')){
+                $problema->fecha_inicio = Carbon::parse($request->input('fecha_inicio'));
             }else{
                 $problema->fecha_inicio = null;
             }
-            if(isset($request->set_fecha_termino)){
-                $problema->fecha_termino = Carbon::parse( $request->input('fecha_termino'));
+            if(isset($request->set_fecha_termino) && $request->filled('fecha_termino')){
+                $problema->fecha_termino = Carbon::parse($request->input('fecha_termino'));
             }else{
                 $problema->fecha_termino = null;
             }
@@ -269,6 +311,27 @@ class ProblemasController extends Controller
         try {
             DB::beginTransaction();
             $problema = Problemas::find($request->id);
+            if (!$problema) {
+                DB::rollBack();
+                return redirect()->route('problemas.index', $id_curso ? ['id_curso' => $id_curso] : [])
+                    ->with('error', 'El problema solicitado no existe.');
+            }
+            if (!$this->usuarioTieneAccesoProblema($problema)) {
+                DB::rollBack();
+                abort(403, 'No tienes permiso para modificar este problema.');
+            }
+            if (!auth()->user()->hasRole('administrador') && $request->has('cursos')) {
+                $cursosSolicitados = array_unique(array_map('intval', (array) $request->input('cursos', [])));
+                $cursosExistentes = $problema->cursos()->pluck('cursos.id')->map(fn($id) => (int) $id)->toArray();
+                $cursosNuevos = array_diff($cursosSolicitados, $cursosExistentes);
+                if (!empty($cursosNuevos)) {
+                    $autorizados = auth()->user()->cursos()->whereIn('cursos.id', $cursosNuevos)->count();
+                    if ($autorizados !== count($cursosNuevos)) {
+                        DB::rollBack();
+                        abort(403, 'No tienes permiso para asignar este problema a cursos ajenos.');
+                    }
+                }
+            }
             $this->set_datos_problemas($problema, $request);
             DB::commit();
         } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
@@ -295,6 +358,15 @@ class ProblemasController extends Controller
         try {
             DB::beginTransaction();
             $problema = Problemas::find($request->id);
+            if (!$problema) {
+                DB::rollBack();
+                return redirect()->route('problemas.index', $id_curso ? ['id_curso' => $id_curso] : [])
+                    ->with('error', 'El problema solicitado no existe.');
+            }
+            if (!$this->usuarioTieneAccesoProblema($problema)) {
+                DB::rollBack();
+                abort(403, 'No tienes permiso para eliminar este problema.');
+            }
             $problema->delete();
             DB::commit();
         } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
@@ -319,6 +391,9 @@ class ProblemasController extends Controller
         $id_curso = $request->input('id_curso');
 
         if ($id_curso) {
+            if (!$this->usuarioTieneAccesoCurso((int) $id_curso)) {
+                abort(403, 'No tienes permiso para modificar la visibilidad en este curso.');
+            }
             $curso = Cursos::findOrFail($id_curso);
             $pivotRow = DB::table('disponible')
                 ->where('id_problema', $problema->id)
@@ -353,6 +428,9 @@ class ProblemasController extends Controller
         }
 
         // Cambio global en todos los cursos asignados
+        if (!$this->usuarioTieneAccesoProblema($problema)) {
+            abort(403, 'No tienes permiso para modificar la visibilidad de este problema.');
+        }
         $nuevoEstadoGlobal = !$problema->visible;
         $problema->visible = $nuevoEstadoGlobal;
         $problema->save();
@@ -372,6 +450,9 @@ class ProblemasController extends Controller
             $problema = Problemas::find($request->id);
             if (!$problema) {
                 return redirect()->route('problemas.index')->with('error', 'El problema solicitado no existe.');
+            }
+            if (!$this->usuarioTieneAccesoProblema($problema)) {
+                abort(403, 'No tienes permiso para editar las pistas de este problema.');
             }
             $problema->body_editorial = self::almacenarImagenesBase64($request->input('body_editorial'));
             $problema->save();
@@ -398,6 +479,9 @@ class ProblemasController extends Controller
                     return redirect()->route('problemas.index', ['id_curso' => $id_curso])->with('error', 'El problema solicitado no existe.');
                 }
                 return redirect()->route('problemas.index')->with('error', 'El problema solicitado no existe.');
+            }
+            if (!$this->usuarioTieneAccesoProblema($problema)) {
+                abort(403, 'No tienes permiso para acceder a las pistas de este problema.');
             }
         } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
             DB::rollBack();

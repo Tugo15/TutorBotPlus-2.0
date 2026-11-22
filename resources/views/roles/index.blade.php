@@ -83,7 +83,7 @@
                                                     @can('eliminar rol')
                                                         <form action="{{ route('roles.eliminar', ['id' => $rol->id]) }}"
                                                             method="POST" 
-                                                            onsubmit="event.preventDefault();submitFormEliminar('el rol {{ $rol->name }}', {{ $rol->id }})" id="eliminarForm_{{ $rol->id }}">
+                                                            onsubmit="event.preventDefault();submitFormEliminar('el rol {{ addslashes($rol->name) }}', {{ $rol->id }})" id="eliminarForm_{{ $rol->id }}">
                                                             @csrf
                                                             <button type="submit" class="btn btn-xs btn-outline-danger mb-0" title="Eliminar Rol"><i class="fa fa-fw fa-trash me-1"></i> Eliminar</button>
                                                         </form>

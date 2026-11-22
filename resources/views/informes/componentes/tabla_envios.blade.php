@@ -3,7 +3,7 @@
     $problemas_unicos = collect($envios_list)->pluck('nombre_problema')->filter()->unique();
 @endphp
 
-<div class="row mt-4 mx-3">
+<div class="row mt-4 mx-4">
     <div class="col-12">
         <div class="card shadow-xs border mb-4">
             <div class="card-header pb-0 border-bottom mb-0">
@@ -20,7 +20,7 @@
                         <label for="filtroEstadoEnvio" class="form-label text-xs font-weight-bold text-dark mb-1">
                             <i class="fa fa-filter text-primary me-1"></i>Estado del Envío:
                         </label>
-                        <select id="filtroEstadoEnvio" class="form-select form-select-sm" style="height: 34px;">
+                        <select id="filtroEstadoEnvio" class="form-select form-select-sm" style="height: 32px; min-height: 32px; max-height: 32px;">
                             <option value="">Todos los Estados</option>
                             <option value="Aceptado">Aceptado / Accepted</option>
                             <option value="Aceptado (Variación de Formato)">Aceptado (Variación de Formato)</option>
@@ -35,7 +35,7 @@
                         <label for="filtroProblemaEnvio" class="form-label text-xs font-weight-bold text-dark mb-1">
                             <i class="fa fa-puzzle-piece text-info me-1"></i>Filtrar por Problema:
                         </label>
-                        <select id="filtroProblemaEnvio" class="form-select form-select-sm" style="height: 34px;">
+                        <select id="filtroProblemaEnvio" class="form-select form-select-sm" style="height: 32px; min-height: 32px; max-height: 32px;">
                             <option value="">Todos los Problemas</option>
                             @foreach($problemas_unicos as $probNombre)
                                 <option value="{{ $probNombre }}">{{ $probNombre }}</option>
@@ -48,11 +48,11 @@
                         <label for="filtroEstudianteEnvio" class="form-label text-xs font-weight-bold text-dark mb-1">
                             <i class="fa fa-user text-success me-1"></i>Estudiante / RUT:
                         </label>
-                        <input type="text" id="filtroEstudianteEnvio" class="form-control form-control-sm" style="height: 34px;" placeholder="Buscar Estudiante o RUT...">
+                        <input type="text" id="filtroEstudianteEnvio" class="form-control form-control-sm" style="height: 32px; min-height: 32px; max-height: 32px;" placeholder="Buscar Estudiante o RUT...">
                     </div>
 
                     <div class="col-12 col-sm-6 col-lg-2">
-                        <button type="button" id="btnLimpiarFiltrosEnvio" class="btn btn-sm btn-outline-secondary w-100 mb-0" style="height: 34px;">
+                        <button type="button" id="btnLimpiarFiltrosEnvio" class="btn btn-xs btn-outline-secondary w-100 mb-0 d-inline-flex align-items-center justify-content-center" style="height: 32px; min-height: 32px; max-height: 32px;">
                             <i class="fa fa-sync-alt me-1"></i> Limpiar
                         </button>
                     </div>
@@ -86,17 +86,17 @@
                                 @endphp
                                 <tr>
                                     <td class="text-center align-middle">
-                                        <div class="d-inline-flex px-2 py-1 justify-content-center text-center align-items-center">
+                                        <div class="d-inline-flex px-1 py-1 justify-content-center text-center align-items-center" style="max-width: 125px;">
                                             <div class="d-flex flex-column justify-content-center text-start">
-                                                <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $nombreEstudiante }}</h6>
-                                                <p class="text-xs text-secondary mb-0">RUT: {{ $envio->rut ?? 'N/A' }}</p>
+                                                <h6 class="mb-0 text-xs font-weight-bold text-dark text-wrap lh-sm">{{ $nombreEstudiante }}</h6>
+                                                <p class="text-xxs text-secondary mb-0">RUT: {{ $envio->rut ?? 'N/A' }}</p>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="text-center align-middle">
-                                        <div class="d-flex px-2 py-1 justify-content-center text-center">
+                                        <div class="d-flex px-1 py-1 justify-content-center text-center" style="max-width: 135px; margin: 0 auto;">
                                             <div class="d-flex flex-column justify-content-center text-center">
-                                                <h6 class="mb-0 text-sm font-weight-bold">
+                                                <h6 class="mb-0 text-xs font-weight-bold text-wrap lh-sm">
                                                     @if(isset($envio->token))
                                                         <a href="{{ route('informe.envio.detalle', ['token' => $envio->token]) }}" class="text-dark text-decoration-none text-primary-hover" title="Ver Enunciado y Detalle del Envío">
                                                             {{ $nombreProb }}
@@ -108,53 +108,55 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="align-middle text-center text-sm">
+                                    <td class="align-middle text-center text-xs">
                                         <span class="badge border border-dark text-dark bg-white text-xxs">{{ $envio->nombre_lenguaje ?? 'Lenguaje' }}</span>
                                     </td>
-                                    <td class="align-middle text-center text-sm">
+                                    <td class="align-middle text-center text-xs">
                                         <span class="badge border border-dark text-dark bg-white font-monospace text-xxs">
-                                            <i class="fa fa-network-wired me-1 text-primary"></i>{{ $ipOrigen }}
+                                            {{ $ipOrigen }}
                                         </span>
                                     </td>
-                                    <td class="align-middle text-center text-sm">
-                                        @if($esAceptado)
-                                            <span class="d-none">Aceptado Accepted</span>
-                                            <span class="badge bg-success text-xxs"><i class="fa fa-check-circle me-1"></i> {{ !empty($envio->variacion_formato) ? 'Aceptado (Variación de Formato)' : 'Aceptado' }}</span>
-                                        @elseif($esError)
-                                            <span class="d-none">{{ $envio->estado ?? 'Rechazado' }} Rechazado Wrong Answer Error</span>
-                                            <span class="badge bg-danger text-xxs"><i class="fa fa-times-circle me-1"></i> {{ \App\Support\Judge0StatusHelper::traducir($envio->resultado ?? $envio->estado ?? 'Rechazado') }}</span>
-                                        @elseif(isset($envio->estado) && $envio->estado == 'En Proceso')
-                                            <span class="d-none">En Proceso In Process</span>
-                                            <span class="badge bg-warning text-xxs"><i class="fa fa-clock me-1"></i> En Proceso</span>
-                                        @elseif(empty($envio->termino))
-                                            <span class="d-none">En Proceso In Process</span>
-                                            <span class="badge bg-warning text-xxs"><i class="fa fa-clock me-1"></i> En Proceso</span>
-                                        @else
-                                            <span class="d-none">Rechazado Sin Evaluación</span>
-                                            <span class="badge bg-secondary text-xxs"><i class="fa fa-exclamation-triangle me-1"></i> Sin Evaluación</span>
-                                        @endif
-                                        @if(isset($envio->cumple_restricciones))
-                                            <div class="mt-1">
-                                                @if($envio->cumple_restricciones)
-                                                    <span class="badge bg-success text-xxs" title="Verificación de Restricciones del Bot"><i class="fa fa-robot me-1"></i> Cumple</span>
-                                                @else
-                                                    <span class="badge bg-danger text-xxs" title="Verificación de Restricciones del Bot"><i class="fa fa-robot me-1"></i> No cumple</span>
-                                                @endif
-                                            </div>
-                                        @endif
+                                    <td class="align-middle text-center text-xs">
+                                        <div class="d-inline-flex flex-column align-items-center justify-content-center" style="max-width: 135px;">
+                                            @if($esAceptado)
+                                                <span class="d-none">Aceptado Accepted</span>
+                                                <span class="badge bg-success text-xxs text-wrap lh-sm"><i class="fa fa-check-circle me-1"></i> {{ !empty($envio->variacion_formato) ? 'Aceptado (Variación de Formato)' : 'Aceptado' }}</span>
+                                            @elseif($esError)
+                                                <span class="d-none">{{ $envio->estado ?? 'Rechazado' }} Rechazado Wrong Answer Error</span>
+                                                <span class="badge bg-danger text-xxs text-wrap lh-sm"><i class="fa fa-times-circle me-1"></i> {{ \App\Support\Judge0StatusHelper::traducir($envio->resultado ?? $envio->estado ?? 'Rechazado') }}</span>
+                                            @elseif(isset($envio->estado) && $envio->estado == 'En Proceso')
+                                                <span class="d-none">En Proceso In Process</span>
+                                                <span class="badge bg-warning text-xxs text-wrap lh-sm"><i class="fa fa-clock me-1"></i> En Proceso</span>
+                                            @elseif(empty($envio->termino))
+                                                <span class="d-none">En Proceso In Process</span>
+                                                <span class="badge bg-warning text-xxs text-wrap lh-sm"><i class="fa fa-clock me-1"></i> En Proceso</span>
+                                            @else
+                                                <span class="d-none">Rechazado Sin Evaluación</span>
+                                                <span class="badge bg-secondary text-xxs text-wrap lh-sm"><i class="fa fa-exclamation-triangle me-1"></i> Sin Evaluación</span>
+                                            @endif
+                                            @if(isset($envio->cumple_restricciones))
+                                                <div class="mt-1">
+                                                    @if($envio->cumple_restricciones)
+                                                        <span class="badge bg-success text-xxs" title="Verificación de Restricciones del Bot"><i class="fa fa-robot me-1"></i> Cumple</span>
+                                                    @else
+                                                        <span class="badge bg-danger text-xxs" title="Verificación de Restricciones del Bot"><i class="fa fa-robot me-1"></i> No cumple</span>
+                                                    @endif
+                                                </div>
+                                            @endif
+                                        </div>
                                     </td>
-                                    <td class="align-middle text-center text-sm">
-                                        <p class="text-xs mb-0">Casos: <span class="badge bg-gradient-info text-xxs">{{ $envio->cant_casos_resuelto ?? 0 }} / {{ $envio->total_casos ?? 0 }}</span></p>
-                                        <p class="text-xs mb-0">Puntos: <span class="badge bg-gradient-dark text-xxs">{{ $envio->puntaje ?? 0 }}</span></p>
+                                    <td class="align-middle text-center text-xs">
+                                        <p class="text-xxs mb-0 text-nowrap">Casos: <span class="badge bg-gradient-info text-xxs">{{ $envio->cant_casos_resuelto ?? 0 }}/{{ $envio->total_casos ?? 0 }}</span></p>
+                                        <p class="text-xxs mb-0 text-nowrap mt-1">Pts: <span class="badge bg-primary text-xxs">{{ $envio->puntaje ?? 0 }}</span></p>
                                     </td>
-                                    <td class="align-middle text-center text-sm">
-                                        <span class="text-xs font-weight-bold text-dark">
+                                    <td class="align-middle text-center text-xs">
+                                        <span class="text-xxs font-weight-bold text-dark d-inline-block" style="max-width: 72px; line-height: 1.25;">
                                             {{ isset($envio->created_at) ? \Carbon\Carbon::parse($envio->created_at)->format('d/m/Y H:i') : '-' }}
                                         </span>
                                     </td>
-                                    <td class="align-middle text-end">
-                                        <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1">
-                                            <button type="button" class="btn btn-xs btn-outline-primary mb-0 btn-ver-codigo-envio"
+                                    <td class="align-middle text-center">
+                                        <div class="d-inline-flex flex-column px-1 py-1 justify-content-center align-items-stretch gap-1">
+                                            <button type="button" class="btn btn-xs btn-outline-primary mb-0 text-nowrap btn-ver-codigo-envio"
                                                 data-estudiante="{{ $nombreEstudiante }}"
                                                 data-problema="{{ $nombreProb }}"
                                                 data-lenguaje="{{ $envio->nombre_lenguaje ?? 'Lenguaje' }}"
@@ -163,7 +165,7 @@
                                                 <i class="fa fa-code me-1"></i> Ver Código
                                             </button>
                                             @if(isset($envio->token))
-                                                <a class="btn btn-xs btn-outline-info mb-0" title="Ver Enunciado y Detalle del Envío" href="{{ route('informe.envio.detalle', ['token' => $envio->token]) }}">
+                                                <a class="btn btn-xs btn-outline-info mb-0 text-nowrap" title="Ver Enunciado y Detalle del Envío" href="{{ route('informe.envio.detalle', ['token' => $envio->token]) }}">
                                                     <i class="fa fa-info-circle me-1"></i> Ver Detalle
                                                 </a>
                                             @endif

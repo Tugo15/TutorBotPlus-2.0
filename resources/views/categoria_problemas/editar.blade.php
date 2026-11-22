@@ -1,4 +1,4 @@
-@extends('layouts.app', ['class' => 'g-sidenav-show bg-gray-100', 'title_url'=>'Editar Categoría De Problema'])
+@extends('layouts.app', ['class' => 'g-sidenav-show bg-gray-100', 'title_url'=>'Editar Categoría de Problema'])
 
 @section('content')
     @include('layouts.navbars.auth.topnav', ['title' => 'Editar Categoría de Problema'])

@@ -33,7 +33,7 @@
                     <input type="hidden" name="body_editorial" id="body_editorial" value="{{ old('body_editorial', $problema->body_editorial ?? '') }}">
                     <label for="editor" class="form-control-label font-weight-bold text-sm mb-2">Contenido de las Pistas</label>
                     <div class="flex flex-col space-y-2 mb-3">
-                        <div id="editor" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" style="position: relative; z-index: 9999;"></div>
+                        <div id="editor" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" style="position: relative; z-index: 1;"></div>
                     </div>
                     <div class="mt-4 pt-3 border-top d-flex justify-content-center">
                         <button type="submit" class="btn btn-sm btn-dark mb-0"><i class="fa fa-save me-1"></i> Guardar Pistas</button>

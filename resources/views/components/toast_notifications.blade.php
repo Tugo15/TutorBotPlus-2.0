@@ -15,7 +15,7 @@
 
     .tbp-toast-container {
         position: fixed;
-        top: 1.25rem;
+        top: 4.85rem;
         right: 1.25rem;
         z-index: 10999;
         display: flex;

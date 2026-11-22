@@ -16,46 +16,72 @@ class CheckInstitutionalNetwork
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $id_certamen = $request->route('id_certamen') ?? $request->input('id_certamen');
+        $certamen = self::resolveCertamenFromRequest($request);
 
-        // Si se encuentra en la ruta por parámetro o token
-        if (!$id_certamen) {
-            $token = $request->route('token') ?? $request->route('token_certamen') ?? $request->input('token');
-            if ($token) {
-                $res = \App\Models\ResolucionCertamenes::where('token', $token)->first();
-                if ($res) {
-                    $id_certamen = $res->id_certamen;
+        if ($certamen && $certamen->restriccion_red) {
+            $clientIp = $request->ip();
+
+            if (!self::allowsIpForCertamen($clientIp, $certamen)) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => "Acceso restringido: Esta evaluación solo puede ser rendida desde la red institucional. (IP detectada: {$clientIp})"
+                    ], 403);
                 }
-            }
-        }
 
-        if ($id_certamen) {
-            $certamen = Certamenes::find($id_certamen);
+                $redirectTarget = \Illuminate\Support\Facades\Route::has('certamenes.ver')
+                    ? route('certamenes.ver', ['id_certamen' => $certamen->id])
+                    : route('certamenes.listado');
 
-            if ($certamen && $certamen->restriccion_red) {
-                $clientIp = $request->ip();
-
-                if (!$this->isInstitutionalIp($clientIp, $certamen->ips_autorizadas)) {
-                    if ($request->expectsJson()) {
-                        return response()->json([
-                            'success' => false,
-                            'error' => "Acceso restringido: Esta evaluación solo puede ser rendida desde la red institucional. (IP detectada: {$clientIp})"
-                        ], 403);
-                    }
-
-                    $redirectTarget = ($id_certamen && \Illuminate\Support\Facades\Route::has('certamenes.ver'))
-                        ? route('certamenes.ver', ['id_certamen' => $id_certamen])
-                        : route('certamenes.listado');
-
-                    return redirect($redirectTarget)->with(
-                        'error',
-                        "Acceso restringido: Esta evaluación requiere estar conectado a la red institucional (IP detectada: {$clientIp})."
-                    );
-                }
+                return redirect($redirectTarget)->with(
+                    'error',
+                    "Acceso restringido: Esta evaluación requiere estar conectado a la red institucional (IP detectada: {$clientIp})."
+                );
             }
         }
 
         return $next($request);
+    }
+
+    /**
+     * Resuelve la evaluación a partir del token de resolución o identificador de ruta/petición.
+     */
+    public static function resolveCertamenFromRequest(Request $request): ?Certamenes
+    {
+        $token = $request->route('token')
+            ?? $request->route('token_certamen')
+            ?? $request->input('token_certamen')
+            ?? $request->input('token');
+
+        if ($token) {
+            $res = \App\Models\ResolucionCertamenes::with('certamen')->where('token', $token)->first();
+            if ($res && $res->certamen) {
+                return $res->certamen;
+            }
+        }
+
+        $id_certamen = $request->route('id_certamen');
+        if ($id_certamen) {
+            return Certamenes::find($id_certamen);
+        }
+
+        if ($request->filled('id_certamen')) {
+            return Certamenes::find($request->input('id_certamen'));
+        }
+
+        return null;
+    }
+
+    /**
+     * Determina si una IP está autorizada para una evaluación dada.
+     */
+    public static function allowsIpForCertamen(string $ip, Certamenes $certamen): bool
+    {
+        if (!$certamen->restriccion_red) {
+            return true;
+        }
+
+        return (new self())->isInstitutionalIp($ip, $certamen->ips_autorizadas);
     }
 
     /**

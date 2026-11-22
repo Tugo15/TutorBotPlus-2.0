@@ -264,7 +264,7 @@ var espaniol = {
     }
 };
 
-var responsiveDomLayout = "<'row mx-0 px-2 px-md-4 pb-2 pt-1 align-items-center gy-2'<'col-12 col-lg-8 d-flex align-items-center flex-wrap gap-2 custom-filters-container'l><'col-12 col-lg-4 d-flex align-items-center justify-content-lg-end justify-content-start'f>>" +
+var responsiveDomLayout = "<'row mx-0 px-2 px-md-3 pb-2 pt-1 align-items-center gy-2 gx-2'<'col-12 col-lg d-flex align-items-center flex-wrap gap-1 custom-filters-container'l><'col-12 col-lg-auto d-flex align-items-center justify-content-lg-end justify-content-start'f>>" +
     "<'row mx-0'<'col-12 px-0 table-responsive'tr>>" +
     "<'row mx-0 px-2 px-md-4 pt-3 pb-4 align-items-center gy-2'<'col-12 col-md-5 text-center text-md-start'i><'col-12 col-md-7 d-flex justify-content-center justify-content-md-end'p>>";
 
@@ -301,27 +301,20 @@ if (typeof jQuery !== 'undefined' && jQuery.fn && jQuery.fn.dataTable) {
     function tagTableResponsiveColumns(root) {
         jQuery(root || document).find('table thead th').each(function() {
             var txt = (jQuery(this).text() || '').replace(/\s+/g, ' ').trim().toLowerCase();
+            var idx = jQuery(this).index();
             if (txt === 'acción' || txt === 'acciones' || txt === 'accion' || txt === 'opciones') {
                 jQuery(this).addClass('no-sort dt-col-acciones');
                 if (!jQuery(this).attr('data-priority')) {
                     jQuery(this).attr('data-priority', '2');
                 }
-            } else if (
-                txt === 'nombre' ||
-                txt === 'nombre completo' ||
-                txt === 'problema' ||
-                txt === 'entradas' ||
-                txt === 'usuario' ||
-                txt === 'evaluación' ||
-                txt === 'evaluacion' ||
-                txt === 'curso' ||
-                txt === 'categoría' ||
-                txt === 'categoria' ||
-                txt === 'rol'
-            ) {
+            } else if (idx === 0) {
                 jQuery(this).addClass('dt-col-primary');
                 if (!jQuery(this).attr('data-priority')) {
                     jQuery(this).attr('data-priority', '1');
+                }
+            } else if (idx === 1 && txt === 'problema') {
+                if (!jQuery(this).attr('data-priority')) {
+                    jQuery(this).attr('data-priority', '3');
                 }
             }
         });
@@ -337,6 +330,37 @@ if (typeof jQuery !== 'undefined' && jQuery.fn && jQuery.fn.dataTable) {
         DataTable.defaults.searchDelay = 200;
         DataTable.defaults.autoWidth = false;
     }
+    function patchDtrHandlers(api) {
+        try {
+            var tbodyEl = api.table().body();
+            if (!tbodyEl) return;
+            jQuery(tbodyEl).find('a[href]:not([href="#"]):not([data-bs-toggle]):not([onclick])')
+                .off('click.tbLinkFix mousedown.tbLinkFix mouseup.tbLinkFix')
+                .on('click.tbLinkFix mousedown.tbLinkFix mouseup.tbLinkFix', function(ev) {
+                    ev.stopPropagation();
+                });
+            if (jQuery._data) {
+                var dtEvents = jQuery._data(tbodyEl, 'events');
+                ['click', 'mousedown', 'mouseup'].forEach(function(evType) {
+                    if (dtEvents && dtEvents[evType]) {
+                        dtEvents[evType].forEach(function(evObj) {
+                            if (evObj.namespace === 'dtr' && !evObj._tbWrapped) {
+                                var origHandler = evObj.handler;
+                                evObj.handler = function(ev) {
+                                    if (ev && ev.target && jQuery(ev.target).closest('a, button, input, select, textarea, label, .btn, [data-bs-toggle]').length > 0) {
+                                        return;
+                                    }
+                                    return origHandler.apply(this, arguments);
+                                };
+                                evObj._tbWrapped = true;
+                            }
+                        });
+                    }
+                });
+            }
+        } catch (err) {}
+    }
+
     jQuery(document).on('preInit.dt', function(e, settings) {
         if (settings && settings.nTable) {
             tagTableResponsiveColumns(settings.nTable);
@@ -344,7 +368,9 @@ if (typeof jQuery !== 'undefined' && jQuery.fn && jQuery.fn.dataTable) {
     });
     jQuery(document).on('init.dt', function(e, settings) {
         var api = new jQuery.fn.dataTable.Api(settings);
+        patchDtrHandlers(api);
         setTimeout(function() {
+            patchDtrHandlers(api);
             try {
                 api.columns.adjust();
                 if (api.responsive && typeof api.responsive.recalc === 'function') {
@@ -352,6 +378,45 @@ if (typeof jQuery !== 'undefined' && jQuery.fn && jQuery.fn.dataTable) {
                 }
             } catch (err) {}
         }, 120);
+    });
+    jQuery(document).on('draw.dt', function(e, settings) {
+        if (settings && settings.nTable) {
+            patchDtrHandlers(new jQuery.fn.dataTable.Api(settings));
+        }
+    });
+
+    function recalcAllDataTablesOnViewportChange() {
+        try {
+            if (!jQuery.fn || !jQuery.fn.dataTable) return;
+            var tables = jQuery.fn.dataTable.tables({ visible: true, api: true });
+            if (!tables || !tables.tables) return;
+            tables.tables().every(function() {
+                var api = this;
+                try {
+                    var node = api.table().node();
+                    var wrapper = api.table().container();
+                    var tblContainer = wrapper ? (wrapper.querySelector('.table-responsive') || (node && node.parentElement)) : null;
+                    if (tblContainer && tblContainer.dataset && tblContainer.dataset.dtMaxH) {
+                        delete tblContainer.dataset.dtMaxH;
+                        tblContainer.style.minHeight = '';
+                    }
+                    api.columns.adjust();
+                    if (api.responsive && typeof api.responsive.recalc === 'function') {
+                        api.responsive.recalc();
+                    }
+                    patchDtrHandlers(api);
+                } catch (innerErr) {}
+            });
+        } catch (err) {}
+    }
+
+    var tbResizeTimer1 = null;
+    var tbResizeTimer2 = null;
+    window.addEventListener('resize', function() {
+        clearTimeout(tbResizeTimer1);
+        clearTimeout(tbResizeTimer2);
+        tbResizeTimer1 = setTimeout(recalcAllDataTablesOnViewportChange, 60);
+        tbResizeTimer2 = setTimeout(recalcAllDataTablesOnViewportChange, 260);
     });
     jQuery(document).on('draw.dt init.dt', function(e, settings) {
         var wrapper = settings && settings.nTableWrapper ? settings.nTableWrapper : document;

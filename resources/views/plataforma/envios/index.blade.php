@@ -2,7 +2,7 @@
 @section('content')
     <div class="container-fluid py-3 px-4">
         <div class="card border-danger">
-            <div class="card-body px-5">
+            <div class="card-body px-2 px-md-3">
                 <div class="table-responsive">
                     <table id="table" class="table table-striped" style="width:100%">
                         <thead>

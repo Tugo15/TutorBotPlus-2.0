@@ -23,11 +23,32 @@ class InformeController extends Controller
             return redirect()->route('problemas.index')->with('error', 'El problema que estás tratando de acceder no existe.');
         }
         if(auth()->user()->hasRole('administrador')){
-            $cursos = $problema->cursos()->select('disponible.cantidad_resueltos', 'disponible.cantidad_intentos', 'disponible.cant_retroalimentacion_solicitada','cursos.id as id_curso','cursos.nombre', 'cursos.codigo')->get();
+            $cursos = $problema->cursos()->select('disponible.cant_retroalimentacion_solicitada','cursos.id as id_curso','cursos.nombre', 'cursos.codigo')->get();
         } else {
             $cursos_usuarios = auth()->user()->cursos()->select('cursos.id')->get()->pluck('id')->toArray();
-            $cursos = $problema->cursos()->select('disponible.cantidad_resueltos', 'disponible.cantidad_intentos', 'disponible.cant_retroalimentacion_solicitada','cursos.id as id_curso','cursos.nombre', 'cursos.codigo')->whereIn('cursos.id', $cursos_usuarios)->get();
+            $cursos = $problema->cursos()->select('disponible.cant_retroalimentacion_solicitada','cursos.id as id_curso','cursos.nombre', 'cursos.codigo')->whereIn('cursos.id', $cursos_usuarios)->get();
         }
+        $statsPorCurso = DB::table('envio_solucion_problemas')
+            ->join('resolver', 'resolver.id', '=', 'envio_solucion_problemas.id_resolver')
+            ->join('cursa', 'cursa.id', '=', 'envio_solucion_problemas.id_cursa')
+            ->where('resolver.id_problema', '=', $problema->id)
+            ->whereIn('cursa.id_curso', $cursos->pluck('id_curso')->toArray())
+            ->whereNull('envio_solucion_problemas.id_certamen')
+            ->whereNotNull('envio_solucion_problemas.termino')
+            ->groupBy('cursa.id_curso')
+            ->select(
+                'cursa.id_curso',
+                DB::raw('COUNT(envio_solucion_problemas.id) as cantidad_intentos'),
+                DB::raw('COALESCE(SUM(CASE WHEN envio_solucion_problemas.solucionado = 1 THEN 1 ELSE 0 END), 0) as cantidad_resueltos')
+            )
+            ->get()
+            ->keyBy('id_curso');
+
+        $cursos->each(function ($curso) use ($statsPorCurso) {
+            $st = $statsPorCurso->get($curso->id_curso);
+            $curso->cantidad_intentos = (int) ($st->cantidad_intentos ?? 0);
+            $curso->cantidad_resueltos = (int) ($st->cantidad_resueltos ?? 0);
+        });
         return view("informes.problemas.index", compact("problema", "cursos"));
     }
     public function ver_envios_problema(Request $request){
@@ -140,6 +161,7 @@ class InformeController extends Controller
         ->leftJoin('solicitud_ra_llms', 'solicitud_ra_llms.id_envio', '=', 'envio_solucion_problemas.id')
         ->where('resolver.id_problema', '=', $request->id_problema)
         ->whereIn('cursa.id_curso', $cursos_ids)
+        ->whereNull('envio_solucion_problemas.id_certamen')
         ->whereNotNull('envio_solucion_problemas.termino')
         ->groupBy('cursa.id_usuario');
         $envios = DB::table('users')

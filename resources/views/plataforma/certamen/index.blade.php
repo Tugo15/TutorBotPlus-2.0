@@ -3,7 +3,7 @@
     <div class="container-fluid py-3 px-4">
         @include('components.alert')
         <div class="card border-danger">
-            <div class="card-body px-5">
+            <div class="card-body px-3 px-md-4">
                 <div class="table-responsive">
                     <table id="table" class="table table-striped" style="width:100%">
                         <thead>
@@ -45,6 +45,6 @@
 
     <script src="{{ asset('assets/js/DataTables/datatables.min.js') }}"></script>
 
-    <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}"></script>
+    <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}?v={{ @filemtime(public_path('assets/js/DataTables/gestion_initialize_es_cl.js')) ?: '1.0' }}"></script>
     
 @endpush

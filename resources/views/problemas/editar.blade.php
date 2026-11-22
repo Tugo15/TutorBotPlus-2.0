@@ -7,7 +7,7 @@
     </div>
     <div class="container-fluid py-4">
         <form role="form" method="POST" action="{{ route('problemas.update', ['id' => $problema->id]) }}"
-            enctype="multipart/form-data" onsubmit="event.preventDefault();submitFormEditar('{{'el problema '.$problema->nombre}}')" id="editarForm">
+            enctype="multipart/form-data" onsubmit="event.preventDefault();submitFormEditar('{{'el problema '.addslashes($problema->nombre)}}')" id="editarForm">
             @csrf
             @if(isset($id_curso) && $id_curso)
                 <input type="hidden" name="id_curso" value="{{ $id_curso }}">

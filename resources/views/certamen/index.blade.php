@@ -54,7 +54,7 @@
                                                         </div>
                                                         <span class="badge border border-primary text-primary text-xxs px-2.5 py-1 bg-white">{{ $curso->codigo }}</span>
                                                     </div>
-                                                    <h6 class="font-weight-bold text-dark mb-1 text-sm">{{ $curso->nombre }}</h6>
+                                                    <h6 class="font-weight-bold text-dark mb-1 text-sm d-flex align-items-center justify-content-center" style="min-height: 2.35rem;">{{ $curso->nombre }}</h6>
                                                     <p class="text-xs text-secondary mb-3">{{ $curso->certamenes_count ?? 0 }} Evaluación(es)</p>
                                                 </div>
                                                 <div class="pt-2 border-top d-flex justify-content-center align-items-center gap-1">
@@ -124,7 +124,7 @@
                                         <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Acceso Red</th>
                                         <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Configuración</th>
                                         <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Disponibilidad</th>
-                                        @canany(['editar certamen', 'eliminar certamen', 'ver informe del certamen'])
+                                        @canany(['ver informe del certamen', 'editar certamen', 'crear certamen', 'eliminar certamen'])
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Acciones</th>
                                         @endcanany
                                     </tr>
@@ -133,10 +133,10 @@
                                     @foreach ($certamenes as $certamen)
                                         <tr>
                                             <td class="align-middle text-center">
-                                                <div class="d-inline-flex px-2 py-1 justify-content-center text-center align-items-center">
+                                                <div class="d-inline-flex px-1 py-1 justify-content-center text-center align-items-center" style="max-width: 155px;">
                                                     <div class="d-flex flex-column justify-content-center text-start">
-                                                        <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $certamen->nombre }}</h6>
-                                                        <p class="text-xs text-secondary mb-0 mt-1">ID: <span class="badge border border-secondary text-secondary text-xxs px-2 py-0 bg-white">#{{ $certamen->id }}</span></p>
+                                                        <h6 class="mb-0 text-xs font-weight-bold text-dark text-wrap">{{ $certamen->nombre }}</h6>
+                                                        <p class="text-xxs text-secondary mb-0 mt-1">ID: <span class="badge border border-secondary text-secondary text-xxs px-2 py-0 bg-white">#{{ $certamen->id }}</span></p>
                                                     </div>
                                                 </div>
                                             </td>
@@ -175,13 +175,13 @@
                                             </td>
                                             <td class="align-middle text-center" data-order="{{ \App\Support\DateHelper::timestamp(method_exists($certamen, 'getRawOriginal') ? $certamen->getRawOriginal('fecha_inicio') : $certamen->fecha_inicio) }}">
                                                 <div class="d-flex flex-column justify-content-center text-center">
-                                                    <span class="text-xs font-weight-bold text-dark">Inicio: {{ $certamen->fecha_inicio ? $certamen->fecha_inicio : 'No Definido' }}</span>
-                                                    <span class="text-xs text-secondary">Término: {{ $certamen->fecha_termino ? $certamen->fecha_termino : 'No Definido' }}</span>
+                                                    <span class="text-xxs font-weight-bold text-dark">Inicio: {{ $certamen->fecha_inicio ? $certamen->fecha_inicio : 'No Definido' }}</span>
+                                                    <span class="text-xxs text-secondary">Término: {{ $certamen->fecha_termino ? $certamen->fecha_termino : 'No Definido' }}</span>
                                                 </div>
                                             </td>
-                                            @canany(['editar problemas', 'eliminar problemas', 'editar certamen', 'crear certamen'])
+                                            @canany(['ver informe del certamen', 'editar certamen', 'crear certamen', 'eliminar certamen'])
                                                 <td class="align-middle text-center">
-                                                    <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1 flex-wrap">
+                                                    <div class="px-1 py-1 justify-content-center align-items-center" style="display: inline-grid !important; grid-template-columns: repeat(2, auto); gap: 0.2rem;">
                                                         @can('ver informe del certamen')
                                                             <a class="btn btn-xs btn-outline-primary mb-0" title="Ver Informe" href="{{ route('informe.certamen', ['id_certamen' => $certamen->id]) }}"><i class="fa fa-chart-bar me-1"></i> Informe</a>
                                                         @endcan

@@ -6,19 +6,23 @@
                     <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-chart-line me-2 text-primary"></i>Estadísticas de Problemas del Curso</h6>
                 </div>
             </div>
-            <div class="card-body px-3 px-md-5 pt-3 pb-3">
-                <div class="row">
+            <div class="card-body px-3 px-md-4 pt-3 pb-3">
+                <div class="row g-2">
                     @if ((!empty($lenguajes_estadistica) || !empty($estadistica_estados)) && isset($problema_mas_resuelto) && isset($problema_mas_intentado))
-                        <span><strong>Problema más resuelto:</strong></span>
-                        <a href="{{ route('problemas.ver', ['id_curso' => $curso_estadistica->id ?? '', 'codigo' => $problema_mas_resuelto->codigo]) }}"
-                            class="mb-3">{{ $problema_mas_resuelto->nombre }}
-                            ({{ $problema_mas_resuelto->cantidad_resueltos }} soluciones y
-                            {{ $problema_mas_resuelto->cantidad_intentos }} intentos)</a>
-                        <span><strong>Problema con más intentos: </strong></span>
-                        <a href="{{ route('problemas.ver', ['id_curso' => $curso_estadistica->id ?? '', 'codigo' => $problema_mas_intentado->codigo]) }}"
-                            class="mb-3">{{ $problema_mas_intentado->nombre }}
-                            ({{ $problema_mas_intentado->cantidad_resueltos }} soluciones y
-                            {{ $problema_mas_intentado->cantidad_intentos }} intentos)</a>
+                        <div class="col-12 col-lg-6">
+                            <div class="py-2 px-2 bg-gray-100 rounded border d-flex align-items-center justify-content-center flex-wrap gap-1 h-100" style="font-size: 0.72rem;">
+                                <span class="text-dark"><i class="fa fa-check-circle text-success me-1"></i><strong>Problema más resuelto:</strong></span>
+                                <a href="{{ route('problemas.ver', ['id_curso' => $curso_estadistica->id ?? '', 'codigo' => $problema_mas_resuelto->codigo]) }}"
+                                    class="text-primary font-weight-bold mb-0">{{ $problema_mas_resuelto->nombre }} ({{ $problema_mas_resuelto->cantidad_resueltos }} soluciones y {{ $problema_mas_resuelto->cantidad_intentos }} intentos)</a>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <div class="py-2 px-2 bg-gray-100 rounded border d-flex align-items-center justify-content-center flex-wrap gap-1 h-100" style="font-size: 0.72rem;">
+                                <span class="text-dark"><i class="fa fa-fire text-warning me-1"></i><strong>Problema con más intentos:</strong></span>
+                                <a href="{{ route('problemas.ver', ['id_curso' => $curso_estadistica->id ?? '', 'codigo' => $problema_mas_intentado->codigo]) }}"
+                                    class="text-primary font-weight-bold mb-0">{{ $problema_mas_intentado->nombre }} ({{ $problema_mas_intentado->cantidad_resueltos }} soluciones y {{ $problema_mas_intentado->cantidad_intentos }} intentos)</a>
+                            </div>
+                        </div>
                         <div class="col-12 mt-2">
                             <div style="position: relative; height: 300px;">
                                 <canvas id="grafica_problemas"></canvas>
@@ -75,10 +79,14 @@
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                xAxes: [{
-                    barPercentage: 1,
-                    categoryPercentage: 0.6
-                }],
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true
+                }
             }
         };
 

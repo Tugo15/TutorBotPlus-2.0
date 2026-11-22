@@ -29,8 +29,8 @@
 @section('content')
     <div class="container-fluid py-3 px-4">
         @include('components.alert')
-        <div class="row mb-3 row-cols-2">
-            <div class="col-sm-8 col-xs-12">
+        <div class="row mb-3 g-3">
+            <div class="col-12 col-lg-8">
                 <div class="card border-danger shadow-sm h-100" style="min-height:40rem">
                     <div class="card-header">
                         Enunciado
@@ -39,29 +39,7 @@
                         <h4 id="titulo_problema">{{ $problemas[0]->nombre }}</h4>
                         <hr>
                         <div id="enunciado">
-                            @php
-                                $bodyProblemaSanitized = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $problemas[0]->body_problema ?? '');
-                                $mathBlocks = [];
-                                $bodyProblemaSanitized = preg_replace_callback('/```[\s\S]*?```|`[^`\r\n]*`|\$\$[\s\S]+?\$\$|(?<!\$)\$(?!\$)([^\$\r\n]+?)\$(?!\$)|(?<=[\p{L}\p{N}])\*(?=[\p{L}\p{N}])/u', function ($m) use (&$mathBlocks) {
-                                    if ($m[0] === '*') {
-                                        return '\\*';
-                                    }
-                                    if (str_starts_with($m[0], '$')) {
-                                        $key = 'TBMATHPLACEHOLDER' . count($mathBlocks) . 'END';
-                                        $mathBlocks[$key] = e($m[0]);
-                                        return $key;
-                                    }
-                                    return $m[0];
-                                }, $bodyProblemaSanitized);
-                                $renderedCertamenProblemaHtml = Str::markdown($bodyProblemaSanitized, [
-                                    'html_input' => 'strip',
-                                    'allow_unsafe_links' => false,
-                                ]);
-                                if (!empty($mathBlocks)) {
-                                    $renderedCertamenProblemaHtml = strtr($renderedCertamenProblemaHtml, $mathBlocks);
-                                }
-                            @endphp
-                            {!! $renderedCertamenProblemaHtml !!}
+                            {!! \App\Support\MarkdownRenderer::render($problemas[0]->body_problema ?? '') !!}
 
                             @php
                                 $casos_ejemplo_0 = isset($problemas[0]->casos_de_prueba) ? $problemas[0]->casos_de_prueba : $problemas[0]->casos_de_prueba()->where('ejemplo', true)->orderBy('id', 'asc')->get();
@@ -106,7 +84,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-sm-4 col-xs-12">
+            <div class="col-12 col-lg-4">
                 <div class="card border-danger p-3 px-sm-4 mb-3" style="min-height: 11rem; height: auto;">
                     <div class="d-flex justify-content-center flex-wrap gap-2">
                         @foreach ($problemas as $key => $problema)

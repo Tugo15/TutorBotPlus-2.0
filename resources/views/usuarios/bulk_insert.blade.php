@@ -29,7 +29,7 @@
                     <p class="text-sm">
                         La contraseña inicial de cada usuario será su RUT sin dígito verificador.
                         <br>
-                        <a href="{{ asset('examples/ejemplo_bulk_usuarios.csv') }}" class="badge border border-primary text-primary text-xs mt-1 bg-white" download>
+                        <a href="{{ route('usuarios.bulk_ejemplo') }}" class="badge border border-primary text-primary text-xs mt-1 bg-white">
                             <i class="fa fa-download me-1"></i> Descargar archivo CSV de ejemplo
                         </a>
                     </p>

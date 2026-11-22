@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Builder;
+use App\Models\ResolucionCertamenes;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -90,5 +91,46 @@ class EnvioSolucionProblema extends Model
     public function retroalimentaciones(): HasMany
     {
         return $this->hasMany(SolicitudRaLlm::class,'id_envio');
+    }
+
+    public function resolucion_certamen(): BelongsTo
+    {
+        return $this->belongsTo(ResolucionCertamenes::class, 'id_certamen');
+    }
+
+    /**
+     * Obtiene el ID del curso asociado al envío (vía cursa o vía certamen).
+     */
+    public function resolveCursoId(): ?int
+    {
+        $this->loadMissing(['curso', 'resolucion_certamen.certamen']);
+
+        if ($this->curso && $this->curso->id) {
+            return (int) $this->curso->id;
+        }
+
+        if ($this->resolucion_certamen && $this->resolucion_certamen->certamen) {
+            return (int) $this->resolucion_certamen->certamen->id_curso;
+        }
+
+        return null;
+    }
+
+    /**
+     * Obtiene el ID del usuario dueño del envío (vía cursa o vía resolución de certamen).
+     */
+    public function resolveOwnerId(): ?int
+    {
+        $this->loadMissing(['usuario', 'resolucion_certamen']);
+
+        if ($this->usuario && $this->usuario->id) {
+            return (int) $this->usuario->id;
+        }
+
+        if ($this->resolucion_certamen && $this->resolucion_certamen->id_usuario) {
+            return (int) $this->resolucion_certamen->id_usuario;
+        }
+
+        return null;
     }
 }

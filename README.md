@@ -82,9 +82,9 @@ cd judge0-v1.13.0 && sudo docker compose up -d
 
 | Rol | Correo | Contraseña |
 | :--- | :--- | :--- |
-| **Administrador** | `admin@tutorbot.com` | `12345678` *(o `admin` según seeder)* |
-| **Profesor** | `profesor@tutorbot.com` | `12345678` *(o `profesor` según seeder)* |
-| **Estudiante** | `estudiante@tutorbot.com` | `12345678` *(o `estudiante` según seeder)* |
+| **Administrador** | `admin@tutorbot.com` | `admin` |
+| **Profesor** | `profesor@tutorbot.com` | `profesor` |
+| **Estudiante** | `estudiante@tutorbot.com` | `estudiante` |
 
 ---
 

@@ -71,34 +71,34 @@
                                         </td>
                                         @canany(['editar curso', 'eliminar curso', 'ver informe del curso'])
                                             <td class="align-middle text-center">
-                                                <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1 flex-wrap">
-                                                    <a class="btn btn-xs btn-outline-primary mb-0" title="Gestionar Estudiantes"
+                                                <div class="px-2 py-1 justify-content-center align-items-center" style="display: inline-grid !important; grid-template-columns: repeat(3, auto); gap: 0.25rem;">
+                                                    <a class="btn btn-xs btn-outline-primary mb-0 text-nowrap" title="Gestionar Estudiantes"
                                                         href="{{ route('cursos.estudiantes', ['id' => $curso->id]) }}">
                                                         <i class="fa fa-users me-1"></i> Estudiantes ({{ $curso->users_count ?? 0 }})
                                                     </a>
-                                                    <a class="btn btn-xs btn-outline-success mb-0" title="Gestionar Ejercicios"
+                                                    <a class="btn btn-xs btn-outline-success mb-0 text-nowrap" title="Gestionar Ejercicios"
                                                         href="{{ route('problemas.index', ['id_curso' => $curso->id]) }}">
                                                         <i class="fa fa-code me-1"></i> Ejercicios ({{ $curso->problemas_count ?? 0 }})
                                                     </a>
                                                     @can('ver informe del curso')
-                                                        <a class="btn btn-xs btn-outline-secondary mb-0" title="Ver Informe del Curso"
+                                                        <a class="btn btn-xs btn-outline-secondary mb-0 text-nowrap" title="Ver Informe del Curso"
                                                             href="{{ route('informe.curso', ['id_curso' => $curso->id]) }}"><i class="fa fa-chart-bar me-1"></i> Informe</a>
                                                     @endcan
                                                     @can('crear certamen')
-                                                        <a class="btn btn-xs btn-outline-warning mb-0" title="Crear Evaluación en este Curso"
+                                                        <a class="btn btn-xs btn-outline-warning mb-0 text-nowrap" title="Crear Evaluación en este Curso"
                                                             href="{{ route('certamen.crear', ['id_curso' => $curso->id]) }}"><i class="fa fa-plus me-1"></i> Evaluación</a>
                                                     @endcan
                                                     @can('editar curso')
-                                                        <a class="btn btn-xs btn-outline-info mb-0" title="Editar Curso"
+                                                        <a class="btn btn-xs btn-outline-info mb-0 text-nowrap" title="Editar Curso"
                                                             href="{{ route('cursos.editar', ['id' => $curso->id]) }}"><i class="fa fa-pencil me-1"></i> Editar</a>
                                                     @endcan
                                                     @can('eliminar curso')
                                                         <form action="{{ route('cursos.eliminar', ['id' => $curso->id]) }}"
                                                             method="POST"
-                                                            onsubmit="event.preventDefault();submitFormEliminar('{{ 'el curso ' . $curso->nombre }}', {{ $curso->id }})"
+                                                            onsubmit="event.preventDefault();submitFormEliminar('{{ 'el curso ' . addslashes($curso->nombre) }}', {{ $curso->id }})"
                                                             id="eliminarForm_{{ $curso->id }}">
                                                             @csrf
-                                                            <button type="submit" class="btn btn-xs btn-outline-danger mb-0" title="Eliminar Curso"><i class="fa fa-fw fa-trash me-1"></i> Eliminar</button>
+                                                            <button type="submit" class="btn btn-xs btn-outline-danger mb-0 w-100 text-nowrap" title="Eliminar Curso"><i class="fa fa-fw fa-trash me-1"></i> Eliminar</button>
                                                         </form>
                                                     @endcan
                                                 </div>

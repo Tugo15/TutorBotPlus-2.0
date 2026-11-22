@@ -68,7 +68,7 @@
         @else
             @if (!in_array(request()->route()?->getName(), ['profile', 'profile-static']))
                 <div class="min-height-300 bg-primary position-absolute w-100"></div>
-            @elseif (in_array(request()->route()->getName(), ['profile-static', 'profile']))
+            @elseif (in_array(request()->route()?->getName(), ['profile-static', 'profile']))
                 <div class="position-absolute w-100 min-height-300 top-0" style="background: linear-gradient(135deg, #b81d1a 0%, #5e1312 100%);">
                     <span class="mask bg-primary opacity-6"></span>
                 </div>
@@ -98,17 +98,6 @@
     <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
     @stack('js')
     <style>
-        /* Definición robusta de NucleoIcons con ruta directa generada por asset() */
-        @font-face {
-            font-family: 'NucleoIcons';
-            src: url("{{ asset('assets/fonts/nucleo-icons.woff2') }}") format('woff2'),
-                 url("{{ asset('assets/fonts/nucleo-icons.woff') }}") format('woff'),
-                 url("{{ asset('assets/fonts/nucleo-icons.ttf') }}") format('truetype');
-            font-weight: normal;
-            font-style: normal;
-            font-display: swap;
-        }
-
         /* Tipografía Open Sans aplicada únicamente a textos (excluyendo cualquier ícono) */
         body, h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6, p, input, button, select, textarea, table, th, td, label {
             font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
@@ -178,9 +167,12 @@
         }
 
         .icon-shape i.ni,
+        .icon-shape i.fa,
         .icon-shape .svg-inline--fa {
-            font-size: 1rem !important;
-            line-height: 0 !important;
+            font-size: 0.95rem !important;
+            line-height: 1 !important;
+            top: 0 !important;
+            position: static !important;
         }
 
         /* ABSOLUTE FIX FOR DATATABLES LENGTH SELECT ARROW OVERLAP */
@@ -195,35 +187,6 @@
             font-size: 0.875rem !important;
             color: #6c757d !important;
             font-weight: 600 !important;
-        }
-
-        select[name$="_length"],
-        .dataTables_length select,
-        div.dataTables_length select,
-        .dataTables_wrapper .dataTables_length select,
-        html body div.dataTables_wrapper div.dataTables_length select {
-            -webkit-appearance: none !important;
-            -moz-appearance: none !important;
-            appearance: none !important;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") !important;
-            background-repeat: no-repeat !important;
-            background-position: calc(100% - 10px) center !important;
-            background-size: 14px 12px !important;
-            background-color: #ffffff !important;
-            padding-left: 14px !important;
-            padding-right: 42px !important; /* Huge 42px right padding */
-            min-width: 95px !important;
-            width: 95px !important;
-            height: 34px !important;
-            line-height: 1.5 !important;
-            border-radius: 0.5rem !important;
-            border: 1px solid #d2d6da !important;
-            box-sizing: border-box !important;
-            font-size: 0.875rem !important;
-            color: #495057 !important;
-            cursor: pointer !important;
-            display: inline-block !important;
-            margin: 0 0.5rem !important;
         }
 
         .dataTables_filter label,
@@ -360,6 +323,16 @@
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' && body.classList.contains(className)) {
                     toggleSidenav();
+                }
+            });
+            window.addEventListener('resize', function() {
+                if (!body) return;
+                if (window.innerWidth >= 1200) {
+                    body.classList.remove('g-sidenav-hidden');
+                    body.classList.add(className);
+                    if (sidenav) sidenav.style.transform = '';
+                } else {
+                    body.classList.remove(className);
                 }
             });
         });

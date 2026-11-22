@@ -15,26 +15,37 @@ use Illuminate\Support\Facades\DB;
 class LlmController extends Controller
 {
     /**
-     * Verifica que el usuario autenticado sea el dueño del envío o cuente con permisos docentes/administrativos.
+     * Verifica que el usuario autenticado sea el dueño del envío o docente asignado al curso del envío.
      */
     private function puedeAccederEnvio(EnvioSolucionProblema $envio): bool
     {
         if (!auth()->check()) {
             return false;
         }
+
         $user = auth()->user();
-        $esDocenteOAdmin = $user->hasRole('administrador') ||
-            $user->hasRole('profesor') ||
+        if ($user->hasRole('administrador')) {
+            return true;
+        }
+
+        $ownerId = $envio->resolveOwnerId();
+        if ($ownerId !== null && $ownerId === (int) $user->id) {
+            return true;
+        }
+
+        $esDocente = $user->hasRole('profesor') ||
             $user->can('ver informe del certamen') ||
             $user->can('ver informe del curso') ||
             $user->can('ver informe del problema');
 
-        if ($esDocenteOAdmin) {
-            return true;
+        if ($esDocente) {
+            $cursoId = $envio->resolveCursoId();
+            if ($cursoId !== null && $user->cursos()->where('cursos.id', $cursoId)->exists()) {
+                return true;
+            }
         }
 
-        $envio->loadMissing('usuario');
-        return $envio->usuario && (int) $envio->usuario->id === (int) $user->id;
+        return false;
     }
 
     public function generar_retroalimentacion(Request $request){
@@ -69,7 +80,8 @@ class LlmController extends Controller
                 ->with('error', 'La retroalimentación automática no está habilitada para este problema.');
         }
 
-        $cant_retroalimentacion = $evaluacion->limite_llm - DB::table('solicitud_ra_llms')->leftJoin('envio_solucion_problemas', 'solicitud_ra_llms.id_envio', '=', 'envio_solucion_problemas.id')->join('resolver', 'envio_solucion_problemas.id_resolver', '=', 'resolver.id')->join('cursa', 'envio_solucion_problemas.id_cursa', '=', 'cursa.id')->where('resolver.id_problema', '=', $evaluacion->id_problema)->where('cursa.id_usuario', '=', auth()->user()->id)->count();
+        $ownerId = $envioCheck->resolveOwnerId() ?? auth()->user()->id;
+        $cant_retroalimentacion = max(0, $evaluacion->limite_llm - DB::table('solicitud_ra_llms')->leftJoin('envio_solucion_problemas', 'solicitud_ra_llms.id_envio', '=', 'envio_solucion_problemas.id')->join('resolver', 'envio_solucion_problemas.id_resolver', '=', 'resolver.id')->join('cursa', 'envio_solucion_problemas.id_cursa', '=', 'cursa.id')->where('resolver.id_problema', '=', $evaluacion->id_problema)->where('cursa.id_usuario', '=', $ownerId)->count());
         if($cant_retroalimentacion <= 0){
             return redirect()->route('envios.ver', ['token'=>$request->token])->with('error', 'Has superado el límite de uso de la LLM');
         }
@@ -152,7 +164,8 @@ class LlmController extends Controller
             return redirect()->route('envios.generar_retroalimentacion', ['token' => $request->token]);
         }
 
-        $cant_retroalimentacion = max(0, $retroalimentacion->limite_llm - DB::table('solicitud_ra_llms')->leftJoin('envio_solucion_problemas', 'solicitud_ra_llms.id_envio', '=', 'envio_solucion_problemas.id')->join('resolver', 'envio_solucion_problemas.id_resolver', '=', 'resolver.id')->join('cursa', 'envio_solucion_problemas.id_cursa', '=', 'cursa.id')->where('resolver.id_problema', '=', $retroalimentacion->id_problema)->where('cursa.id_usuario', '=', auth()->user()->id)->count());
+        $ownerId = $envios->resolveOwnerId() ?? auth()->user()->id;
+        $cant_retroalimentacion = max(0, $retroalimentacion->limite_llm - DB::table('solicitud_ra_llms')->leftJoin('envio_solucion_problemas', 'solicitud_ra_llms.id_envio', '=', 'envio_solucion_problemas.id')->join('resolver', 'envio_solucion_problemas.id_resolver', '=', 'resolver.id')->join('cursa', 'envio_solucion_problemas.id_cursa', '=', 'cursa.id')->where('resolver.id_problema', '=', $retroalimentacion->id_problema)->where('cursa.id_usuario', '=', $ownerId)->count());
         $abrev = isset($envios->lenguaje->abreviatura) ? strtolower($envios->lenguaje->abreviatura) : '';
         $highlightjs_choice = EnvioSolucionProblema::$higlightjs_language[$abrev] ?? 'c';
         return view('plataforma.problemas.retroalimentacion', compact('retroalimentacion', 'cant_retroalimentacion', 'envios', 'highlightjs_choice'))->with('token', $request->token);

@@ -14,6 +14,7 @@ use App\Models\Resolver;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 class EnvioSolucionProblemaController extends Controller
 {
@@ -67,12 +68,31 @@ class EnvioSolucionProblemaController extends Controller
         }
 
         if (isset($request->id_certamen)) {
-            $resCertCheck = \App\Models\ResolucionCertamenes::find($request->id_certamen);
+            $resCertCheck = \App\Models\ResolucionCertamenes::with('certamen')->find($request->id_certamen);
             if (!$resCertCheck || (int) $resCertCheck->id_usuario !== (int) auth()->id()) {
                 abort(403, 'No tienes permiso para enviar soluciones en esta evaluación.');
             }
             if (!auth()->user()->hasRole('administrador') && !$resCertCheck->ProblemasSeleccionadas()->where('id_problema', $resolverCheck->id_problema)->exists()) {
                 abort(403, 'El problema no pertenece a esta evaluación.');
+            }
+            if ($resCertCheck->finalizado) {
+                return redirect()->route('certamenes.ver', ['id_certamen' => $resCertCheck->id_certamen])
+                    ->with('error', 'No puedes enviar soluciones porque la evaluación ya ha sido finalizada.');
+            }
+            if ($resCertCheck->certamen) {
+                $now = Carbon::now();
+                $fechaInicio = $resCertCheck->certamen->fecha_inicio ? Carbon::parse($resCertCheck->certamen->fecha_inicio) : null;
+                $fechaTermino = $resCertCheck->fecha_termino_efectiva ?? ($resCertCheck->certamen->fecha_termino ? Carbon::parse($resCertCheck->certamen->fecha_termino) : null);
+
+                if (($fechaInicio && $now->lt($fechaInicio)) || ($fechaTermino && $now->gt($fechaTermino))) {
+                    return redirect()->route('certamenes.ver', ['id_certamen' => $resCertCheck->id_certamen])
+                        ->with('error', 'No puedes enviar soluciones porque el plazo de la evaluación ha expirado o aún no inicia.');
+                }
+
+                if (!\App\Http\Middleware\CheckInstitutionalNetwork::allowsIpForCertamen($request->ip(), $resCertCheck->certamen)) {
+                    return redirect()->route('certamenes.ver', ['id_certamen' => $resCertCheck->id_certamen])
+                        ->with('error', 'Acceso restringido: Esta evaluación requiere estar conectado a la red institucional.');
+                }
             }
         } else {
             $cursaCheck = \App\Models\Cursa::where('id', $request->id_cursa)
@@ -144,6 +164,9 @@ class EnvioSolucionProblemaController extends Controller
                     $resolver = Resolver::where('id_problema', $request->id_problema)->where('id_lenguaje', $lenguaje->id)->first();
                     if ($resolver) {
                         $envio->id_resolver = $resolver->id;
+                    } else {
+                        DB::rollBack();
+                        abort(403, 'El lenguaje seleccionado no está habilitado para este problema.');
                     }
                 }
             }
@@ -221,7 +244,25 @@ class EnvioSolucionProblemaController extends Controller
                 $initial_json_string = $initial_json_string.',"compiler_options":"-lm -Werror=implicit-function-declaration"';
             }
             if(isset($problema->memoria_limite) && $problema->memoria_limite>0){
-                $initial_json_string = $initial_json_string.',"memory_limit":"'.$problema->memoria_limite.'"';
+                $memoriaLimiteEnvio = (int) $problema->memoria_limite;
+                if ($memoriaLimiteEnvio < 128000 && !app()->runningUnitTests()) {
+                    $usaPerProcessMem = Cache::remember('judge0_per_proc_mem_' . md5($juez->direccion), 300, function () use ($juez) {
+                        try {
+                            $cfgClient = new Client(['timeout' => 1.5]);
+                            $cfgHeaders = JuecesVirtuales::generateHeaderRequest($juez);
+                            $cfgResp = $cfgClient->request('GET', rtrim($juez->direccion, '/') . '/config_info', ['headers' => $cfgHeaders]);
+                            $cfgJson = json_decode($cfgResp->getBody()->getContents(), true);
+                            return (bool) ($cfgJson['enable_per_process_and_thread_memory_limit'] ?? false);
+                        } catch (\Throwable $e) {
+                            return false;
+                        }
+                    });
+                    if ($usaPerProcessMem) {
+                        // Bajo RLIMIT_AS (sin cgroups), límites RSS pequeños como 5000 KB impiden cargar libc/libm en Python/Java
+                        $memoriaLimiteEnvio = 128000;
+                    }
+                }
+                $initial_json_string = $initial_json_string.',"memory_limit":"'.$memoriaLimiteEnvio.'"';
             }
             if(isset($problema->tiempo_limite) && $problema->tiempo_limite>0){
                 $initial_json_string = $initial_json_string.',"cpu_time_limit":"'.$problema->tiempo_limite.'"';
@@ -292,6 +333,9 @@ class EnvioSolucionProblemaController extends Controller
                 $evaluacion->save();
             }
             DB::commit();
+            if (config('queue.default') !== 'sync') {
+                \App\Jobs\EvaluarEnvioJob::dispatch($envio->id)->delay(now()->addSeconds(2));
+            }
             return ["estado" => true];
         } catch (\Throwable $e) {
             DB::rollBack();

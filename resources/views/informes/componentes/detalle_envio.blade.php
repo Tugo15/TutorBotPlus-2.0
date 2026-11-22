@@ -1,6 +1,11 @@
 @php
     $certamenObj = (isset($res_certamen) && $res_certamen->certamen) ? $res_certamen->certamen : null;
     $totalCasos = $evaluaciones->count();
+    $totalCasosResumen = max(
+        $totalCasos,
+        isset($problema) && isset($problema->casos_de_prueba) ? $problema->casos_de_prueba->count() : 0,
+        (int) ($envio->cant_casos_resuelto ?? 0)
+    );
     $casosAceptados = $evaluaciones->filter(fn($e) => $e->estado === 'Aceptado')->count();
     $casosFallados = $evaluaciones->filter(fn($e) => $e->estado !== 'Aceptado' && $e->estado !== 'En Proceso')->count();
     $casosEnProceso = $evaluaciones->filter(fn($e) => $e->estado === 'En Proceso')->count();
@@ -272,8 +277,8 @@
                         <div class="overflow-hidden">
                             <span class="text-xxs text-uppercase text-secondary font-weight-bold d-block">Casos Evaluados</span>
                             <h6 class="text-xs font-weight-bold text-dark mb-0">
-                                @if($totalCasos > 0)
-                                    {{ $envio->cant_casos_resuelto ?? 0 }} / {{ $totalCasos }} superados
+                                @if($totalCasosResumen > 0)
+                                    {{ $envio->cant_casos_resuelto ?? 0 }} / {{ $totalCasosResumen }} superados
                                 @else
                                     {{ $envio->cant_casos_resuelto ?? 0 }} superado(s)
                                 @endif
@@ -334,30 +339,8 @@
                         </div>
                     @endif
 
-                    @php
-                        $bodyProblemaSanitized = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $problema->body_problema ?? '');
-                        $mathBlocks = [];
-                        $bodyProblemaSanitized = preg_replace_callback('/```[\s\S]*?```|`[^`\r\n]*`|\$\$[\s\S]+?\$\$|(?<!\$)\$(?!\$)([^\$\r\n]+?)\$(?!\$)|(?<=[\p{L}\p{N}])\*(?=[\p{L}\p{N}])/u', function ($m) use (&$mathBlocks) {
-                            if ($m[0] === '*') {
-                                return '\\*';
-                            }
-                            if (str_starts_with($m[0], '$')) {
-                                $key = 'TBMATHPLACEHOLDER' . count($mathBlocks) . 'END';
-                                $mathBlocks[$key] = e($m[0]);
-                                return $key;
-                            }
-                            return $m[0];
-                        }, $bodyProblemaSanitized);
-                        $renderedResultadoMd = Str::markdown($bodyProblemaSanitized, [
-                            'html_input' => 'strip',
-                            'allow_unsafe_links' => false,
-                        ]);
-                        if (!empty($mathBlocks)) {
-                            $renderedResultadoMd = strtr($renderedResultadoMd, $mathBlocks);
-                        }
-                    @endphp
                     <div class="markdown-content text-dark text-sm" style="line-height: 1.65;">
-                        {!! $renderedResultadoMd !!}
+                        {!! \App\Support\MarkdownRenderer::render($problema->body_problema ?? '') !!}
                     </div>
 
                     @php
@@ -467,8 +450,8 @@
                 <div class="card-header bg-white border-bottom py-2 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <h6 class="mb-0 font-weight-bold text-dark text-sm">
                         <i class="fa fa-vials text-success me-2"></i>Casos de Prueba
-                        @if($totalCasos > 0)
-                            ({{ $envio->cant_casos_resuelto ?? 0 }}/{{ $totalCasos }})
+                        @if($totalCasosResumen > 0)
+                            ({{ $envio->cant_casos_resuelto ?? 0 }}/{{ $totalCasosResumen }})
                         @endif
                     </h6>
                     @if($totalCasos > 0)

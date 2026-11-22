@@ -23,7 +23,7 @@
             </div>
         </form>
         <form
-            action="{{ isset($res_certamen) ? route('problemas.enviar', ['id_problema' => $problema->id, 'id_resolver' => $last_envio->id_resolver, 'id_certamen' => $res_certamen->id, 'token_certamen' => $res_certamen->token]) : route('problemas.enviar', ['id_problema' => $problema->id, 'id_resolver' => $last_envio->id_resolver, 'id_cursa' => $last_envio->id_cursa]) }}"
+            action="{{ isset($res_certamen) ? route('certamenes.enviar_problema', ['id_problema' => $problema->id, 'id_resolver' => $last_envio->id_resolver, 'id_certamen' => $res_certamen->id, 'token_certamen' => $res_certamen->token]) : route('problemas.enviar', ['id_problema' => $problema->id, 'id_resolver' => $last_envio->id_resolver, 'id_cursa' => $last_envio->id_cursa]) }}"
             method="POST" id="evaluacion_form">
             @csrf
             <div class="d-grid mb-3">

@@ -6,13 +6,13 @@
         <div class="col-12">
             <div class="card shadow-xs border mb-4">
                 <div class="card-header pb-0 border-bottom mb-0">
-                    <div class="row align-items-center pb-2 gy-2">
-                        <div class="col-12 col-lg">
-                            <a href="{{ route('cursos.index') }}" class="btn btn-xs btn-outline-secondary mb-0">
+                    <div class="tb-header-symmetric pb-2" style="--tb-header-side: 320px;">
+                        <div class="tb-header-left d-flex align-items-center justify-content-center justify-content-xl-start">
+                            <a href="{{ route('cursos.index') }}" class="btn btn-xs btn-outline-secondary mb-0 d-inline-flex align-items-center text-nowrap" style="height: 32px;">
                                 <i class="fa fa-arrow-left me-1"></i> Volver a Cursos
                             </a>
                         </div>
-                        <div class="col-12 col-lg-auto text-center">
+                        <div class="tb-header-center text-center">
                             @php
                                 $staffCount = $estudiantes->filter(fn($u) => $u->hasAnyRole(['administrador', 'profesor', 'docente', 'ayudante']))->count();
                                 $studentOnlyCount = $estudiantes->count() - $staffCount;
@@ -27,16 +27,16 @@
                                 | Total: <span class="badge bg-dark text-xxs">{{ $estudiantes->count() }}</span>
                             </p>
                         </div>
-                        <div class="col-12 col-lg d-flex justify-content-center justify-content-lg-end align-items-center gap-2 flex-wrap">
-                            <div class="input-group input-group-sm" style="max-width: 250px;">
-                                <span class="input-group-text"><i class="fa fa-search text-xs"></i></span>
-                                <input type="text" class="form-control" id="buscadorEstudiantesCurso" placeholder="Filtrar matriculados...">
+                        <div class="tb-header-right d-flex justify-content-center justify-content-xl-end align-items-center gap-1 flex-wrap flex-sm-nowrap">
+                            <div class="input-group input-group-sm" style="width: 158px;">
+                                <span class="input-group-text px-2"><i class="fa fa-search text-xs"></i></span>
+                                <input type="text" class="form-control form-control-sm text-xs" id="buscadorEstudiantesCurso" placeholder="Filtrar alumnos...">
                             </div>
-                            <button type="button" class="btn btn-sm btn-dark mb-0" data-bs-toggle="modal" data-bs-target="#modalInscribirEstudiantes">
+                            <button type="button" class="btn btn-xs btn-dark mb-0 px-2 d-inline-flex align-items-center text-nowrap" style="height: 32px;" data-bs-toggle="modal" data-bs-target="#modalInscribirEstudiantes">
                                 <i class="fa fa-user-plus me-1"></i> Inscribir Estudiantes
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-danger mb-0 d-none" id="btnSacarSeleccionados" onclick="confirmarSacarSeleccionados()">
-                                <i class="fa fa-user-times me-1"></i> Sacar Seleccionados (<span id="countSeleccionados">0</span>)
+                            <button type="button" class="btn btn-xs btn-outline-danger mb-0 d-none align-items-center text-nowrap" style="height: 32px;" id="btnSacarSeleccionados" onclick="confirmarSacarSeleccionados()">
+                                <i class="fa fa-user-times me-1"></i> Sacar (<span id="countSeleccionados">0</span>)
                             </button>
                         </div>
                     </div>

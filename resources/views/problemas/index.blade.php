@@ -6,81 +6,24 @@
         <div class="col-12">
             <div class="card shadow-xs border mb-4">
                 <div class="card-header pb-0 border-bottom mb-0">
-                    <div class="row align-items-center pb-2 gy-2">
-                        <div class="col-12 col-lg"></div>
-                        <div class="col-12 col-lg-auto text-center">
+                    <div class="tb-header-symmetric pb-2">
+                        <div class="tb-header-left"></div>
+                        <div class="tb-header-center text-center">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-code me-2 text-primary"></i>Gestión de Problemas</h6>
-                            <p class="text-xs text-secondary mb-0">Administración de problemas de programación organizados por asignaturas o listado general.</p>
+                            <p class="text-xs text-secondary mb-0">Administración de problemas de programación por asignaturas o listado general.</p>
                         </div>
-                        <div class="col-12 col-lg d-flex justify-content-center justify-content-lg-end align-items-center gap-2 flex-wrap">
+                        <div class="tb-header-right d-flex justify-content-center justify-content-xl-end align-items-center gap-1 flex-wrap flex-sm-nowrap">
                             @if(!isset($id_curso_activo) || !$id_curso_activo)
-                                <script>
-                                    function switchVista(mode) {
-                                        var vistaCarpetas = document.getElementById('vista-carpetas');
-                                        var vistaTodos = document.getElementById('vista-todos');
-                                        var btnCarpetas = document.getElementById('btnVistaCarpetas');
-                                        var btnTodos = document.getElementById('btnVistaTodos');
-                                        if (!vistaCarpetas || !vistaTodos) return;
-                                        if (mode === 'todos') {
-                                            vistaCarpetas.classList.add('d-none');
-                                            vistaCarpetas.style.display = 'none';
-                                            vistaTodos.classList.remove('d-none');
-                                            vistaTodos.style.display = 'block';
-                                            if (btnCarpetas) {
-                                                btnCarpetas.classList.remove('btn-primary', 'active');
-                                                btnCarpetas.classList.add('btn-outline-primary');
-                                            }
-                                            if (btnTodos) {
-                                                btnTodos.classList.remove('btn-outline-primary');
-                                                btnTodos.classList.add('btn-primary', 'active');
-                                            }
-                                            try {
-                                                localStorage.setItem('vista_problemas_pref', 'todos');
-                                                var url = new URL(window.location.href);
-                                                url.searchParams.set('vista', 'todos');
-                                                window.history.replaceState({}, '', url.toString());
-                                            } catch(e) {}
-                                            if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable('#table')) {
-                                                setTimeout(function() {
-                                                    try {
-                                                        var dt = $('#table').DataTable();
-                                                        dt.columns.adjust();
-                                                        if (dt.responsive && typeof dt.responsive.recalc === 'function') dt.responsive.recalc();
-                                                    } catch(e) {}
-                                                }, 50);
-                                            }
-                                        } else {
-                                            vistaTodos.classList.add('d-none');
-                                            vistaTodos.style.display = 'none';
-                                            vistaCarpetas.classList.remove('d-none');
-                                            vistaCarpetas.style.display = 'block';
-                                            if (btnTodos) {
-                                                btnTodos.classList.remove('btn-primary', 'active');
-                                                btnTodos.classList.add('btn-outline-primary');
-                                            }
-                                            if (btnCarpetas) {
-                                                btnCarpetas.classList.remove('btn-outline-primary');
-                                                btnCarpetas.classList.add('btn-primary', 'active');
-                                            }
-                                            try {
-                                                localStorage.setItem('vista_problemas_pref', 'carpetas');
-                                                var url = new URL(window.location.href);
-                                                url.searchParams.delete('vista');
-                                                window.history.replaceState({}, '', url.toString());
-                                            } catch(e) {}
-                                        }
-                                    }
-                                </script>
                                 <div class="btn-group me-1" role="group" id="btnGroupVista" aria-label="Modo de Vista">
-                                    <button type="button" class="btn btn-xs btn-primary active mb-0" id="btnVistaCarpetas" onclick="switchVista('carpetas')">
+                                    <button type="button" class="btn btn-xs btn-primary active mb-0 px-2 text-nowrap" id="btnVistaCarpetas">
                                         <i class="fa fa-folder-open me-1"></i> Vista Carpetas
                                     </button>
-                                    <button type="button" class="btn btn-xs btn-outline-primary mb-0" id="btnVistaTodos" onclick="switchVista('todos')">
+                                    <button type="button" class="btn btn-xs btn-outline-primary mb-0 px-2 text-nowrap" id="btnVistaTodos">
                                         <i class="fa fa-list me-1"></i> Todos
                                     </button>
                                 </div>
                                 @can('crear problemas')
-                                    <a class="btn btn-xs btn-dark mb-0" href="{{ route('problemas.crear') }}">
+                                    <a class="btn btn-xs btn-dark mb-0 px-2 text-nowrap" href="{{ route('problemas.crear') }}">
                                         <i class="fa fa-plus me-1"></i> Problema
                                     </a>
                                 @endcan
@@ -126,7 +69,7 @@
                                                         </div>
                                                         <span class="badge border border-primary text-primary text-xxs px-2.5 py-1 bg-white">{{ $curso->codigo }}</span>
                                                     </div>
-                                                    <h6 class="font-weight-bold text-dark mb-1 text-sm">{{ $curso->nombre }}</h6>
+                                                    <h6 class="font-weight-bold text-dark mb-1 text-sm d-flex align-items-center justify-content-center" style="min-height: 2.35rem;">{{ $curso->nombre }}</h6>
                                                     <p class="text-xs text-secondary mb-3">{{ $curso->problemas_count ?? 0 }} Problema(s)</p>
                                                 </div>
                                                 <div class="pt-2 border-top d-flex justify-content-center align-items-center gap-1">
@@ -164,26 +107,26 @@
                     @else
                         <!-- VISTA 3: DENTRO DE LA CARPETA DE UN CURSO ESPECÍFICO -->
                         <div class="px-4 pb-1 mt-3">
-                            <div class="d-flex justify-content-between align-items-center mb-1 pb-2 border-bottom flex-wrap gap-2">
-                                <div style="flex: 1;">
-                                    <a href="{{ route('problemas.index') }}" class="btn btn-xs btn-outline-secondary mb-0">
+                            <div class="tb-header-symmetric mb-1 pb-2 border-bottom">
+                                <div class="tb-header-left d-flex align-items-center justify-content-center justify-content-xl-start">
+                                    <a href="{{ route('problemas.index') }}" class="btn btn-xs btn-outline-secondary mb-0 d-inline-flex align-items-center text-nowrap" style="height: 32px;">
                                         <i class="fa fa-arrow-left me-1"></i> Volver a Cursos
                                     </a>
                                 </div>
-                                <div class="text-center" style="flex: 2;">
+                                <div class="tb-header-center text-center">
                                     <h6 class="mb-0 font-weight-bold text-dark">
                                         <i class="fa fa-folder-open me-2 text-primary"></i>Curso: <span class="text-dark">{{ $curso_activo->nombre ?? '' }}</span>
                                     </h6>
                                     <p class="text-xs text-secondary mb-0">Código: <strong>{{ $curso_activo->codigo ?? '' }}</strong></p>
                                 </div>
-                                <div class="text-end d-flex justify-content-end align-items-center gap-2 flex-wrap" style="flex: 1;">
+                                <div class="tb-header-right d-flex justify-content-center justify-content-xl-end align-items-center gap-1 flex-wrap flex-sm-nowrap">
                                     @can('editar problemas')
-                                        <button type="button" class="btn btn-sm btn-outline-primary mb-0" data-bs-toggle="modal" data-bs-target="#modalAsignarProblemas">
-                                            <i class="fa fa-folder-plus me-1"></i> Asignar Ejercicios Existentes
+                                        <button type="button" class="btn btn-xs btn-outline-primary mb-0 px-2 d-inline-flex align-items-center text-nowrap" style="height: 32px;" data-bs-toggle="modal" data-bs-target="#modalAsignarProblemas" title="Asignar Ejercicios Existentes del Banco">
+                                            <i class="fa fa-folder-plus me-1"></i> Asignar Existentes
                                         </button>
                                     @endcan
                                     @can('crear problemas')
-                                        <a class="btn btn-sm btn-dark mb-0" href="{{ route('problemas.crear', ['id_curso' => $curso_activo->id]) }}">
+                                        <a class="btn btn-xs btn-dark mb-0 px-2 d-inline-flex align-items-center text-nowrap" style="height: 32px;" href="{{ route('problemas.crear', ['id_curso' => $curso_activo->id]) }}">
                                             <i class="fa fa-plus me-1"></i> Crear Problema
                                         </a>
                                     @endcan
@@ -256,7 +199,7 @@
                                         </select>
                                     </div>
                                     <div class="col-12 col-sm-12 col-md-2">
-                                        <button type="button" class="btn btn-xs btn-outline-secondary mb-0 w-100" id="btnLimpiarFiltrosProbDisp" title="Restablecer todos los filtros">
+                                        <button type="button" class="btn btn-xs btn-outline-secondary mb-0 w-100 d-inline-flex align-items-center justify-content-center" style="height: 32px;" id="btnLimpiarFiltrosProbDisp" title="Restablecer todos los filtros">
                                             <i class="fa fa-undo me-1"></i> Limpiar
                                         </button>
                                     </div>
@@ -268,10 +211,10 @@
                                     Mostrando <strong id="countVisiblesProb" class="text-dark">{{ isset($problemas_disponibles_para_asignar) ? $problemas_disponibles_para_asignar->count() : 0 }}</strong> de <strong>{{ isset($problemas_disponibles_para_asignar) ? $problemas_disponibles_para_asignar->count() : 0 }}</strong> problemas disponibles
                                 </small>
                                 <div class="d-flex align-items-center gap-1">
-                                    <button type="button" class="btn btn-xxs btn-outline-secondary mb-0 py-1 px-2" id="btnDeseleccionarTodosProbDisponibles">
+                                    <button type="button" class="btn btn-xs btn-outline-secondary mb-0 d-inline-flex align-items-center" style="height: 32px;" id="btnDeseleccionarTodosProbDisponibles">
                                         Deseleccionar todos
                                     </button>
-                                    <button type="button" class="btn btn-xs btn-outline-primary mb-0" id="btnMarcarTodosProbDisponibles">
+                                    <button type="button" class="btn btn-xs btn-outline-primary mb-0 d-inline-flex align-items-center" style="height: 32px;" id="btnMarcarTodosProbDisponibles">
                                         <i class="fa fa-check-double me-1"></i> Seleccionar visibles
                                     </button>
                                 </div>
@@ -458,13 +401,13 @@
                     function updateProblemasLabels(rawCursos, rawCats) {
                         var $lblCur = $('.lbl-curso-selected');
                         if ($lblCur.length) {
-                            if (rawCursos.length === 0) $lblCur.html('Seleccionar...');
+                            if (rawCursos.length === 0) $lblCur.html('Todos');
                             else if (rawCursos.length === 1) $lblCur.html(rawCursos[0] + ' <span class="badge bg-primary text-xxs ms-1">1</span>');
                             else $lblCur.html(rawCursos.length + ' selec. <span class="badge bg-primary text-xxs ms-1">' + rawCursos.length + '</span>');
                         }
                         var $lblCat = $('.lbl-cat-selected');
                         if ($lblCat.length) {
-                            if (rawCats.length === 0) $lblCat.html('Seleccionar...');
+                            if (rawCats.length === 0) $lblCat.html('Todas');
                             else if (rawCats.length === 1) $lblCat.html(rawCats[0] + ' <span class="badge bg-primary text-xxs ms-1">1</span>');
                             else $lblCat.html(rawCats.length + ' selec. <span class="badge bg-primary text-xxs ms-1">' + rawCats.length + '</span>');
                         }

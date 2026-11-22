@@ -108,8 +108,8 @@
             <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
                 <div class="card shadow-xs border h-100">
                     <div class="card-body p-3">
-                        <p class="text-xs mb-1 text-uppercase font-weight-bold text-secondary">
-                            <i class="ni ni-single-02 text-dark text-sm opacity-10 me-1"></i> Conectados Ahora
+                        <p class="text-xs mb-1 text-uppercase font-weight-bold text-secondary tb-metric-title">
+                            <i class="ni ni-single-02 text-dark opacity-10"></i><span>Conectados Ahora</span>
                         </p>
                         <h5 class="font-weight-bolder text-dark mb-0">
                             {{ $cantidad_conectados }} <span class="text-xs font-weight-normal text-secondary">/ {{ $total_usuarios }} usuarios</span>
@@ -121,8 +121,8 @@
             <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
                 <div class="card shadow-xs border h-100">
                     <div class="card-body p-3">
-                        <p class="text-xs mb-1 text-uppercase font-weight-bold text-secondary">
-                            <i class="fa fa-code text-danger text-sm opacity-10 me-1"></i> Envíos Correctos / Incorrectos
+                        <p class="text-xs mb-1 text-uppercase font-weight-bold text-secondary tb-metric-title">
+                            <i class="fa fa-code text-danger opacity-10"></i><span>Envíos Correctos / Incorrectos</span>
                         </p>
                         <h5 class="font-weight-bolder mb-0">
                             <span class="text-success">{{ $envios_correctos }}</span>
@@ -137,8 +137,8 @@
             <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
                 <div class="card shadow-xs border h-100">
                     <div class="card-body p-3">
-                        <p class="text-xs mb-1 text-uppercase font-weight-bold text-secondary">
-                            <i class="fa fa-calendar-check text-info text-sm opacity-10 me-1"></i> Tasa de Éxito
+                        <p class="text-xs mb-1 text-uppercase font-weight-bold text-secondary tb-metric-title">
+                            <i class="fa fa-calendar-check text-info opacity-10"></i><span>Tasa de Éxito</span>
                         </p>
                         <h5 class="font-weight-bolder text-dark mb-0">{{ $tasa_exito_global }}%</h5>
                     </div>
@@ -148,8 +148,8 @@
             <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
                 <div class="card shadow-xs border h-100">
                     <div class="card-body p-3">
-                        <p class="text-xs mb-1 text-uppercase font-weight-bold text-secondary">
-                            <i class="fa fa-list-alt text-success text-sm opacity-10 me-1"></i> Problemas Visibles
+                        <p class="text-xs mb-1 text-uppercase font-weight-bold text-secondary tb-metric-title">
+                            <i class="fa fa-list-alt text-success opacity-10"></i><span>Problemas Visibles</span>
                         </p>
                         <h5 class="font-weight-bolder text-dark mb-0">
                             {{ $problemas_visibles }} <span class="text-xs font-weight-normal text-secondary">/ {{ $total_problemas }}</span>
@@ -176,7 +176,7 @@
                         </div>
                         <div class="d-flex align-items-center flex-wrap gap-2">
                             <!-- Búsqueda rápida -->
-                            <div class="input-group input-group-sm" style="width: 220px;">
+                            <div class="input-group input-group-sm" style="width: 245px;">
                                 <span class="input-group-text bg-white border-end-0 py-1 pe-1 text-secondary">
                                     <i class="fa fa-search text-xs"></i>
                                 </span>
@@ -232,7 +232,7 @@
                                             <td class="ps-3 py-2">
                                                 <div class="d-flex align-items-center">
                                                     <div class="position-relative me-2 flex-shrink-0">
-                                                        <div class="avatar avatar-xs rounded-circle d-flex align-items-center justify-content-center text-xxs font-weight-bold {{ $esTu ? 'bg-gradient-success text-white' : 'bg-light text-dark border' }}" style="width: 32px; height: 32px;">
+                                                        <div class="avatar rounded-circle d-flex align-items-center justify-content-center text-xxs font-weight-bold {{ $esTu ? 'bg-gradient-success text-white' : 'bg-light text-dark border' }}" style="width: 32px !important; height: 32px !important; min-width: 32px !important;">
                                                             {{ $iniciales ?: 'U' }}
                                                         </div>
                                                         <span class="pulse-online position-absolute bottom-0 end-0 border border-white" style="margin-bottom: -1px; margin-right: -1px;"></span>
@@ -381,18 +381,20 @@
                                                 <span class="text-success font-weight-bold">{{ $c->cantidad_resueltos }}</span> / {{ $c->cantidad_intentos }}
                                             </td>
                                             <td class="text-center py-2">
-                                                <a href="{{ route('cursos.estudiantes', ['id' => $c->id]) }}" class="btn btn-xs btn-outline-info mb-0 me-1" title="Gestionar Estudiantes">
-                                                    <i class="fa fa-users me-1"></i> Estudiantes
-                                                </a>
-                                                <a href="{{ route('problemas.index', ['id_curso' => $c->id]) }}" class="btn btn-xs btn-outline-primary mb-0 me-1" title="Gestionar Ejercicios">
-                                                    <i class="fa fa-list-alt text-success me-1"></i> Problemas
-                                                </a>
-                                                <a href="{{ route('certamen.index', ['id_curso' => $c->id]) }}" class="btn btn-xs btn-outline-warning mb-0 me-1">
-                                                    <i class="fa fa-calendar-check text-warning me-1"></i> Evaluaciones
-                                                </a>
-                                                <a href="{{ route('informe.curso', ['id_curso' => $c->id]) }}" class="btn btn-xs btn-outline-secondary mb-0">
-                                                    <i class="fa fa-chart-bar text-primary me-1"></i> Informe
-                                                </a>
+                                                <div class="d-flex flex-wrap justify-content-center align-items-center gap-1">
+                                                    <a href="{{ route('cursos.estudiantes', ['id' => $c->id]) }}" class="btn btn-xs btn-outline-info mb-0" title="Gestionar Estudiantes">
+                                                        <i class="fa fa-users me-1"></i> Estudiantes
+                                                    </a>
+                                                    <a href="{{ route('problemas.index', ['id_curso' => $c->id]) }}" class="btn btn-xs btn-outline-primary mb-0" title="Gestionar Ejercicios">
+                                                        <i class="fa fa-list-alt text-success me-1"></i> Problemas
+                                                    </a>
+                                                    <a href="{{ route('certamen.index', ['id_curso' => $c->id]) }}" class="btn btn-xs btn-outline-warning mb-0">
+                                                        <i class="fa fa-calendar-check text-warning me-1"></i> Evaluaciones
+                                                    </a>
+                                                    <a href="{{ route('informe.curso', ['id_curso' => $c->id]) }}" class="btn btn-xs btn-outline-secondary mb-0">
+                                                        <i class="fa fa-chart-bar text-primary me-1"></i> Informe
+                                                    </a>
+                                                </div>
                                             </td>
                                         </tr>
                                     @empty
@@ -422,14 +424,14 @@
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table align-items-center mb-0">
+                            <table class="table align-items-center mb-0" id="tablaUltimosEnvios">
                                 <thead>
                                     <tr>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Estudiante</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Problema</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Curso</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Lenguaje</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">IP Origen</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">IP</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Estado</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Fecha</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Acción</th>
@@ -442,14 +444,14 @@
                                             $esError = in_array($uEnv->estado, ['Rechazado', 'Error']);
                                         @endphp
                                         <tr>
-                                            <td class="ps-3 py-2">
+                                            <td class="ps-3 pe-2 py-2 text-wrap" style="max-width: 145px;">
                                                 <span class="text-xs font-weight-bold text-dark d-block">{{ $uEnv->firstname }} {{ $uEnv->lastname }}</span>
                                                 <span class="text-xxs text-secondary">{{ $uEnv->rut }}</span>
                                             </td>
-                                            <td class="py-2 text-xs font-weight-bold text-dark">
+                                            <td class="px-2 py-2 text-xs font-weight-bold text-dark text-wrap" style="max-width: 145px;">
                                                 {{ $uEnv->nombre_problema }}
                                             </td>
-                                            <td class="text-center py-2">
+                                            <td class="text-center px-2 py-2 text-wrap" style="max-width: 140px;">
                                                 <span class="text-xs font-weight-bold text-dark d-block">{{ $uEnv->nombre_curso }}</span>
                                                 <span class="badge border border-primary text-primary bg-white text-xxs">{{ $uEnv->codigo_curso }}</span>
                                             </td>

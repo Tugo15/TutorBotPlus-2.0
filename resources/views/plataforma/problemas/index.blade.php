@@ -99,7 +99,7 @@
 @push('js')
     <link href="{{ asset('assets/js/DataTables/datatables.min.css') }}" rel="stylesheet">
     <script src="{{ asset('assets/js/DataTables/datatables.min.js') }}"></script>
-    <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}"></script>
+    <script src="{{ asset('assets/js/DataTables/gestion_initialize_es_cl.js') }}?v={{ @filemtime(public_path('assets/js/DataTables/gestion_initialize_es_cl.js')) ?: '1.0' }}"></script>
     <script>
         var cursoTabStorageKey = 'tb_curso_tab_{{ $curso->id }}';
         function mostrarSeccion(tipo) {

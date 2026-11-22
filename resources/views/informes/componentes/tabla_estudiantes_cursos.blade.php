@@ -72,7 +72,7 @@
                                         <td class="align-middle text-end">
                                             <div class="d-flex px-3 py-1 justify-content-center align-items-center">
                                                 @can('ver informe del problema')
-                                                    <a class="btn btn-xs btn-outline-info mb-0" title="Ver Envíos del Estudiante" href="{{route('informe.envios.curso', ['id_curso'=>$curso_estadistica->id, 'id_usuario'=>$item->id_usuario])}}"><i class="fa fa-code me-1"></i> Envíos</a>
+                                                    <a class="btn btn-xs btn-outline-info mb-0 text-nowrap" title="Ver Envíos del Estudiante" href="{{route('informe.envios.curso', ['id_curso'=>$curso_estadistica->id, 'id_usuario'=>$item->id_usuario])}}"><i class="fa fa-code me-1"></i> Envíos</a>
                                                 @endcan
                                             </div>
                                         </td>

@@ -9,37 +9,72 @@ use App\Models\JuecesVirtuales;
 use App\Models\Problemas;
 use App\Models\SolicitudRaLlm;
 use App\Models\ResolucionCertamenes;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
 
-use Illuminate\Support\Facades\Artisan;
-
 class EvaluacionSolucionController extends Controller
 {
 
-    private function esDocenteOAdmin(): bool
+    private function puedeVerEnvio(EnvioSolucionProblema $envio, bool $requiereDocente = false): bool
     {
-        return auth()->check() && (
-            auth()->user()->hasRole('administrador') ||
-            auth()->user()->hasRole('profesor') ||
-            auth()->user()->can('ver informe del certamen') ||
-            auth()->user()->can('ver informe del curso') ||
-            auth()->user()->can('ver informe del problema')
-        );
+        if (!auth()->check()) {
+            return false;
+        }
+
+        $user = auth()->user();
+        if ($user->hasRole('administrador')) {
+            return true;
+        }
+
+        $ownerId = $envio->resolveOwnerId();
+        $esDueno = $ownerId !== null && $ownerId === (int) $user->id;
+        if (!$requiereDocente && $esDueno) {
+            return true;
+        }
+
+        $esDocente = $user->hasRole('profesor') ||
+            $user->can('ver informe del certamen') ||
+            $user->can('ver informe del curso') ||
+            $user->can('ver informe del problema');
+
+        if ($esDocente) {
+            $cursoId = $envio->resolveCursoId();
+            if ($cursoId !== null && $user->cursos()->where('cursos.id', $cursoId)->exists()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Si el driver de colas es síncrono, evalúa únicamente el envío actual con throttling por caché
+     * (evita ejecutar `app:evaluar-envios` de forma global desde peticiones HTTP).
+     */
+    private function refrescarPendientesSiSync(EnvioSolucionProblema $envio): void
+    {
+        if (config('queue.default') !== 'sync') {
+            return;
+        }
+
+        if ($envio->evaluaciones()->where('estado', '=', 'En Proceso')->exists()) {
+            $throttleKey = 'sync_eval_throttle_' . $envio->id;
+            if (Cache::add($throttleKey, true, 4)) {
+                try {
+                    \App\Console\Commands\EvaluarEnvios::evaluarSingleEnvio($envio);
+                    $envio->refresh();
+                } catch (\Throwable $e) {
+                    // Continuar si Judge0 no responde temporalmente
+                }
+            }
+        }
     }
 
     private function prepararEvaluacionData(EnvioSolucionProblema $envio): array
     {
-        // Si existen evaluaciones pendientes en proceso, evaluar de forma sincrónica con Judge0 inmediatamente
-        if ($envio->evaluaciones()->where('estado', '=', 'En Proceso')->exists()) {
-            try {
-                Artisan::call('app:evaluar-envios');
-                $envio->refresh();
-            } catch (\Exception $e) {
-                // Continuar si ocurre alguna excepción no crítica
-            }
-        }
+        $this->refrescarPendientesSiSync($envio);
 
         $problema = $envio->problema;
         if ($problema && !empty(trim($problema->restricciones)) && is_null($envio->verificacion_restricciones)) {
@@ -58,18 +93,20 @@ class EvaluacionSolucionController extends Controller
             }
         }
         $evaluaciones = $envio->evaluaciones()->with('casos_pruebas')->get();
-        //Calculo de intentos restante de retroalimentación
+        // Cálculo de intentos restantes de retroalimentación para el dueño del envío
         $cant_retroalimentacion = 0;
-        if ($problema && auth()->check()) {
-            $cant_retroalimentacion = ($problema->limite_llm ?? 0) - DB::table('solicitud_ra_llms')
+        $ownerId = $envio->resolveOwnerId() ?? auth()->id();
+        if ($problema && $ownerId) {
+            $usadosLlm = DB::table('solicitud_ra_llms')
                 ->leftJoin('envio_solucion_problemas', 'solicitud_ra_llms.id_envio', '=', 'envio_solucion_problemas.id')
                 ->join('resolver', 'envio_solucion_problemas.id_resolver', '=', 'resolver.id')
                 ->join('cursa', 'envio_solucion_problemas.id_cursa', '=', 'cursa.id')
                 ->where('resolver.id_problema', '=', $problema->id)
-                ->where('cursa.id_usuario', '=', auth()->user()->id)
+                ->where('cursa.id_usuario', '=', $ownerId)
                 ->count();
+            $cant_retroalimentacion = max(0, ($problema->limite_llm ?? 0) - $usadosLlm);
         }
-        //Booleano que verifica si hay una retroalimentación asociado al código.
+        // Booleano que verifica si hay una retroalimentación asociada al código.
         $tieneRetroalimentacion = SolicitudRaLlm::where('id_envio', '=', $envio->id)->exists();
         $pendientes = $envio->evaluaciones()->where('estado', '=', 'En Proceso')->count();
         $diferencia = 0;
@@ -86,12 +123,12 @@ class EvaluacionSolucionController extends Controller
 
     public function ver_evaluacion(Request $request)
     {
-        $envio = EnvioSolucionProblema::with(['curso', 'problema.casos_de_prueba', 'usuario', 'lenguaje'])->where("token", "=", $request->token)->first();
+        $envio = EnvioSolucionProblema::with(['curso', 'resolucion_certamen.certamen', 'problema.casos_de_prueba', 'usuario', 'lenguaje'])->where("token", "=", $request->token)->first();
         if (!isset($envio)) {
             return redirect()->route('envios.listado')->with('error', 'El envio no existe');
         }
 
-        if (!$this->esDocenteOAdmin() && (!isset($envio->usuario) || $envio->usuario->id !== auth()->id())) {
+        if (!$this->puedeVerEnvio($envio)) {
             return redirect()->route('envios.listado')->with('error', 'No tienes permiso para visualizar este envío.');
         }
 
@@ -100,13 +137,13 @@ class EvaluacionSolucionController extends Controller
 
     public function ver_detalle_docente(Request $request)
     {
-        if (!$this->esDocenteOAdmin()) {
-            abort(403, 'No tienes permiso para visualizar el detalle de este envío.');
-        }
-
-        $envio = EnvioSolucionProblema::with(['curso', 'problema.casos_de_prueba', 'usuario', 'lenguaje'])->where("token", "=", $request->token)->first();
+        $envio = EnvioSolucionProblema::with(['curso', 'resolucion_certamen.certamen', 'problema.casos_de_prueba', 'usuario', 'lenguaje'])->where("token", "=", $request->token)->first();
         if (!isset($envio)) {
             return redirect()->route('home')->with('error', 'El envío no existe');
+        }
+
+        if (!$this->puedeVerEnvio($envio, true)) {
+            abort(403, 'No tienes permiso para visualizar el detalle de este envío.');
         }
 
         return view('informes.componentes.detalle_envio', $this->prepararEvaluacionData($envio));
@@ -115,20 +152,16 @@ class EvaluacionSolucionController extends Controller
     //Retorna un JSON de los estados de evaluaciones de un envio, esto para utilizar en la vista de resultados de un envio, cuando las evaluaciones aun están en proceso y queremos una actualización de esos.
     public function obtener_status_evaluaciones(Request $request){
         try{
-            $envio = EnvioSolucionProblema::with(['curso','problema', 'usuario'])->where("token", "=", $request->token)->first();
+            $envio = EnvioSolucionProblema::with(['curso', 'resolucion_certamen.certamen', 'problema', 'usuario'])->where("token", "=", $request->token)->first();
             if(!isset($envio)){
                 return response('El envio no existe', 400);
             }
 
-            if (!$this->esDocenteOAdmin() && (!isset($envio->usuario) || $envio->usuario->id !== auth()->id())) {
+            if (!$this->puedeVerEnvio($envio)) {
                 return response('No tienes permiso para visualizar este envío.', 403);
             }
 
-            // Si al consultar vía AJAX existen evaluaciones pendientes, forzar actualización sincrónica
-            if ($envio->evaluaciones()->where('estado', '=', 'En Proceso')->exists()) {
-                Artisan::call('app:evaluar-envios');
-                $envio->refresh();
-            }
+            $this->refrescarPendientesSiSync($envio);
 
             $evaluaciones = $envio->evaluaciones()->with('casos_pruebas')->get()->map(function($item){
                 $item->resultado = \App\Support\Judge0StatusHelper::traducir($item->resultado);

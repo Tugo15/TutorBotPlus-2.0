@@ -28,8 +28,8 @@
     }
     .custom-filters-container {
         flex-wrap: wrap !important;
-        row-gap: 0.5rem !important;
-        column-gap: 0.75rem !important;
+        row-gap: 0.4rem !important;
+        column-gap: 0.3rem !important;
         white-space: normal !important;
     }
     .dataTables_filter {
@@ -47,27 +47,46 @@
         align-items: center !important;
         min-height: 32px !important;
         height: auto !important;
-        margin: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
         padding: 0 !important;
-        font-size: 0.75rem !important;
+        font-size: 0.72rem !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
         color: #6c757d !important;
         line-height: 1.2 !important;
         white-space: nowrap !important;
     }
-    .custom-filters-container select,
+    .custom-filters-container .dt-length label,
+    .custom-filters-container .dataTables_length label {
+        text-transform: none !important;
+        font-weight: 600 !important;
+        gap: 0.25rem !important;
+    }
     .custom-filters-container .dropdown-toggle,
     .dataTables_filter input,
     div.dt-container div.dt-search input {
-        height: 34px !important;
-        max-height: 34px !important;
-        min-height: 34px !important;
+        height: 32px !important;
+        max-height: 32px !important;
+        min-height: 32px !important;
         line-height: 1.2 !important;
-        padding: 0.25rem 0.5rem !important;
+        padding: 0.2rem 0.4rem !important;
         margin-top: 0 !important;
         margin-bottom: 0 !important;
-        font-size: 0.75rem !important;
+        font-size: 0.72rem !important;
+        box-sizing: border-box !important;
+        border-radius: 0.375rem !important;
+        vertical-align: middle !important;
+    }
+    .custom-filters-container select {
+        height: 32px !important;
+        max-height: 32px !important;
+        min-height: 32px !important;
+        line-height: 16px !important;
+        padding: 7px 1.3rem 5px 0.45rem !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        font-size: 0.72rem !important;
         box-sizing: border-box !important;
         border-radius: 0.375rem !important;
         vertical-align: middle !important;
@@ -110,10 +129,10 @@
 <div id="custom-filters-src" class="d-none">
     @if(isset($mostrar_curso) && $mostrar_curso && count($cursos_disponibles) > 0)
         <div class="d-flex align-items-center">
-            <span class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Curso: &nbsp;</span>
+            <span class="me-1 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Curso:</span>
             <div class="dropdown">
-                <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside" style="height: 32px; min-width: 130px;">
-                    <span class="lbl-curso-selected">Seleccionar...</span>
+                <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside" style="height: 32px; min-width: 56px;">
+                    <span class="lbl-curso-selected">Todos</span>
                 </button>
                 <ul class="dropdown-menu px-2" style="max-height: 200px; overflow-y: auto;">
                     @foreach($cursos_disponibles as $cItem)
@@ -129,20 +148,20 @@
         </div>
     @endif
 
-    <div class="d-flex align-items-center">
-        <label for="filterEstado" class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Estado: &nbsp;</label>
-        <select id="filterEstado" class="form-select form-select-sm w-auto border-secondary" style="min-width: 110px; height: 32px;">
+    <div class="d-flex align-items-center {{ (!isset($mostrar_curso) || !$mostrar_curso) ? 'ms-2' : '' }}">
+        <span class="{{ (!isset($mostrar_curso) || !$mostrar_curso) ? 'me-2' : 'me-1' }} mb-0 font-weight-bold text-xs text-uppercase text-secondary">Estado:</span>
+        <select id="filterEstado" class="form-select form-select-sm w-auto border-secondary" aria-label="Filtrar por estado" style="min-width: 58px; height: 32px;">
             <option value="">Todos</option>
             <option value="Visible">Visible</option>
             <option value="Oculto">Oculto</option>
         </select>
     </div>
 
-    <div class="d-flex align-items-center">
-        <span class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Categoría: &nbsp;</span>
+    <div class="d-flex align-items-center {{ (!isset($mostrar_curso) || !$mostrar_curso) ? 'ms-2' : '' }}">
+        <span class="{{ (!isset($mostrar_curso) || !$mostrar_curso) ? 'me-2' : 'me-1' }} mb-0 font-weight-bold text-xs text-uppercase text-secondary">Categoría:</span>
         <div class="dropdown">
-            <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" data-bs-auto-close="outside" style="height: 34px; min-width: 130px;">
-                <span class="lbl-cat-selected">Seleccionar...</span>
+            <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" data-bs-auto-close="outside" style="height: 32px; min-width: 56px;">
+                <span class="lbl-cat-selected">Todas</span>
             </button>
             <ul class="dropdown-menu dropdown-menu-start px-2" style="max-height: 200px; overflow-y: auto;">
                 @foreach($categorias_disponibles as $c)
@@ -158,7 +177,7 @@
     </div>
 
     <div class="d-flex align-items-center">
-        <button type="button" id="btnLimpiarFiltrosProblemas" class="btn btn-outline-secondary bg-white btn-sm mb-0 d-inline-flex align-items-center text-xs" style="height: 32px;" title="Restablecer filtros y búsqueda">
+        <button type="button" id="btnLimpiarFiltrosProblemas" class="btn btn-outline-secondary bg-white btn-sm mb-0 d-inline-flex align-items-center text-xs" style="height: 32px; padding: 0.2rem 0.45rem !important;" title="Restablecer filtros y búsqueda">
             <i class="fa fa-eraser me-1"></i> Limpiar
         </button>
     </div>
@@ -170,7 +189,7 @@
             <tr class="border-bottom">
                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Problema</th>
                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Curso(s)</th>
-                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Categorías y Dificultad</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Categorías y <br>Dificultad</th>
                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Lenguajes</th>
                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Estado</th>
                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bold opacity-7">Disponibilidad</th>
@@ -183,10 +202,12 @@
             @foreach ($problemas as $problema)
                 <tr>
                     <td class="align-middle text-center">
-                        <div class="d-inline-flex px-2 py-1 justify-content-center text-center align-items-center" style="max-width: 240px;">
+                        <div class="d-inline-flex px-0 py-1 justify-content-center text-center align-items-center" style="min-width: 105px; max-width: 140px;">
                             <div class="d-flex flex-column justify-content-center text-start w-100">
-                                <h6 class="mb-0 text-sm font-weight-bold text-dark text-wrap">{{ $problema->nombre }}</h6>
-                                <p class="text-xs text-secondary mb-0 mt-1 text-wrap">Código: <span class="badge border border-secondary text-secondary text-xxs px-2 py-0 bg-white text-wrap">{{ $problema->codigo }}</span></p>
+                                <h6 class="mb-0 text-xs font-weight-bold text-dark text-wrap lh-sm">{{ $problema->nombre }}</h6>
+                                <div class="text-xs text-secondary mb-0 mt-1">
+                                    <code class="d-inline-block border border-secondary text-secondary rounded px-1 py-0.5 bg-white lh-sm text-break" style="font-size: 0.62rem; word-break: break-all;">{{ $problema->codigo }}</code>
+                                </div>
                             </div>
                         </div>
                     </td>
@@ -220,25 +241,23 @@
                         $difProbOrder = ($difProbValor == 'Fácil') ? 1 : (($difProbValor == 'Difícil') ? 3 : 2);
                     @endphp
                     <td class="align-middle text-center" data-order="{{ $difProbOrder }}">
-                        <div class="d-flex flex-column gap-1 py-1 justify-content-center">
-                            <div class="d-flex align-items-center justify-content-center gap-1 flex-wrap">
-                                <span class="badge border {{ $difProbClass }} text-xxs bg-white">{{ $difProbValor }}</span>
-                                @if(isset($problema->categorias) && $problema->categorias->isNotEmpty())
-                                    @php
-                                        $cats = $problema->categorias;
-                                    @endphp
-                                    @if($cats->count() == 1)
-                                        <span class="badge border border-danger text-danger text-xxs bg-white">{{ $cats->first()->nombre }}</span>
-                                    @else
-                                        <span class="d-none">{{ $cats->pluck('nombre')->implode(' ') }}</span>
-                                        <button type="button" class="btn btn-xs btn-outline-danger mb-0 d-inline-flex align-items-center"
-                                                onclick="verEtiquetasModal('Categorías de {{ addslashes($problema->nombre) }}', {{ json_encode($cats->pluck('nombre')) }}, 'danger', 'fa-tags')"
-                                                title="Ver categorías asignadas">
-                                            <i class="fa fa-tags me-1"></i> Ver ({{ $cats->count() }})
-                                        </button>
-                                    @endif
+                        <div class="d-flex flex-column align-items-center justify-content-center gap-1 py-1">
+                            <span class="badge border {{ $difProbClass }} text-xxs bg-white">{{ $difProbValor }}</span>
+                            @if(isset($problema->categorias) && $problema->categorias->isNotEmpty())
+                                @php
+                                    $cats = $problema->categorias;
+                                @endphp
+                                @if($cats->count() == 1)
+                                    <span class="badge border border-danger text-danger text-xxs bg-white text-wrap lh-sm" style="max-width: 136px;">{{ $cats->first()->nombre }}</span>
+                                @else
+                                    <span class="d-none">{{ $cats->pluck('nombre')->implode(' ') }}</span>
+                                    <button type="button" class="btn btn-xs btn-outline-danger mb-0 d-inline-flex align-items-center"
+                                            onclick="verEtiquetasModal('Categorías de {{ addslashes($problema->nombre) }}', {{ json_encode($cats->pluck('nombre')) }}, 'danger', 'fa-tags')"
+                                            title="Ver categorías asignadas">
+                                        <i class="fa fa-tags me-1"></i> Ver ({{ $cats->count() }})
+                                    </button>
                                 @endif
-                            </div>
+                            @endif
                         </div>
                     </td>
                     <td class="align-middle text-center">
@@ -280,14 +299,14 @@
                         </div>
                     </td>
                     <td class="align-middle text-center" data-order="{{ \App\Support\DateHelper::timestamp(method_exists($problema, 'getRawOriginal') ? $problema->getRawOriginal('fecha_inicio') : $problema->fecha_inicio, method_exists($problema, 'getRawOriginal') ? $problema->getRawOriginal('created_at') : $problema->created_at) }}">
-                        <div class="d-flex flex-column justify-content-center text-center">
-                            <span class="text-xs font-weight-bold text-dark">Inicio: {{ $problema->fecha_inicio ? $problema->fecha_inicio : 'Inmediata' }}</span>
-                            <span class="text-xs text-secondary">Término: {{ $problema->fecha_termino ? $problema->fecha_termino : 'Indefinida' }}</span>
+                        <div class="d-flex flex-column justify-content-center text-center" style="font-size: 0.65rem; line-height: 1.25; max-width: 112px; margin: 0 auto;">
+                            <span class="font-weight-bold text-dark">Inicio: {{ $problema->fecha_inicio ? $problema->fecha_inicio : 'Inmediata' }}</span>
+                            <span class="text-secondary">Término: {{ $problema->fecha_termino ? $problema->fecha_termino : 'Indefinida' }}</span>
                         </div>
                     </td>
                     @canany(['editar problemas', 'eliminar problemas', 'ver informe del problema'])
                         <td class="align-middle text-center">
-                            <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1 flex-wrap">
+                            <div class="px-0 py-1 justify-content-center align-items-center" style="display: inline-grid !important; grid-template-columns: repeat(2, auto); gap: 0.15rem;">
                                 @can('ver informe del problema')
                                     @if(isset($id_curso_activo) && $id_curso_activo)
                                         <a class="btn btn-xs btn-outline-primary mb-0" title="Ver Informe del Curso"
@@ -359,11 +378,11 @@
                                             </button>
                                         </form>
                                     @endif
-                                    <a class="btn btn-xs btn-outline-info mb-0" title="Casos de Prueba"
+                                    <a class="btn btn-xs btn-outline-info mb-0 text-nowrap" title="Casos de Prueba"
                                         href="{{ route('casos_pruebas.assign', array_merge(['id' => $problema->id], (isset($id_curso_activo) && $id_curso_activo ? ['id_curso' => $id_curso_activo] : []))) }}"><i class="fa fa-vials me-1"></i> Casos</a>
-                                    <a class="btn btn-xs btn-outline-secondary mb-0" title="Editar Pistas"
-                                        href="{{ route('problemas.editorial', array_merge(['id' => $problema->id], (isset($id_curso_activo) && $id_curso_activo ? ['id_curso' => $id_curso_activo] : []))) }}"><i class="fa fa-book me-1"></i> Editar Pistas</a>
-                                    <a class="btn btn-xs btn-outline-warning mb-0" title="Editar Problema"
+                                    <a class="btn btn-xs btn-outline-secondary mb-0 text-nowrap" title="Editar Pistas"
+                                        href="{{ route('problemas.editorial', array_merge(['id' => $problema->id], (isset($id_curso_activo) && $id_curso_activo ? ['id_curso' => $id_curso_activo] : []))) }}"><i class="fa fa-book me-1"></i> Pistas</a>
+                                    <a class="btn btn-xs btn-outline-warning mb-0 text-nowrap" title="Editar Problema"
                                         href="{{ route('problemas.editar', array_merge(['id' => $problema->id], (isset($id_curso_activo) && $id_curso_activo ? ['id_curso' => $id_curso_activo] : []))) }}"><i class="fa fa-pencil me-1"></i> Editar</a>
                                 @endcan
                                 @if(isset($id_curso_activo) && $id_curso_activo)

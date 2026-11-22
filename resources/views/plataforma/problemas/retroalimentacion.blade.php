@@ -8,29 +8,7 @@
                         Retroalimentación
                     </div>
                     <div class="card-body overflow-auto" id="body_markdown" style="max-height: 35rem;">
-                        @php
-                            $raSanitized = $retroalimentacion->retroalimentacion ?? '';
-                            $mathBlocks = [];
-                            $raSanitized = preg_replace_callback('/```[\s\S]*?```|`[^`\r\n]*`|\$\$[\s\S]+?\$\$|(?<!\$)\$(?!\$)([^\$\r\n]+?)\$(?!\$)|(?<=[\p{L}\p{N}])\*(?=[\p{L}\p{N}])/u', function ($m) use (&$mathBlocks) {
-                                if ($m[0] === '*') {
-                                    return '\\*';
-                                }
-                                if (str_starts_with($m[0], '$')) {
-                                    $key = 'TBMATHPLACEHOLDER' . count($mathBlocks) . 'END';
-                                    $mathBlocks[$key] = e($m[0]);
-                                    return $key;
-                                }
-                                return $m[0];
-                            }, $raSanitized);
-                            $renderedRaHtml = Str::markdown($raSanitized, [
-                                'html_input' => 'strip',
-                                'allow_unsafe_links' => false,
-                            ]);
-                            if (!empty($mathBlocks)) {
-                                $renderedRaHtml = strtr($renderedRaHtml, $mathBlocks);
-                            }
-                        @endphp
-                        {!! $renderedRaHtml !!}
+                        {!! \App\Support\MarkdownRenderer::render($retroalimentacion->retroalimentacion ?? '') !!}
                     </div>
                 </div>
             </div>
@@ -56,7 +34,7 @@
                         Código Fuente
                     </div>
                     <div class="card-body">
-                        <pre class="mb-0 pb-2"><code class="{{ $highlightjs_choice }}-html">{{ $envios->codigo }}</code></pre>
+                        <pre class="mb-0 pb-2"><code class="language-{{ $highlightjs_choice }}">{{ $envios->codigo }}</code></pre>
                     </div>
                 </div>
             </div>

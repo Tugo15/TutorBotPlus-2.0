@@ -17,29 +17,7 @@
                         Descripción
                     </div>
                     <div class="card-body p-3 p-md-4 text-wrap" id="body_markdown">
-                        @php
-                            $descSanitized = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $certamen->descripcion ?? '');
-                            $mathBlocks = [];
-                            $descSanitized = preg_replace_callback('/```[\s\S]*?```|`[^`\r\n]*`|\$\$[\s\S]+?\$\$|(?<!\$)\$(?!\$)([^\$\r\n]+?)\$(?!\$)|(?<=[\p{L}\p{N}])\*(?=[\p{L}\p{N}])/u', function ($m) use (&$mathBlocks) {
-                                if ($m[0] === '*') {
-                                    return '\\*';
-                                }
-                                if (str_starts_with($m[0], '$')) {
-                                    $key = 'TBMATHPLACEHOLDER' . count($mathBlocks) . 'END';
-                                    $mathBlocks[$key] = e($m[0]);
-                                    return $key;
-                                }
-                                return $m[0];
-                            }, $descSanitized);
-                            $renderedDescHtml = Str::markdown($descSanitized, [
-                                'html_input' => 'strip',
-                                'allow_unsafe_links' => false,
-                            ]);
-                            if (!empty($mathBlocks)) {
-                                $renderedDescHtml = strtr($renderedDescHtml, $mathBlocks);
-                            }
-                        @endphp
-                        {!! $renderedDescHtml !!}
+                        {!! \App\Support\MarkdownRenderer::render($certamen->descripcion ?? '') !!}
                     </div>
                 </div>
             </div>
@@ -48,14 +26,14 @@
                     <div class="card-body px-3">
                         @if (isset($res_certamen) && !$res_certamen->finalizado)
                             @if ($certamen->disponibilidad)
-                                <div class="alert alert-success border-success text-white py-2 px-3 mb-3 text-center" role="alert">
+                                <div class="alert alert-success border-success py-2 px-3 mb-3 text-center" role="alert">
                                     <i class="fa fa-unlock-alt me-1"></i>
                                     <small class="font-weight-bold">
                                         Tienes esta evaluación en curso. Presiona "Volver a la Evaluación" para continuar.
                                     </small>
                                 </div>
                             @else
-                                <div class="alert alert-secondary text-white py-2 px-3 mb-3 text-center" role="alert">
+                                <div class="alert alert-secondary py-2 px-3 mb-3 text-center" role="alert">
                                     <i class="fa fa-clock-o me-1"></i>
                                     <small class="font-weight-bold">
                                         El plazo para esta evaluación ha finalizado.

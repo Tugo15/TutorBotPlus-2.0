@@ -6,16 +6,16 @@
         <div class="col-12">
             <div class="card shadow-xs border mb-4">
                 <div class="card-header pb-0 border-bottom mb-0">
-                    <div class="row align-items-center pb-2 gy-2">
-                        <div class="col-12 col-lg"></div>
-                        <div class="col-12 col-lg-auto text-center">
+                    <div class="tb-header-symmetric pb-2">
+                        <div class="tb-header-left"></div>
+                        <div class="tb-header-center text-center">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-users me-2 text-primary"></i>Gestión de Usuarios</h6>
-                            <p class="text-xs text-secondary mb-0">Administre los usuarios registrados, asigne roles, edite información y gestione accesos.</p>
+                            <p class="text-xs text-secondary mb-0">Administre los usuarios registrados, roles y accesos de la plataforma.</p>
                         </div>
-                        <div class="col-12 col-lg d-flex justify-content-center justify-content-lg-end gap-2 flex-wrap">
+                        <div class="tb-header-right d-flex justify-content-center justify-content-xl-end align-items-center gap-1 flex-wrap flex-sm-nowrap">
                             @can('crear usuario')
-                                <a class="btn btn-sm btn-dark mb-0" href="{{ route('usuarios.crear') }}"><i class="fa fa-user-plus me-1"></i> Crear Usuario</a>
-                                <a class="btn btn-sm btn-outline-primary mb-0" href="{{ route('usuarios.bulk') }}"><i class="fa fa-file-upload me-1"></i> Inserción Masiva</a>
+                                <a class="btn btn-xs btn-dark mb-0 text-nowrap" href="{{ route('usuarios.crear') }}"><i class="fa fa-user-plus me-1"></i> Crear Usuario</a>
+                                <a class="btn btn-xs btn-outline-primary mb-0 text-nowrap" href="{{ route('usuarios.bulk') }}"><i class="fa fa-file-upload me-1"></i> Inserción Masiva</a>
                             @endcan
                         </div>
                     </div>
@@ -50,9 +50,9 @@
 
                     <div id="custom-filters-src" class="d-none">
                         <div class="d-flex align-items-center">
-                            <span class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Rol:</span>
+                            <span class="me-1 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Rol:</span>
                             <div class="dropdown">
-                                <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside" style="height: 32px; min-width: 120px;">
+                                <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside" style="height: 32px; min-width: 105px;">
                                     <span class="lbl-rol-selected">Seleccionar...</span>
                                 </button>
                                 <ul class="dropdown-menu px-2" style="max-height: 200px; overflow-y: auto;">
@@ -69,9 +69,9 @@
                         </div>
                         
                         <div class="d-flex align-items-center">
-                            <span class="me-2 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Curso:</span>
+                            <span class="me-1 mb-0 font-weight-bold text-xs text-uppercase text-secondary">Curso:</span>
                             <div class="dropdown">
-                                <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside" style="height: 32px; min-width: 120px;">
+                                <button class="btn btn-outline-secondary bg-white btn-sm dropdown-toggle mb-0 d-inline-flex align-items-center justify-content-between text-xs" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside" style="height: 32px; min-width: 105px;">
                                     <span class="lbl-curso-selected">Seleccionar...</span>
                                 </button>
                                 <ul class="dropdown-menu px-2" style="max-height: 200px; overflow-y: auto;">
@@ -106,10 +106,10 @@
                                 @foreach ($users as $user)
                                     <tr>
                                         <td class="align-middle text-center">
-                                            <div class="d-flex px-2 py-1 justify-content-center text-center">
+                                            <div class="d-flex px-1 py-1 justify-content-center text-center">
                                                 <div class="d-flex flex-column justify-content-center text-center">
-                                                    <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $user->firstname ? $user->firstname . ' ' . $user->lastname : $user->username }}</h6>
-                                                    <p class="text-xs text-secondary mb-0">{{ $user->username }} | {{ $user->rut }}</p>
+                                                    <h6 class="mb-0 text-xs font-weight-bold text-dark">{{ $user->firstname ? $user->firstname . ' ' . $user->lastname : $user->username }}</h6>
+                                                    <p class="text-xxs text-secondary mb-0">{{ $user->username }} | {{ $user->rut }}</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -148,9 +148,9 @@
                                             @endif
                                         </td>
                                         <td class="align-middle text-center">
-                                            <div class="d-flex px-3 py-1 justify-content-center">
+                                            <div class="d-flex px-1 py-1 justify-content-center">
                                                 <div class="d-flex flex-column justify-content-center">
-                                                    <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $user->email }}</h6>
+                                                    <span class="mb-0 text-xs font-weight-bold text-dark text-break">{{ $user->email }}</span>
                                                 </div>
                                             </div>
                                         </td>
@@ -160,7 +160,7 @@
                                         </td>
                                         @canany(['editar usuario', 'eliminar usuario'])
                                             <td class="align-middle text-center">
-                                                <div class="d-flex px-3 py-1 justify-content-center align-items-center gap-1">
+                                                <div class="d-flex px-1 py-1 justify-content-center align-items-center gap-1 flex-wrap">
                                                      @can('editar usuario')
                                                          <a class="btn btn-xs btn-outline-info mb-0" title="Editar Usuario"
                                                              href="{{ route('usuarios.editar', ['id' => $user->id]) }}"><i class="fa fa-pencil me-1"></i> Editar</a>
@@ -173,7 +173,7 @@
                                                     @can('eliminar usuario')
                                                         @if (auth()->user()->id != $user->id)
                                                             <form action="{{ route('usuarios.eliminar', ['id' => $user->id]) }}"
-                                                                method="POST" onsubmit="event.preventDefault();submitFormEliminar('el usuario {{ $user->username }}', {{ $user->id }})" id="eliminarForm_{{ $user->id }}">
+                                                                method="POST" onsubmit="event.preventDefault();submitFormEliminar('el usuario {{ addslashes($user->username) }}', {{ $user->id }})" id="eliminarForm_{{ $user->id }}">
                                                                 @csrf
                                                                 <button type="submit" class="btn btn-xs btn-outline-danger mb-0" title="Eliminar Usuario"><i class="fa fa-fw fa-trash me-1"></i> Eliminar</button>
                                                             </form>

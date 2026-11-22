@@ -65,9 +65,9 @@
                                         <span class="badge badge-sm bg-gradient-secondary me-1" title="Intentos Realizados">Int: {{ $envio->cant_intentos }}</span>
                                         <span class="badge badge-sm bg-gradient-info" title="Cantidad de Feedback">FB: {{ $envio->cant_retroalimentacion }}</span>
                                     </td>
-                                    <td class="align-middle text-center text-sm">
-                                        <p class="text-xs text-secondary mb-0" title="Casos de Prueba">Casos: <span class="badge bg-gradient-dark text-xxs">{{ $envio->max_casos_resueltos }} / {{ $problema_estadistica->total_casos }}</span></p>
-                                        <p class="text-xs text-secondary mb-0" title="Puntaje">Puntos: <span class="badge bg-gradient-dark text-xxs">{{ $envio->max_puntaje }} / {{ $problema_estadistica->puntaje_total }}</span></p>
+                                    <td class="align-middle text-center text-xs">
+                                        <p class="text-xxs text-secondary mb-0 text-nowrap" title="Casos de Prueba">Casos: <span class="badge bg-gradient-info text-xxs">{{ $envio->max_casos_resueltos }}/{{ $problema_estadistica->total_casos }}</span></p>
+                                        <p class="text-xxs text-secondary mb-0 text-nowrap mt-1" title="Puntaje">Pts: <span class="badge bg-primary text-xxs">{{ $envio->max_puntaje }}/{{ $problema_estadistica->puntaje_total }}</span></p>
                                     </td>
                                     <td class="align-middle text-center text-sm">
                                         <span class="text-xs font-weight-bold">{{isset($envio->diferencia)? $envio->diferencia : 0}}</span>
@@ -79,7 +79,7 @@
                                         <td class="align-middle text-center">
                                             <div class="d-flex px-3 py-1 justify-content-center align-items-center">
                                                 @can('ver informe del problema')
-                                                    <a class="btn btn-xs btn-outline-info mb-0" title="Ver Envíos del Estudiante" href="{{route('informe.envios.problema', ['id_problema'=>$envio->id_problema, 'id_curso'=>$envio->id_curso, 'id_usuario'=>$envio->id_usuario])}}"><i class="fa fa-code me-1"></i> Envíos</a>
+                                                    <a class="btn btn-xs btn-outline-info mb-0 text-nowrap" title="Ver Envíos del Estudiante" href="{{route('informe.envios.problema', ['id_problema'=>$envio->id_problema, 'id_curso'=>$envio->id_curso, 'id_usuario'=>$envio->id_usuario])}}"><i class="fa fa-code me-1"></i> Envíos</a>
                                                 @endcan
                                             </div>
                                         </td>

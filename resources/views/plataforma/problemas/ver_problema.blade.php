@@ -17,29 +17,7 @@
                                 </div>
                             </div>
                         @endif
-                        @php
-                            $bodyProblemaSanitized = preg_replace('/!\[(.*?)\]\s*\r?\n\s*\(([^)]+)\)/', '![$1]($2)', $problema->body_problema ?? '');
-                            $mathBlocks = [];
-                            $bodyProblemaSanitized = preg_replace_callback('/```[\s\S]*?```|`[^`\r\n]*`|\$\$[\s\S]+?\$\$|(?<!\$)\$(?!\$)([^\$\r\n]+?)\$(?!\$)|(?<=[\p{L}\p{N}])\*(?=[\p{L}\p{N}])/u', function ($m) use (&$mathBlocks) {
-                                if ($m[0] === '*') {
-                                    return '\\*';
-                                }
-                                if (str_starts_with($m[0], '$')) {
-                                    $key = 'TBMATHPLACEHOLDER' . count($mathBlocks) . 'END';
-                                    $mathBlocks[$key] = e($m[0]);
-                                    return $key;
-                                }
-                                return $m[0];
-                            }, $bodyProblemaSanitized);
-                            $renderedProblemaHtml = Str::markdown($bodyProblemaSanitized, [
-                                'html_input' => 'strip',
-                                'allow_unsafe_links' => false,
-                            ]);
-                            if (!empty($mathBlocks)) {
-                                $renderedProblemaHtml = strtr($renderedProblemaHtml, $mathBlocks);
-                            }
-                        @endphp
-                        {!! $renderedProblemaHtml !!}
+                        {!! \App\Support\MarkdownRenderer::render($problema->body_problema ?? '') !!}
 
                         @php
                             $casos_ejemplo = $problema->casos_de_prueba()->where('ejemplo', true)->orderBy('id', 'asc')->get();

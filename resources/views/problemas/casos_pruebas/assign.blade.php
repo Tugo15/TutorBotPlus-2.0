@@ -13,7 +13,7 @@
                 <div class="card-header pb-0 border-bottom mb-3">
                     <div class="row align-items-center pb-2 gy-2">
                         <div class="col-12 col-lg d-flex justify-content-center justify-content-lg-start">
-                            <a href="{{ $urlRetorno ?? ((isset($id_curso) && $id_curso) || request('id_curso') ? route('problemas.index', ['id_curso' => $id_curso ?? request('id_curso')]) : route('problemas.index')) }}" class="btn btn-xs btn-outline-secondary mb-0"><i class="fa fa-arrow-left me-1"></i> Volver</a>
+                            <a href="{{ $urlRetorno ?? ((isset($id_curso) && $id_curso) || request('id_curso') ? route('problemas.index', ['id_curso' => $id_curso ?? request('id_curso')]) : route('problemas.index')) }}" class="btn btn-xs btn-outline-secondary mb-0 d-inline-flex align-items-center" style="height: 32px;"><i class="fa fa-arrow-left me-1"></i> Volver</a>
                         </div>
                         <div class="col-12 col-lg-auto text-center">
                             <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-vials me-2 text-warning"></i>Casos de Prueba: {{ $problema->nombre }}</h6>
@@ -21,7 +21,7 @@
                         </div>
                         <div class="col-12 col-lg d-flex justify-content-center justify-content-lg-end gap-2 flex-wrap">
                             @can('editar problemas')
-                                <button type="button" class="btn btn-xs btn-dark mb-0" data-bs-toggle="modal" data-bs-target="#modalInyeccionMasiva">
+                                <button type="button" class="btn btn-xs btn-dark mb-0 d-inline-flex align-items-center" style="height: 32px;" data-bs-toggle="modal" data-bs-target="#modalInyeccionMasiva">
                                     <i class="fa fa-upload me-1"></i> Inyección Masiva
                                 </button>
                             @endcan

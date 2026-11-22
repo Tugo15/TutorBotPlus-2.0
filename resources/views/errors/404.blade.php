@@ -4,9 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Página no encontrada (404) - TutorBot+</title>
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('tutorbot_theme') === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    document.documentElement.classList.add('dark-mode');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <link rel="icon" type="image/x-icon" href="{{ asset('img/favicon.ico') }}">
     <link href="{{ asset('assets/css/argon-dashboard.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/fontawesome/all.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/dark_mode.css') }}?v={{ @filemtime(public_path('assets/css/dark_mode.css')) ?: '1.0' }}" rel="stylesheet">
 </head>
 <body class="bg-gray-100 d-flex align-items-center justify-content-center min-vh-100 p-3">
     <div class="card shadow-sm border-0 text-center p-4 p-md-5" style="max-width: 500px; width: 100%;">

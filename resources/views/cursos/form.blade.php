@@ -1,7 +1,7 @@
 <div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom">
     <div>
         <h6 class="mb-0 font-weight-bold text-dark"><i class="fa fa-graduation-cap me-2 text-success"></i>Información del Curso</h6>
-        <p class="text-xs text-secondary mb-0">Complete los datos básicos del curso a registrar en el sistema.</p>
+        <p class="text-xs text-secondary mb-0">Complete o actualice los datos básicos del curso en el sistema.</p>
     </div>
     <span class="text-xs text-danger font-weight-bold">* Campo Obligatorio</span>
 </div>
