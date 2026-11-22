@@ -1,14 +1,14 @@
 @extends('layout_plataforma.app', ['title_html' => 'Mi Perfil', 'title' => 'Mi Perfil', 'breadcrumbs' => [['nombre' => 'Mi Perfil']]])
 @section('content')
-    <div class="container-fluid py-3 px-2 px-md-5">
+    <div class="container-fluid px-3 px-md-4 pb-3">
         <div id="alert">
         @include('components.alert')
         </div>
         <div class="card border-danger">
-            <div class="card-header">
+            <div class="card-header px-3 px-md-4">
                 <strong>Información Personal</strong>
             </div>
-            <div class="card-body px-3 px-md-5">
+            <div class="card-body px-3 px-md-4 py-4">
                 <p class="text-sm text-danger">* Obligatorio</p>
                 <form action="{{ route('perfil.update') }}" method="POST" id="editForm"
                     onsubmit="event.preventDefault();submitFormEditar()">
@@ -110,18 +110,20 @@
                     @error('password_confirmation')
                         <p class="text-danger text-xs pt-1"> {{ $message }} </p>
                     @enderror
-                    <div class="d-flex justify-content-center">
-                        <button class="btn btn-primary" type="submit">Guardar Cambios</button>
+                    <div class="d-flex justify-content-center mt-2">
+                        <button class="btn btn-primary d-inline-flex align-items-center gap-2" type="submit">
+                            <i class="fa fa-save"></i><span>Guardar Cambios</span>
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
 
         <div class="card border-warning mt-4">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center px-3 px-md-4">
                 <strong><i class="fa fa-shield me-2 text-warning"></i>Seguridad y Sesiones Activas</strong>
             </div>
-            <div class="card-body px-3 px-md-5 py-4">
+            <div class="card-body px-3 px-md-4 py-4">
                 <p class="text-sm text-secondary">
                     Si sospechas que tu cuenta está abierta en otro navegador o dispositivo no autorizado, puedes finalizar remotamente todas las demás sesiones activas.
                 </p>

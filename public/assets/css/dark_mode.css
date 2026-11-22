@@ -46,10 +46,43 @@ html[data-theme="dark"] body .main-content {
     color: var(--tb-text-body) !important;
 }
 
-/* Top decorative banner in Admin Dashboard: subtle deep gradient instead of bright block */
+/* Top decorative banner in Admin Dashboard & Student Portal: subtle deep gradient instead of bright block */
 html[data-theme="dark"] body .min-height-300.bg-danger,
 html[data-theme="dark"] body .min-height-300.bg-primary {
     background: linear-gradient(180deg, rgba(185, 28, 28, 0.26) 0%, rgba(11, 15, 25, 0) 100%) !important;
+}
+
+html[data-theme="dark"] body .tb-student-hero {
+    background: linear-gradient(180deg, rgba(185, 28, 28, 0.48) 0%, rgba(185, 28, 28, 0.18) 52%, rgba(11, 15, 25, 0) 100%) !important;
+}
+
+html[data-theme="dark"] body .main-content.tb-student-main {
+    background-color: transparent !important;
+}
+
+html[data-theme="dark"] body.tb-student-body {
+    background-color: var(--tb-bg) !important;
+}
+
+html[data-theme="dark"] body .tb-student-hero-title {
+    color: var(--tb-text) !important;
+    text-shadow: none !important;
+}
+
+html[data-theme="dark"] body .tb-student-hero .breadcrumb-item {
+    color: var(--tb-text-secondary) !important;
+}
+
+html[data-theme="dark"] body .tb-student-hero .breadcrumb-item a {
+    color: #fca5a5 !important;
+}
+
+html[data-theme="dark"] body .tb-student-hero .breadcrumb-item.active {
+    color: var(--tb-text) !important;
+}
+
+html[data-theme="dark"] body .tb-student-hero .breadcrumb-item + .breadcrumb-item::before {
+    color: var(--tb-text-muted) !important;
 }
 
 /* Elevated surfaces (#111827 / #161B22) */
@@ -241,8 +274,14 @@ html[data-theme="dark"] body .navbar .navbar-brand {
 }
 
 html[data-theme="dark"] body .navbar .nav-link:hover,
-html[data-theme="dark"] body .navbar .nav-link.active {
+html[data-theme="dark"] body .navbar .nav-link.active,
+html[data-theme="dark"] body .tb-student-navbar .nav-link.active {
     color: #F87171 !important;
+}
+
+html[data-theme="dark"] body .tb-student-navbar .nav-link:hover,
+html[data-theme="dark"] body .tb-student-navbar .nav-link.active {
+    background-color: rgba(248, 113, 113, 0.12) !important;
 }
 
 html[data-theme="dark"] body .navbar-toggler-bar {
@@ -1190,5 +1229,49 @@ html[data-theme="dark"] body .tbp-toast-msg {
 }
 
 html[data-theme="dark"] body .tbp-toast-close {
+    color: var(--tb-text-muted) !important;
+}
+
+/* Tarjetas horizontales de Cursos (Dark Mode) */
+html[data-theme="dark"] body .curso-card-horizontal {
+    background: linear-gradient(105deg, rgba(209, 36, 33, 0.18) 0%, rgba(17, 24, 39, 0.96) 52%, var(--tb-surface-2) 100%) !important;
+    border-color: var(--tb-border-solid) !important;
+}
+
+html[data-theme="dark"] body .curso-card-link:hover .curso-card-horizontal {
+    background: linear-gradient(105deg, rgba(220, 38, 38, 0.25) 0%, rgba(22, 30, 46, 0.98) 58%, var(--tb-elevated) 100%) !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 8px 20px rgba(220, 38, 38, 0.2) !important;
+}
+
+html[data-theme="dark"] body .curso-card-code {
+    color: #f87171 !important;
+}
+
+html[data-theme="dark"] body .curso-card-horizontal .card-title {
+    color: var(--tb-text) !important;
+}
+
+html[data-theme="dark"] body .curso-card-horizontal .card-text {
+    color: var(--tb-text-secondary) !important;
+}
+
+html[data-theme="dark"] body .curso-card-arrow {
+    color: var(--tb-text-muted) !important;
+}
+
+html[data-theme="dark"] body .curso-card-link:hover .curso-card-arrow {
+    color: #f87171 !important;
+}
+
+html[data-theme="dark"] body .curso-card-progress {
+    border-top-color: var(--tb-border-solid) !important;
+}
+
+html[data-theme="dark"] body .curso-progress-track {
+    background-color: var(--tb-elevated) !important;
+}
+
+html[data-theme="dark"] body .curso-card-meta {
     color: var(--tb-text-muted) !important;
 }

@@ -103,24 +103,26 @@
     @stack('css')
 </head>
 
-<body style="background-color: #f2f2f2;">
+<body class="tb-student-body">
     @include('layout_plataforma.navbar')
-    <div class="container-fluid mt-3">
-        <div class="d-flex justify-content-between align-items-center px-3 px-md-5 flex-wrap gap-2">
-            <h3 class="mb-0">{{ $title ? $title : 'No Definido' }}</h3>
-            @if(!isset($res_certamen) || ($show_breadcrumbs ?? false))
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb flex-wrap mb-0">
-                    <li class="breadcrumb-item"><a href="{{url('/')}}">Inicio</a></li>
-                    @foreach($breadcrumbs as $key=>$item)
-                    <li class="breadcrumb-item @if($loop->last) active @endif" aria-current="page"> @if(isset($item["route"]))<a href="{{$item["route"]}}">{{$item["nombre"]}}</a> @else {{$item["nombre"]}} @endif </li>
-                    @endforeach
-                </ol>
-            </nav>
-            @endif
+    <div class="tb-student-hero">
+        <div class="container-fluid px-3 px-md-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h3 class="mb-0 tb-student-hero-title">{{ $title ? $title : 'No Definido' }}</h3>
+                @if(!isset($res_certamen) || ($show_breadcrumbs ?? false))
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb flex-wrap mb-0">
+                        <li class="breadcrumb-item"><a href="{{url('/')}}">Inicio</a></li>
+                        @foreach($breadcrumbs as $key=>$item)
+                        <li class="breadcrumb-item @if($loop->last) active @endif" aria-current="page"> @if(isset($item["route"]))<a href="{{$item["route"]}}">{{$item["nombre"]}}</a> @else {{$item["nombre"]}} @endif </li>
+                        @endforeach
+                    </ol>
+                </nav>
+                @endif
+            </div>
         </div>
     </div>
-    <main class="main-content">
+    <main class="main-content tb-student-main">
         @yield('content')
     </main>
     @include('components.toast_notifications')

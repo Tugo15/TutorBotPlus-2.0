@@ -1,6 +1,6 @@
 @extends('layout_plataforma.app', ['title_html' => 'Retroalimentación para Envío #' . $retroalimentacion->id_envio, 'title' => 'Retroalimentación - Envío #' . $retroalimentacion->id_envio, "breadcrumbs"=>[["nombre"=>"Envíos", "route"=>route("envios.listado")], ["nombre"=>"Envío #".$envios->id, "route"=>route('envios.ver', ['token'=>$envios->token])], ["nombre"=>"Retroalimentación"]]])
 @section('content')
-    <div class="container-fluid py-3 px-2 px-md-4">
+    <div class="container-fluid px-3 px-md-4 pb-3">
         <div class="row g-3 align-items-stretch">
             <div class="col-md-8 col-12">
                 <div class="card border-danger h-100">

@@ -1,4 +1,7 @@
 <div class="card border-danger" style="{{ isset($res_certamen) ? 'min-height: 35rem; height: 100%;' : 'height: 100%;' }}">
+    <div class="card-header">
+        <span>Acciones y Configuración</span>
+    </div>
     <div class="card-body p-3 px-sm-4">
         <form
             action="{{ isset($res_certamen) ? route('certamenes.guardar_codigo') : route('problemas.guardar_codigo') }}"
@@ -17,8 +20,8 @@
                 <input type="hidden" name="token_certamen" value="{{ $res_certamen->token }}">
             @endif
             <div class="d-grid mb-2">
-                <button class="btn btn-outline-primary btn-sm text-wrap" type="submit" id="boton_guardar">
-                    <i class="fa fa-save me-1"></i> {{ isset($res_certamen) ? "Guardar y Volver a la Evaluación" : "Guardar y Volver" }}
+                <button class="btn btn-outline-primary btn-sm text-wrap d-inline-flex align-items-center justify-content-center gap-2" type="submit" id="boton_guardar">
+                    <i class="fa fa-save"></i><span>{{ isset($res_certamen) ? "Guardar y Volver a la Evaluación" : "Guardar y Volver" }}</span>
                 </button>
             </div>
         </form>
@@ -27,8 +30,8 @@
             method="POST" id="evaluacion_form">
             @csrf
             <div class="d-grid mb-3">
-                <button class="btn btn-primary text-wrap" type="submit" id="boton_enviar_solucion">
-                    <i class="fa fa-paper-plane me-1"></i> Enviar Solución
+                <button class="btn btn-primary text-wrap d-inline-flex align-items-center justify-content-center gap-2" type="submit" id="boton_enviar_solucion">
+                    <i class="fa fa-paper-plane"></i><span>Enviar Solución</span>
                 </button>
             </div>
             <h6 class="text-center mt-3 font-weight-bold text-xs text-uppercase text-secondary">Lenguaje de Programación</h6>

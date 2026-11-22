@@ -10,15 +10,13 @@
 @endphp
 @extends('layout_plataforma.app', ['title_html' => 'Pistas', 'title' => 'Pistas - '.$problema->nombre, 'breadcrumbs' => $breadcrumbsEditorial])
 @section('content')
-    <div class="container-fluid py-3 px-4">
+    <div class="container-fluid px-3 px-md-4">
         <div class="card border-danger">
-            <div class="card-header">
-                <div class="d-flex d-flex justify-content-between">
-                    <div class="ms-3 mt-2"><h6>Pistas</h6></div>
-                    <div class="me-3"><a class="btn btn-primary" href="{{ !empty($id_curso) ? route('problemas.ver', ['id_curso'=>$id_curso, 'codigo'=>$problema->codigo]) : route('cursos.listado') }}" role="button">Volver</a></div>
-                  </div>
+            <div class="card-header d-flex justify-content-between align-items-center px-3 px-md-4 py-2">
+                <h6 class="mb-0"><strong>Pistas</strong></h6>
+                <a class="btn btn-sm btn-primary mb-0" href="{{ !empty($id_curso) ? route('problemas.ver', ['id_curso'=>$id_curso, 'codigo'=>$problema->codigo]) : route('cursos.listado') }}" role="button">Volver</a>
             </div>
-            <div class="card-body px-3 px-md-5" id="body_markdown">
+            <div class="card-body px-3 px-md-4 py-4" id="body_markdown">
                 @if(empty(trim($problema->body_editorial ?? '')))
                     <div class="text-center py-4 text-secondary">
                         <i class="fa fa-lightbulb fa-2x text-muted mb-2 d-block"></i>

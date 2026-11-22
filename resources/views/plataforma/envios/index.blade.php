@@ -1,8 +1,18 @@
 @extends('layout_plataforma.app', ['title_html' => 'Envíos', 'title'=>'Mis Envíos', "breadcrumbs"=>[["nombre"=>"Envíos"]]])
 @section('content')
-    <div class="container-fluid py-3 px-4">
+    <div class="container-fluid px-3 px-md-4">
         <div class="card border-danger">
-            <div class="card-body px-2 px-md-3">
+            <div class="card-body px-3 px-md-4 py-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <h5 class="mb-0"><strong>Historial de Mis Envíos</strong></h5>
+                        <span class="badge text-bg-light border fw-semibold">{{ count($envios) }}</span>
+                    </div>
+                    <a href="{{ route('cursos.listado') }}" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center mb-0">
+                        <i class="fa fa-arrow-left me-1"></i> Mis Cursos
+                    </a>
+                </div>
+                <hr class="mt-2 mb-4">
                 <div class="table-responsive">
                     <table id="table" class="table table-striped" style="width:100%">
                         <thead>
@@ -55,7 +65,7 @@
                                     <td>{{$envio->puntaje}}</td>
                                     <td data-order="{{ $envio->inicio_ts ?? \App\Support\DateHelper::timestamp($envio->inicio ?? null) }}">{{$envio->inicio}}</td>
                                     <td data-order="{{ $envio->termino_ts ?? \App\Support\DateHelper::timestamp($envio->termino ?? null) }}">{{$envio->termino}}</td>
-                                    <td><a href="{{route('envios.ver', ['token'=>$envio->token, 'from'=>'envios'])}}">Ver</a></td>
+                                    <td><a class="btn btn-sm btn-outline-danger py-1 px-2 mb-0 d-inline-flex align-items-center" href="{{route('envios.ver', ['token'=>$envio->token, 'from'=>'envios'])}}"><i class="fa fa-eye me-1"></i>Ver</a></td>
                                 </tr>
                             @endforeach
                         </tbody>

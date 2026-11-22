@@ -113,5 +113,32 @@ class TutorBotAuditTest extends TestCase
         $this->actingAs($estudiante)->get('/')->assertStatus(200);
         $this->actingAs($estudiante)->get('/evaluaciones')->assertStatus(200);
     }
+
+    public function test_course_form_limits_nombre_codigo_and_descripcion_length(): void
+    {
+        Permission::firstOrCreate(['name' => 'crear curso']);
+        Permission::firstOrCreate(['name' => 'editar curso']);
+        $roleAdmin = Role::firstOrCreate(['name' => 'administrador']);
+        $roleAdmin->givePermissionTo(['crear curso', 'editar curso']);
+
+        $admin = User::where('email', 'admin@tutorbot.com')->first();
+
+        $res = $this->actingAs($admin)->post(route('cursos.store'), [
+            'nombre' => str_repeat('N', 101),
+            'codigo' => str_repeat('C', 26),
+            'descripcion' => str_repeat('D', 61),
+        ]);
+
+        $res->assertSessionHasErrors(['nombre', 'codigo', 'descripcion']);
+
+        $validRes = $this->actingAs($admin)->post(route('cursos.store'), [
+            'nombre' => 'Curso de Prueba Limite',
+            'codigo' => 'TEST-LIM-60',
+            'descripcion' => str_repeat('D', 60),
+        ]);
+
+        $validRes->assertSessionHasNoErrors();
+        \App\Models\Cursos::where('codigo', 'TEST-LIM-60')->delete();
+    }
 }
 

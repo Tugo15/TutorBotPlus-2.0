@@ -27,7 +27,7 @@
 @endpush
 
 @section('content')
-    <div class="container-fluid py-3 px-4">
+    <div class="container-fluid px-3 px-md-4 pb-3">
         @include('components.alert')
         <div class="row mb-3 g-3">
             <div class="col-12 col-lg-8">

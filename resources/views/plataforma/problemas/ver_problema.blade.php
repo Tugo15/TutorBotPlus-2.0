@@ -1,12 +1,17 @@
 @extends('layout_plataforma.app', ['title_html' => $problema->nombre, 'title' => 'Problema - ' . $problema->nombre, 'breadcrumbs' => [['nombre' => 'Cursos', 'route' => route('cursos.listado')], ['nombre' => 'Problemas', 'route' => route('problemas.listado', ['id' => $id_curso])], ['nombre' => $problema->nombre]]])
 @section('content')
-    <div class="container-fluid py-3 px-2 px-md-4">
+    <div class="container-fluid px-3 px-md-4">
         @include('components.alert')
         <div class="row g-3 mb-3">
             <div class="col-12 col-lg-8">
                 <div class="card border-danger shadow-sm certamen-desktop-card">
-                    <div class="card-header">
-                        Enunciado
+                    <div class="card-header d-flex justify-content-between align-items-center py-2 px-3 px-md-4">
+                        <span>Enunciado</span>
+                        @if(isset($id_curso))
+                            <a href="{{ route('problemas.listado', ['id' => $id_curso]) }}" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center mb-0 py-1 px-2">
+                                <i class="fa fa-arrow-left me-1"></i> Volver
+                            </a>
+                        @endif
                     </div>
                     <div class="card-body p-4 text-wrap" id="body_markdown">
                         @if(isset($problema->restricciones) && trim($problema->restricciones) !== '')
@@ -66,29 +71,29 @@
                     <div class="card-body p-3 d-flex flex-column justify-content-between">
                         <div>
                             <div class="d-grid gap-2 px-1">
-                                <a class="btn btn-primary text-wrap {{ $problema->disponible ? '' : 'disabled' }}"
+                                <a class="btn btn-primary text-wrap d-inline-flex align-items-center justify-content-center gap-2 {{ $problema->disponible ? '' : 'disabled' }}"
                                     @if (isset($id_curso)) href="{{ route('problemas.resolver', ['codigo' => $problema->codigo, 'id_curso' => $id_curso]) }}" @endif
-                                    role="button">{{ $problema->disponible ? 'Resolver Problema' : 'Problema No Disponible' }}</a>
-                                <a class="btn btn-outline-secondary btn-sm text-wrap"
+                                    role="button"><i class="fa fa-play"></i><span>{{ $problema->disponible ? 'Resolver Problema' : 'Problema No Disponible' }}</span></a>
+                                <a class="btn btn-outline-secondary btn-sm text-wrap d-inline-flex align-items-center justify-content-center gap-2"
                                     href="{{ route('problemas.pdf_enunciado', ['id_problema' => $problema->id]) }}"
-                                    target="_blank" role="button">Descargar PDF Enunciado</a>
+                                    target="_blank" role="button"><i class="fa fa-file-pdf"></i><span>Descargar PDF Enunciado</span></a>
                                 @php
                                     $tienePistas = !empty(trim($problema->body_editorial ?? ''));
                                 @endphp
-                                <a class="btn btn-outline-secondary text-wrap btn-sm {{ $tienePistas ? '' : 'disabled' }}"
+                                <a class="btn btn-outline-secondary text-wrap btn-sm d-inline-flex align-items-center justify-content-center gap-2 {{ $tienePistas ? '' : 'disabled' }}"
                                     @if($tienePistas)
                                         href="{{ route('problemas.ver_editorial', ['codigo' => $problema->codigo, 'id_curso' => $id_curso]) }}"
                                     @else
                                         href="#" onclick="return false;" aria-disabled="true" tabindex="-1"
                                     @endif
-                                    role="button">{{ $tienePistas ? 'Ver Pistas' : 'Pistas No Disponible' }}</a>
+                                    role="button"><i class="fa fa-lightbulb"></i><span>{{ $tienePistas ? 'Ver Pistas' : 'Pistas No Disponible' }}</span></a>
                                 @can('ver informe del problema')
-                                    <a class="btn btn-outline-secondary text-wrap btn-sm"
+                                    <a class="btn btn-outline-secondary text-wrap btn-sm d-inline-flex align-items-center justify-content-center gap-2"
                                         href="{{ route('informe.problema', ['id_curso' => $id_curso, 'id_problema' => $problema->id]) }}"
-                                        role="button">Ver Informe del Problema</a>
+                                        role="button"><i class="fa fa-chart-bar"></i><span>Ver Informe del Problema</span></a>
                                 @endcan
-                                <a class="btn btn-outline-secondary text-wrap btn-sm"
-                                    href="{{ route('envios.listado', ['id_problema' => $problema->id]) }}" role="button">Ver Mis Envíos</a>
+                                <a class="btn btn-outline-secondary text-wrap btn-sm d-inline-flex align-items-center justify-content-center gap-2"
+                                    href="{{ route('envios.listado', ['id_problema' => $problema->id]) }}" role="button"><i class="fa fa-history"></i><span>Ver Mis Envíos</span></a>
                             </div>
                             <hr class="my-3">
                             <h6 class="px-1 font-weight-bold text-dark mb-2" style="font-size: 0.95rem;"><i class="fa fa-info-circle me-1 text-primary"></i> Información:</h6>

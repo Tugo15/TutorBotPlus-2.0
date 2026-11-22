@@ -1,9 +1,9 @@
 @extends('layout_plataforma.app', ['title_html' => 'Resultados - ' . $envio->problema->nombre, 'title' => ' Envio #' . $envio->id . ' - Problema ' . $envio->problema->nombre, "breadcrumbs"=>[["nombre"=>"Envios", "route"=>route("envios.listado")], ["nombre"=>"Envio #".$envio->id]]])
 @section('content')
-    <div class="container-fluid py-3 px-4">
+    <div class="container-fluid px-3 px-md-4 pb-3">
         @include('components.alert')
-        <div class="row">
-            <div class="col-sm col-xs-12">
+        <div class="row g-3">
+            <div class="col-12 col-lg-8">
                 <div class="card border-danger" style="height:100%">
                     @php
                         $totalCasosEvaluacion = max(
@@ -168,8 +168,11 @@
                     </div>
                 </div>
             </div>
-            <div class="col-sm-4 col-xs-12 mt-xs-2">
-                <div class="card border-danger">
+            <div class="col-12 col-lg-4">
+                <div class="card border-danger h-100">
+                    <div class="card-header">
+                        <span>Resumen y Acciones</span>
+                    </div>
                     <div class="card-body p-4">
                         <h6 class="text-center mb-1">Tiempo en Total:</h6>
                         <h5 id="tiempo" class="text-center mb-3"></h5>
@@ -222,9 +225,8 @@
                 </div>
             </div>
         </div>
-    </div>
     @if(isset($problema->restricciones) && trim($problema->restricciones) !== '')
-        <div class="row mt-3 mx-2">
+        <div class="row mt-3">
             <div class="col-12">
                 <div class="card border-info shadow-xs">
                     <div class="card-header bg-light border-bottom d-flex justify-content-between align-items-center py-3">
@@ -266,17 +268,18 @@
             </div>
         </div>
     @endif
-    <div class="row mt-3 mx-2">
-        <div class="col">
+    <div class="row mt-3">
+        <div class="col-12">
             <div class="card border-danger" style="height:100%">
                 <div class="card-header">
                     Código Fuente
                 </div>
                 <div class="card-body">
-                    <pre><code class="language-{{ $highlightjs_choice }}">{{ $envio->codigo }}</code></pre>
+                    <pre class="mb-0"><code class="language-{{ $highlightjs_choice }}">{{ $envio->codigo }}</code></pre>
                 </div>
             </div>
         </div>
+    </div>
     </div>
     <link rel="stylesheet" href="{{ asset('assets/js/highlightjs/styles/dark.css') }}">
 @endsection

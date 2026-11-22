@@ -11,7 +11,7 @@
 @endphp
 @extends('layout_plataforma.app', ['title_html' => $problema->nombre, 'title' => 'Problema - ' . $problema->nombre . ' - Resolver', 'breadcrumbs' => $breadcrumbsResolver])
 @section('content')
-    <div class="container-fluid px-2 px-md-4 pb-4">
+    <div class="container-fluid px-3 px-md-4 pb-4">
         @include('components.alert')
         <div class="row g-3">
             <div class="col-12 col-lg-8">

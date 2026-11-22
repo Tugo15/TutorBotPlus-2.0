@@ -5,11 +5,234 @@
     color: #842029;
 }
 
-.curso_image{
-    background: linear-gradient(180deg, #D12421 0%, #621919 100%);
+/* Cabecera institucional con difuminado rojo UCSC para el Portal Estudiantil */
+.tb-student-body {
+    background-color: #f3f4f6;
+}
+
+.tb-student-hero {
+    background: linear-gradient(180deg, #b91c1c 0%, #c8232c 44%, rgba(200, 35, 44, 0.16) 84%, rgba(243, 244, 246, 0) 100%);
+    padding-top: 1.15rem;
+    padding-bottom: 3.35rem;
+}
+
+.tb-student-hero-title {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.55rem;
+    line-height: 1.25;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+}
+
+.tb-student-hero .breadcrumb {
+    background: transparent;
+    padding: 0;
+}
+
+.tb-student-hero .breadcrumb-item,
+.tb-student-hero .breadcrumb-item a {
+    color: rgba(255, 255, 255, 0.86);
+    text-decoration: none;
+    font-size: 0.875rem;
+}
+
+.tb-student-hero .breadcrumb-item a:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.tb-student-hero .breadcrumb-item.active {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.tb-student-hero .breadcrumb-item + .breadcrumb-item::before {
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.tb-student-main {
+    margin-top: -2.2rem;
+    padding-bottom: 2.25rem;
+}
+
+.tb-student-main .card.border-danger {
+    border-radius: 0.75rem;
+    border-color: rgba(209, 36, 33, 0.28) !important;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.07);
+}
+
+.tb-student-main .card-header {
+    font-weight: 600;
+}
+
+.tb-student-main table.dataTable td,
+.tb-student-main table.dataTable th {
+    vertical-align: middle;
+}
+
+.tb-student-main table.table-striped tbody tr:hover > * {
+    background-color: rgba(209, 36, 33, 0.035);
+}
+
+.tb-student-navbar .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 500;
+    padding: 0.45rem 0.75rem !important;
+    border-radius: 0.45rem;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tb-student-navbar .nav-link:hover {
+    background-color: rgba(185, 28, 28, 0.06);
+    color: #b91c1c !important;
+}
+
+.tb-student-navbar .nav-link.active {
+    color: #b91c1c !important;
+    background-color: rgba(185, 28, 28, 0.09);
+    font-weight: 700 !important;
+}
+
+.curso-card-link {
+    display: flex;
     width: 100%;
-    min-height: 150px;
     height: 100%;
+    text-decoration: none !important;
+    color: inherit;
+}
+
+.curso-card-horizontal {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem !important;
+    background: linear-gradient(105deg, rgba(209, 36, 33, 0.09) 0%, rgba(209, 36, 33, 0.025) 38%, #ffffff 74%);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.curso-card-horizontal::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 6px;
+    background: linear-gradient(180deg, #D12421 0%, #621919 100%);
+}
+
+.curso-card-link:hover .curso-card-horizontal {
+    transform: translateY(-2px);
+    border-color: rgba(209, 36, 33, 0.65);
+    background: linear-gradient(105deg, rgba(209, 36, 33, 0.14) 0%, rgba(209, 36, 33, 0.04) 45%, #ffffff 80%);
+    box-shadow: 0 8px 20px rgba(98, 25, 25, 0.12);
+}
+
+.curso-card-emblem {
+    width: 52px;
+    height: 52px;
+    border-radius: 0.65rem;
+    background: linear-gradient(135deg, #D12421 0%, #7F1D1D 100%);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(185, 28, 28, 0.24);
+}
+
+.curso-card-code {
+    display: block;
+    font-size: 0.73rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #b91c1c;
+    margin-bottom: 0.2rem;
+}
+
+.curso-card-horizontal .card-title {
+    color: #0f172a;
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-bottom: 0.35rem;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.curso-card-horizontal .card-text {
+    color: #475569;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.curso-card-arrow {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.curso-card-link:hover .curso-card-arrow {
+    color: #b91c1c;
+    transform: translateX(4px);
+}
+
+.curso-card-progress {
+    margin-top: 0.75rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.curso-progress-track {
+    height: 6px;
+    border-radius: 9999px;
+    background-color: #e2e8f0;
+    overflow: hidden;
+}
+
+.curso-progress-fill {
+    height: 100%;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #dc2626 0%, #991b1b 100%);
+    transition: width 0.3s ease;
+}
+
+.curso-progress-fill.is-complete {
+    background: linear-gradient(90deg, #16a34a 0%, #15803d 100%);
+}
+
+.curso-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    font-size: 0.78rem;
+    color: #64748b;
+    margin-top: 0.55rem;
+}
+
+.curso-card-meta-counts {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.curso-card-meta-counts > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
 }
 
 @media (min-width: 992px) {

@@ -24,16 +24,16 @@ class Cursos extends Model
     ];
 
     public static $createRules = [
-        "nombre" => ["required","string","max:255"],
-        "descripcion" => ["nullable","string","max:500"],
-        "codigo" => ["required","string","unique:cursos,codigo"],
+        "nombre" => ["required","string","max:100"],
+        "descripcion" => ["nullable","string","max:60"],
+        "codigo" => ["required","string","max:25","unique:cursos,codigo"],
     ];
 
     public static function updateRules($id){
         return [
-            "nombre" => ["required","string","max:255"],
-            "descripcion" => ["nullable","string","max:500"],
-            "codigo" => ["required","string", Rule::unique('cursos')->ignore($id)],
+            "nombre" => ["required","string","max:100"],
+            "descripcion" => ["nullable","string","max:60"],
+            "codigo" => ["required","string","max:25", Rule::unique('cursos')->ignore($id)],
         ];
     }
     public function users(): BelongsToMany

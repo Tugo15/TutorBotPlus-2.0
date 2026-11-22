@@ -95,22 +95,76 @@ class CursosController extends Controller
     }
 
     public function listado_cursos(Request $request){
-        $cursos = auth()->user()->cursos();
+        $user = auth()->user();
+        $cursosQuery = $user->cursos();
         $busqueda = is_string($request->buscar_curso) ? trim($request->buscar_curso) : null;
         if ($busqueda !== null && $busqueda !== '') {
             $busquedaEscapada = addcslashes($busqueda, '%_\\');
-            $cursos = $cursos->where(function ($query) use ($busquedaEscapada) {
+            $cursosQuery = $cursosQuery->where(function ($query) use ($busquedaEscapada) {
                 $query->where('cursos.nombre', 'LIKE', '%' . $busquedaEscapada . '%')
                       ->orWhere('cursos.codigo', 'LIKE', '%' . $busquedaEscapada . '%')
                       ->orWhere('cursos.descripcion', 'LIKE', '%' . $busquedaEscapada . '%');
             });
         }
-        
-        $cursos = $cursos->paginate(5)->withQueryString();
+
+        $cursos = $cursosQuery->orderBy('cursos.nombre')->paginate(6)->withQueryString();
         if ($cursos->lastPage() > 0 && (int) $request->input('page', 1) > $cursos->lastPage()) {
             return redirect()->to($request->fullUrlWithQuery(['page' => $cursos->lastPage()]));
         }
-        return view('plataforma.cursos.index', compact('cursos'))->with('busqueda', $busqueda);
+
+        $pageCourseIds = $cursos->pluck('id')->all();
+        $problemasPorCurso = collect();
+        $resueltosPorCurso = collect();
+        $certamenesPorCurso = collect();
+
+        if (!empty($pageCourseIds)) {
+            $problemasPorCurso = DB::table('disponible')
+                ->join('problemas', 'problemas.id', '=', 'disponible.id_problema')
+                ->whereIn('disponible.id_curso', $pageCourseIds)
+                ->where('disponible.visible', true)
+                ->where('problemas.visible', true)
+                ->groupBy('disponible.id_curso')
+                ->selectRaw('disponible.id_curso, COUNT(DISTINCT problemas.id) as total')
+                ->pluck('total', 'id_curso');
+
+            $resueltosPorCurso = DB::table('envio_solucion_problemas')
+                ->join('cursa', 'cursa.id', '=', 'envio_solucion_problemas.id_cursa')
+                ->join('resolver', 'resolver.id', '=', 'envio_solucion_problemas.id_resolver')
+                ->join('disponible', function ($join) {
+                    $join->on('disponible.id_problema', '=', 'resolver.id_problema')
+                         ->on('disponible.id_curso', '=', 'cursa.id_curso');
+                })
+                ->join('problemas', 'problemas.id', '=', 'resolver.id_problema')
+                ->where('cursa.id_usuario', $user->id)
+                ->whereIn('cursa.id_curso', $pageCourseIds)
+                ->whereNull('envio_solucion_problemas.id_certamen')
+                ->where('envio_solucion_problemas.solucionado', true)
+                ->where('disponible.visible', true)
+                ->where('problemas.visible', true)
+                ->groupBy('cursa.id_curso')
+                ->selectRaw('cursa.id_curso, COUNT(DISTINCT resolver.id_problema) as resueltos')
+                ->pluck('resueltos', 'id_curso');
+
+            $certamenesPorCurso = DB::table('certamenes')
+                ->whereIn('id_curso', $pageCourseIds)
+                ->groupBy('id_curso')
+                ->selectRaw('id_curso, COUNT(*) as total')
+                ->pluck('total', 'id_curso');
+        }
+
+        foreach ($cursos as $cursoItem) {
+            $totalP = (int) ($problemasPorCurso[$cursoItem->id] ?? 0);
+            $resP = min($totalP, (int) ($resueltosPorCurso[$cursoItem->id] ?? 0));
+            $cursoItem->problemas_visibles_count = $totalP;
+            $cursoItem->problemas_resueltos_count = $resP;
+            $cursoItem->progreso_porcentaje = $totalP > 0 ? (int) round(($resP / $totalP) * 100) : 0;
+            $cursoItem->certamenes_count = (int) ($certamenesPorCurso[$cursoItem->id] ?? 0);
+        }
+
+        return view('plataforma.cursos.index', compact(
+            'cursos',
+            'busqueda'
+        ));
     }
 
     public function estudiantes(Request $request, $id)

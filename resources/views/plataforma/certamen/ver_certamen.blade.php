@@ -8,13 +8,16 @@
 @extends('layout_plataforma.app', ['title_html' => $certamen->nombre, 'title' => 'Evaluación - ' . $certamen->nombre, 'breadcrumbs' => $breadcrumbsCertamen, 'show_breadcrumbs' => true])
 
 @section('content')
-    <div class="container-fluid py-3 px-2 px-md-4">
+    <div class="container-fluid px-3 px-md-4 pb-3">
         @include('components.alert')
         <div class="row g-3 mb-3">
             <div class="col-12 col-lg-8">
                 <div class="card border-danger shadow-sm certamen-desktop-card">
-                    <div class="card-header">
-                        Descripción
+                    <div class="card-header d-flex justify-content-between align-items-center py-2 px-3 px-md-4">
+                        <span>Descripción</span>
+                        <a href="{{ $certamen->curso ? route('problemas.listado', ['id' => $certamen->curso->id]) : route('certamenes.listado') }}" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center mb-0 py-1 px-2">
+                            <i class="fa fa-arrow-left me-1"></i> Volver
+                        </a>
                     </div>
                     <div class="card-body p-3 p-md-4 text-wrap" id="body_markdown">
                         {!! \App\Support\MarkdownRenderer::render($certamen->descripcion ?? '') !!}
@@ -23,6 +26,9 @@
             </div>
             <div class="col-12 col-lg-4">
                 <div class="card border-danger certamen-desktop-card">
+                    <div class="card-header py-2 px-3 px-md-4">
+                        <span>Acciones e Información</span>
+                    </div>
                     <div class="card-body px-3">
                         @if (isset($res_certamen) && !$res_certamen->finalizado)
                             @if ($certamen->disponibilidad)
